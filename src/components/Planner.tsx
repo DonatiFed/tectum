@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, Check, Lightbulb, MapPin, Zap, Activity } from 'lucide-react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import { type IntakeData, type SystemConfig, recommendSystem, calculateCosts, estimateYield, fmtEUR } from '../lib/solar';
 import { Button } from './ui/button';
+import SolarReportPDF from './SolarReportPDF';
 import { Slider } from './ui/slider';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
@@ -332,9 +334,17 @@ export function Planner({ intake, onBack }: PlannerProps) {
                 </div>
              </div>
 
-             <Button className="w-full bg-white text-primary hover:bg-gray-100 h-12 text-[16px] font-semibold rounded-[8px]">
-               Request installation quote
-             </Button>
+             <PDFDownloadLink
+               document={<SolarReportPDF intake={intake} cfg={cfg} costs={costs} yield_={yield_} />}
+               fileName={`tectum_solar_quote_${new Date().toISOString().slice(0,10)}.pdf`}
+               style={{ textDecoration: 'none' }}
+             >
+               {({ loading }) => (
+                 <Button className="w-full bg-white text-primary hover:bg-gray-100 h-12 text-[16px] font-semibold rounded-[8px]">
+                   {loading ? 'Generating PDF…' : 'Request installation quote'}
+                 </Button>
+               )}
+             </PDFDownloadLink>
           </div>
         </div>
       </div>
