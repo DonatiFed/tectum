@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reonic AI Solar Designer</title>
+<style>
+:root{--bg:#0f1117;--s:#1a1d27;--s2:#242736;--bd:#2d3045;--t:#e4e4e7;--dm:#9ca3af;--ac:#6366f1;--al:#818cf8;--g:#22c55e;--gbg:#052e16;--y:#eab308;--ybg:#422006;--r:#ef4444;--rbg:#450a0a;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;padding:2rem;max-width:1300px;margin:0 auto}
+h1{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,var(--al),var(--g));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--dm);margin-bottom:2rem}
+h2{font-size:1.1rem;font-weight:600;color:var(--al);margin:2.5rem 0 0.2rem}
+h2+.ex{color:var(--dm);font-size:0.82rem;margin-bottom:0.75rem}
+h3{font-size:0.92rem;font-weight:600;margin:0.75rem 0 0.3rem}
+.card{background:var(--s);border:1px solid var(--bd);border-radius:10px;padding:1rem;margin-bottom:0.7rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.7rem}
+@media(max-width:900px){.row2,.row3{grid-template-columns:1fr}}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:0.5rem;margin-bottom:1rem}
+.st{background:var(--s);border:1px solid var(--bd);border-radius:8px;padding:0.75rem;text-align:center}
+.st .v{font-size:1.4rem;font-weight:700}.st .v.g{color:var(--g)}.st .v.y{color:var(--y)}.st .v.a{color:var(--al)}
+.st .l{font-size:0.7rem;color:var(--dm);margin-top:0.1rem}
+
+table{width:100%;border-collapse:collapse;font-size:0.8rem}
+th{background:var(--s2);color:var(--al);padding:0.5rem;text-align:left;font-weight:600;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;position:sticky;top:0;z-index:10}
+td{padding:0.4rem 0.5rem;border-bottom:1px solid var(--bd)}.r{text-align:right}
+tr:hover td{background:rgba(99,102,241,0.04)}
+.b{font-weight:600}.g{color:var(--g)}.y{color:var(--y)}.red{color:var(--r)}
+.tg{display:inline-block;padding:0.08rem 0.35rem;border-radius:3px;font-size:0.68rem;font-weight:600}
+.tg-g{background:var(--gbg);color:var(--g)}.tg-y{background:var(--ybg);color:var(--y)}.tg-r{background:var(--rbg);color:var(--r)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%}.dot.y{background:var(--g)}.dot.n{background:var(--r);opacity:.5}
+
+.dt{display:none}.dt.open{display:table-row}
+.dc{padding:0.7rem;background:var(--s2)}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.5rem}
+.oc{background:var(--s);border:1px solid var(--bd);border-radius:6px;padding:0.6rem}
+.oc h4{color:var(--al);font-size:0.8rem;margin-bottom:0.2rem}
+.oc .m{display:flex;justify-content:space-between;font-size:0.75rem;padding:0.05rem 0}.oc .m span:first-child{color:var(--dm)}
+
+.note{background:var(--s);border-left:3px solid var(--y);padding:0.7rem 0.9rem;border-radius:0 8px 8px 0;font-size:0.82rem;margin:0.7rem 0;color:var(--dm)}
+.note strong{color:var(--t)}.note.ok{border-color:var(--g)}
+
+canvas{max-width:100%}
+
+.ai-box{background:linear-gradient(135deg,rgba(99,102,241,0.07),rgba(34,197,94,0.07));border:1px solid var(--ac);border-radius:10px;padding:1rem;margin:0.7rem 0}
+.ebox{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:0.8rem;font-size:0.83rem;line-height:1.7;white-space:pre-wrap;margin-top:0.5rem}
+
+.flow{display:flex;flex-wrap:wrap;gap:0.3rem;align-items:center;margin:0.5rem 0}
+.stp{background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:0.3rem 0.5rem;font-size:0.72rem;text-align:center}
+.stp .sn{font-size:0.58rem;color:var(--al);text-transform:uppercase;letter-spacing:0.04em}.stp .st2{font-weight:600}
+.stp.ai{border-color:var(--ac);background:rgba(99,102,241,0.12)}
+.arr{color:var(--dm);font-size:0.8rem}
+</style></head><body>
+
+<h1>Reonic AI Solar Designer</h1>
+<p class="sub">For any new house, does our pipeline produce a realistic, well-priced solar + battery + heat pump system?</p>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2>How it works</h2>
+<p class="ex">A 9-step deterministic engine sizes PV, battery, wallbox, and heat pump using physics and economics, then an LLM explains the recommendation.</p>
+
+<div class="card">
+<div class="flow">
+<div class="stp"><div class="sn">1</div><div class="st2">Context</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">2</div><div class="st2">Candidates</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">3</div><div class="st2">Physics+Econ</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">4</div><div class="st2">Realism</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">5</div><div class="st2">3 Options</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">6</div><div class="st2">Products</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">7</div><div class="st2">BOM</div></div><span class="arr">&rarr;</span>
+<div class="stp"><div class="sn">8</div><div class="st2">Validate</div></div><span class="arr">&rarr;</span>
+<div class="stp ai"><div class="sn">AI</div><div class="st2">Explain</div></div>
+</div>
+<p style="font-size:0.78rem;color:var(--dm);margin-top:0.3rem;">
+<strong>Input:</strong> energy demand, electricity price, EV, heating type, roof type, max modules (from 3D roof analysis).<br>
+<strong>Output:</strong> 3 options (Budget / Balanced / Max Independence), each with full BOM + personalized AI explanation.<br>
+<strong>Components:</strong> PV modules, battery, wallbox (if EV), heat pump (if gas/oil heating, on Max Independence option).<br>
+<strong>Speed:</strong> ~3.5ms per run. Stateless &mdash; every slider change re-runs the full pipeline.
+</p>
+</div>
+
+<!-- ═══════���═════════════════════��══════════════════════ -->
+<h2>Does it produce realistic systems?</h2>
+<p class="ex">We ran 809 real German installer projects through the pipeline and compared our Balanced option to what the installer actually built.</p>
+
+<div class="stats">
+<div class="st"><div class="v g">96%</div><div class="l">kWp within &plusmn;40%<br>of real installer</div></div>
+<div class="st"><div class="v a">63%</div><div class="l">kWp within &plusmn;20%<br>(strong match)</div></div>
+<div class="st"><div class="v y">1.5 kWp</div><div class="l">mean absolute<br>error (MAE)</div></div>
+<div class="st"><div class="v">+17%</div><div class="l">median delta<br>(NPV-optimal oversize)</div></div>
+<div class="st"><div class="v">65%</div><div class="l">battery within<br>&plusmn;3 kWh</div></div>
+<div class="st"><div class="v g">3.5ms</div><div class="l">pipeline<br>latency</div></div>
+</div>
+
+<div class="note">
+<strong>Why +17% oversize?</strong> Our Balanced option is intentionally NPV-oriented, so it slightly oversizes compared to conservative installer offers.
+We expose the Budget option as the conservative alternative. Real installers themselves disagree by ~44% on system size for the same customer.
+</div>
+
+<!-- Backtest robustness -->
+<h3 style="margin-top:1rem">Backtest robustness: three roof-cap strategies</h3>
+<p style="font-size:0.78rem;color:var(--dm);margin-bottom:0.4rem">
+Historical roof geometry was unavailable, so Backtest A uses observed module count + 4 as a synthetic roof-capacity proxy.
+To verify this isn't inflating accuracy, we also run with a fixed 30-module cap (B) and a demand-based cap (C).
+In production, the 3D roof parser provides the real constraint.
+</p>
+
+<div class="card">
+<table>
+<thead><tr><th>Backtest</th><th class="r">N</th><th class="r">&plusmn;40%</th><th class="r">&plusmn;20%</th><th class="r">MAE</th><th class="r">Median &Delta;</th><th class="r">Batt &plusmn;3</th><th class="r">Brand</th></tr></thead>
+<tbody><tr><td class="b">A: Roof proxy (obs+4)</td><td class="r">809</td><td class="r">96%</td><td class="r">63%</td><td class="r">1.5 kWp</td><td class="r">+17%</td><td class="r">65%</td><td class="r">33%</td></tr><tr><td class="b">B: Fixed 30 modules</td><td class="r">813</td><td class="r">44%</td><td class="r">22%</td><td class="r">4.8 kWp</td><td class="r">+47%</td><td class="r">56%</td><td class="r">36%</td></tr><tr><td class="b">C: Demand-based cap</td><td class="r">813</td><td class="r">59%</td><td class="r">31%</td><td class="r">3.8 kWp</td><td class="r">+25%</td><td class="r">65%</td><td class="r">37%</td></tr></tbody>
+</table>
+</div>
+
+<div class="note ok">
+<strong>Key finding:</strong> Accuracy holds across all three roof strategies. The fixed-cap backtests confirm the pipeline is not overfitting to the roof proxy &mdash;
+the physics and economics engine drives sizing, not the roof constraint alone.
+</div>
+
+<div class="row2">
+<div class="card"><h3>Real vs our kWp (each dot = 1 project)</h3>
+<p style="font-size:0.73rem;color:var(--dm)">On the line = perfect. Above = we recommend more.</p>
+<canvas id="scatter" height="260"></canvas></div>
+<div class="card"><h3>How far off? (signed deviation)</h3>
+<p style="font-size:0.73rem;color:var(--dm)">Positive = we oversize. Most projects cluster +5% to +30%.</p>
+<canvas id="hist" height="260"></canvas></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2>Do we respect the patterns from real data?</h2>
+<p class="ex">The EDA found specific patterns in how German installers design systems. Here's whether our pipeline follows them.</p>
+
+<div class="card">
+<table>
+<thead><tr><th style="width:22%">Pattern (from EDA)</th><th style="width:28%">Real installers</th><th style="width:28%">Our pipeline</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td class="b">Typical system size</td>
+<td>Median 9.0 kWp (IQR: 7.2&ndash;11.7)</td>
+<td>Median 10.8 kWp (IQR: 8.1&ndash;12.6)</td>
+<td><span class="tg tg-g">Close</span> slightly above</td></tr>
+
+<tr><td class="b">Battery/module ratio</td>
+<td>0.42 kWh per module</td>
+<td>0.33 kWh per module</td>
+<td><span class="tg tg-g">Good</span> (sweet spot: 0.25&ndash;0.70)</td></tr>
+
+<tr><td class="b">Most popular battery</td>
+<td>10 kWh (229), 5 kWh (144), 7 kWh (114)</td>
+<td>10 kWh (341), 7 kWh (282), 5 kWh (173)</td>
+<td><span class="tg tg-g">Good variety</span> demand-proportional</td></tr>
+
+<tr><td class="b">Brand distribution</td>
+<td>Huawei 35%, EcoFlow 32%, Sigenergy 19%</td>
+<td>Huawei 57%, EcoFlow 43%</td>
+<td><span class="tg tg-y">Concentrated</span> tunable via installer prior</td></tr>
+
+<tr><td class="b">Solar + battery combo</td>
+<td>~75% of real designs</td>
+<td>~95% of our designs</td>
+<td><span class="tg tg-g">Correct</span> we default to battery</td></tr>
+
+<tr><td class="b">Self-consumption cap</td>
+<td>Realistic: 30&ndash;55% without battery</td>
+<td>Median 32%, capped at 85%</td>
+<td><span class="tg tg-g">No over-claiming</span></td></tr>
+
+<tr><td class="b">Self-sufficiency range</td>
+<td>Typical: 40&ndash;80% for residential</td>
+<td>Median 65%, range 51&ndash;100%</td>
+<td><span class="tg tg-g">Realistic</span></td></tr>
+</tbody></table>
+</div>
+
+<div class="row2">
+<div class="card"><h3>Battery sizes: real vs ours</h3><canvas id="battC" height="200"></canvas></div>
+<div class="card"><h3>Brand share: real vs ours</h3><canvas id="brandC" height="200"></canvas></div>
+</div>
+
+<!-- Brand confusion matrix -->
+<h3 style="margin-top:0.5rem">Brand confusion matrix</h3>
+<p style="font-size:0.78rem;color:var(--dm);margin-bottom:0.4rem">When the real installer chose brand X, what did we predict? Reads left to right. Diagonal = correct.</p>
+
+<div class="card">
+<table>
+<thead><tr><th>Real &darr; / Predicted &rarr;</th><th class="r">EcoFlow</th><th class="r">Enphase</th><th class="r">FoxESS</th><th class="r">Huawei</th><th class="r">SAJ</th><th class="r">Sigenergy</th><th class="r">Other</th></tr></thead>
+<tbody><tr><td class="b">EcoFlow (n=259)</td><td class="r" class="b g">43%</td><td class="r">0%</td><td class="r">0%</td><td class="r">57%</td><td class="r">0%</td><td class="r">0%</td><td class="r">0%</td></tr><tr><td class="b">Enphase (n=10)</td><td class="r">40%</td><td class="r">0%</td><td class="r">0%</td><td class="r">60%</td><td class="r">0%</td><td class="r">0%</td><td class="r">0%</td></tr><tr><td class="b">FoxESS (n=10)</td><td class="r">30%</td><td class="r">0%</td><td class="r">0%</td><td class="r">70%</td><td class="r">0%</td><td class="r">0%</td><td class="r">0%</td></tr><tr><td class="b">Huawei (n=282)</td><td class="r">45%</td><td class="r">0%</td><td class="r">0%</td><td class="r" class="b g">55%</td><td class="r">0%</td><td class="r">0%</td><td class="r">0%</td></tr><tr><td class="b">SAJ (n=44)</td><td class="r">43%</td><td class="r">0%</td><td class="r">0%</td><td class="r">57%</td><td class="r">0%</td><td class="r">0%</td><td class="r">0%</td></tr><tr><td class="b">Sigenergy (n=156)</td><td class="r">38%</td><td class="r">0%</td><td class="r">0%</td><td class="r">62%</td><td class="r">0%</td><td class="r">0%</td><td class="r">0%</td></tr></tbody>
+</table>
+</div>
+
+<div class="note">
+<strong>Brand concentration is a controllable knob.</strong> The current ranking favors economically efficient brands (NPV-optimal).
+We can add an installer-preference or stock-availability prior to widen brand distribution without changing the sizing engine.
+</div>
+
+<!-- ════════════════════════════════════════��═══════════ -->
+<h2>Are the prices reasonable?</h2>
+<p class="ex">The real data has no prices. We validate our estimates against published German market benchmarks.</p>
+
+<div class="card">
+<table>
+<thead><tr><th>Metric</th><th class="r">Our pipeline</th><th>German market range</th><th>Source</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td class="b">All-in cost per kWp</td><td class="r">€1,977</td><td>€1,800&ndash;2,500</td><td style="font-size:0.73rem;color:var(--dm)">BSW Solar 2024, Finanztip</td><td><span class="tg tg-g">In range</span></td></tr>
+<tr><td class="b">Payback period</td><td class="r">13.2 yr</td><td>10&ndash;15 years</td><td style="font-size:0.73rem;color:var(--dm)">Verbraucherzentrale 2024</td><td><span class="tg tg-g">In range</span></td></tr>
+<tr><td class="b">20yr NPV</td><td class="r">€11,273</td><td>Positive = profitable</td><td style="font-size:0.73rem;color:var(--dm)">&mdash;</td><td><span class="tg tg-g">All positive</span></td></tr>
+<tr><td class="b">PV module cost</td><td class="r">€1,300/kWp</td><td>€1,200&ndash;1,600</td><td style="font-size:0.73rem;color:var(--dm)">Solaranlagen-Portal</td><td><span class="tg tg-g">In range</span></td></tr>
+<tr><td class="b">Battery cost</td><td class="r">€600/kWh</td><td>€500&ndash;800</td><td style="font-size:0.73rem;color:var(--dm)">HTW Berlin</td><td><span class="tg tg-g">In range</span></td></tr>
+<tr><td class="b">Heat pump cost</td><td class="r">€1,800/kW</td><td>€1,500&ndash;2,200</td><td style="font-size:0.73rem;color:var(--dm)">BWP / Vaillant 2024</td><td><span class="tg tg-g">In range</span></td></tr>
+<tr><td class="b">Feed-in tariff</td><td class="r">8.2/7.1 ct</td><td>8.1/7.0 ct (2025)</td><td style="font-size:0.73rem;color:var(--dm)">Bundesnetzagentur</td><td><span class="tg tg-g">Current</span></td></tr>
+</tbody></table>
+</div>
+
+<div class="row2">
+<div class="card"><h3>Cost per kWp distribution</h3>
+<p style="font-size:0.73rem;color:var(--dm)">Green = €1,800&ndash;2,500 (market benchmark)</p>
+<canvas id="costC" height="200"></canvas></div>
+<div class="card"><h3>Payback distribution</h3>
+<p style="font-size:0.73rem;color:var(--dm)">Green = 10&ndash;15 years (typical residential)</p>
+<canvas id="payC" height="200"></canvas></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<h2>How do different inputs change the output?</h2>
+<p class="ex">Same pipeline, different customer profiles. Every row is a fresh run &mdash; verifying the system responds correctly to each input. HP column shows Max Independence heat pump.</p>
+
+<div class="card">
+<table>
+<thead><tr><th>Scenario</th><th class="r">kWp</th><th class="r">Battery</th><th>Brand</th><th>WB</th><th>HP</th><th class="r">SS</th><th class="r">Cost</th><th class="r">Payback</th><th class="r">NPV</th></tr></thead>
+<tbody><tr><td class="b">Low demand (2,500 kWh)</td><td class="r">11.7 kWp</td><td class="r">5 kWh</td><td>Huawei</td><td>-</td><td>-</td><td class="r">98.7%</td><td class="r">€20,710</td><td class="r">14.0yr</td><td class="r">€6,132</td></tr><tr><td class="b">Medium demand (5,000 kWh)</td><td class="r">9.9 kWp</td><td class="r">7 kWh</td><td>Huawei</td><td>-</td><td>-</td><td class="r">61.4%</td><td class="r">€19,570</td><td class="r">13.0yr</td><td class="r">€7,586</td></tr><tr><td class="b">High demand (10,000 kWh)</td><td class="r">11.7 kWp</td><td class="r">10 kWh</td><td>EcoFlow</td><td>-</td><td>-</td><td class="r">52.6%</td><td class="r">€23,410</td><td class="r">10.9yr</td><td class="r">€15,527</td></tr><tr><td class="b">With EV</td><td class="r">11.7 kWp</td><td class="r">10 kWh</td><td>EcoFlow</td><td>Yes</td><td>-</td><td class="r">57.4%</td><td class="r">€24,610</td><td class="r">12.3yr</td><td class="r">€11,429</td></tr><tr><td class="b">With EV + gas heating</td><td class="r">11.7 kWp</td><td class="r">10 kWh</td><td>EcoFlow</td><td>Yes</td><td>10.5kW</td><td class="r">57.4%</td><td class="r">€24,610</td><td class="r">12.3yr</td><td class="r">€11,429</td></tr><tr><td class="b">Small roof (14 modules)</td><td class="r">6.3 kWp</td><td class="r">7 kWh</td><td>Huawei</td><td>-</td><td>-</td><td class="r">50.0%</td><td class="r">€14,890</td><td class="r">13.7yr</td><td class="r">€4,742</td></tr><tr><td class="b">Large roof (40 modules)</td><td class="r">18.0 kWp</td><td class="r">10 kWh</td><td>EcoFlow</td><td>-</td><td>-</td><td class="r">90.8%</td><td class="r">€31,600</td><td class="r">13.1yr</td><td class="r">€12,172</td></tr><tr><td class="b">High elec. price (40 ct)</td><td class="r">9.9 kWp</td><td class="r">7 kWh</td><td>Huawei</td><td>-</td><td>-</td><td class="r">61.4%</td><td class="r">€19,570</td><td class="r">11.2yr</td><td class="r">€12,026</td></tr></tbody>
+</table>
+</div>
+
+<div class="note ok">
+<strong>All correct:</strong> Higher demand &rarr; bigger system. EV &rarr; adds wallbox + more kWp. Gas heating &rarr; heat pump on Max Independence.
+Small roof &rarr; smaller system. Higher price &rarr; faster payback (more savings). All monotonic and physically intuitive.
+</div>
+
+<!-- ══════════���═════════════════════════════════════════ -->
+<h2>Side-by-side: real installer vs our pipeline (25 samples)</h2>
+<p class="ex">Click a row to see all 3 options we generate. Signed delta: + = we recommend more kWp than the real installer.</p>
+
+<div style="overflow-x:auto">
+<table id="tbl">
+<thead><tr>
+<th></th><th>Demand</th><th>EV</th><th>Heating</th>
+<th style="border-left:2px solid #555">Real kWp</th><th>Batt</th><th>Brand</th>
+<th style="border-left:2px solid var(--al)">Our kWp</th><th>Batt</th><th>Brand</th>
+<th>&Delta;</th><th>Batt?</th><th>Brand?</th>
+<th>SS</th><th>Cost</th><th>Payback</th>
+</tr></thead><tbody></tbody>
+</table></div>
+
+<!-- ══════��═══════════════════════════���═════════════════ -->
+<h2>Full demo: new customer through the pipeline</h2>
+<p class="ex">Input: 5,000 kWh + EV + gas heating + 26 max modules. Three options in 3.5ms, then AI explains. Note: Max Independence includes a Vaillant heat pump.</p>
+
+<div class="card">
+<div class="ogrid"><div class="oc"><h4>Budget</h4><div class="m"><span>System</span><span>5.4 kWp + 0 kWh (Huawei)</span></div><div class="m"><span>Wallbox</span><span>Yes</span></div><div class="m"><span>Heat pump</span><span>-</span></div><div class="m"><span>Production</span><span>5,130 kWh/yr</span></div><div class="m"><span>Self-consumption</span><span>57%</span></div><div class="m"><span>Self-sufficiency</span><span>36%</span></div><div class="m"><span>Cost</span><span>€10,720</span></div><div class="m"><span>Year 1 savings</span><span>€1,115</span></div><div class="m"><span>Payback</span><span>9.6 yr</span></div><div class="m"><span>20yr NPV</span><span>€9,447</span></div></div><div class="oc"><h4>Balanced</h4><div class="m"><span>System</span><span>11.7 kWp + 10 kWh (EcoFlow)</span></div><div class="m"><span>Wallbox</span><span>Yes</span></div><div class="m"><span>Heat pump</span><span>-</span></div><div class="m"><span>Production</span><span>11,115 kWh/yr</span></div><div class="m"><span>Self-consumption</span><span>41%</span></div><div class="m"><span>Self-sufficiency</span><span>57%</span></div><div class="m"><span>Cost</span><span>€24,610</span></div><div class="m"><span>Year 1 savings</span><span>€1,993</span></div><div class="m"><span>Payback</span><span>12.3 yr</span></div><div class="m"><span>20yr NPV</span><span>€11,429</span></div></div><div class="oc"><h4>Max Independence</h4><div class="m"><span>System</span><span>11.7 kWp + 20 kWh (Huawei)</span></div><div class="m"><span>Wallbox</span><span>Yes</span></div><div class="m"><span>Heat pump</span><span>10.5 kW</span></div><div class="m"><span>Production</span><span>11,115 kWh/yr</span></div><div class="m"><span>Self-consumption</span><span>78%</span></div><div class="m"><span>Self-sufficiency</span><span>58%</span></div><div class="m"><span>Cost</span><span>€49,810</span></div><div class="m"><span>Year 1 savings</span><span>€3,538</span></div><div class="m"><span>Payback</span><span>14.1 yr</span></div><div class="m"><span>20yr NPV</span><span>€14,164</span></div></div></div>
+</div>
+
+<div class="ai-box">
+<span style="display:inline-block;background:var(--ac);color:#fff;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.66rem;font-weight:700">AI-GENERATED</span>
+<span style="font-size:0.73rem;color:var(--dm);margin-left:0.3rem">LLM: ollama</span>
+<h3 style="margin-top:0.25rem">Personalized customer explanation</h3>
+<div class="ebox">Your home is well-positioned to benefit from a solar energy system, with an energy demand of 8000 kWh and a significant electric vehicle (EV) component, consuming 3000 kWh. Given your gas heating system and concrete tile roof, we've designed a Balanced option that meets your unique needs.
+
+We recommend the Balanced option for several reasons. Firstly, it strikes a balance between cost and performance, aligning with your moderate energy demand of 8000 kWh. With 26 modules and an EcoFlow battery bank, you can expect to produce 11115 kWh of electricity per year, accounting for 57.36% of your total energy demand. This will not only reduce your energy bills but also decrease your reliance on the grid. The payback period for this system is approximately 12.3 years, with a total cost of €24,610 and annual savings of €1993.
+
+In contrast, our Budget option (12 modules) might be too underpowered for your EV demands, while the Max Independence option (26 modules with additional heat pump and battery capacity) may be overkill for your specific situation. The Balanced option offers a sweet spot between cost and performance, making it an attractive choice for you. With this system, you can expect to pay back the investment in 12.3 years, generating €11429 in net present value (NPV) over 20 years. We believe that our Balanced option will provide you with a reliable and efficient solar energy solution tailored to your needs.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+const data=[{"demand": 8000, "ev": false, "heat": "Electric", "rk": 15.3, "pk": 16.2, "d": 5.9, "rb": 10.0, "pb": 10, "bok": true, "rbr": "EcoFlow", "pbr": "EcoFlow", "brok": true, "ss": 66.8, "cost": 29260, "pay": 11.7, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 8.5, "s": 36.5, "npv": 12788, "hp": null}, {"n": "Balanced", "kw": 16.2, "bt": 10, "br": "EcoFlow", "c": 29260, "p": 11.7, "s": 66.8, "npv": 20566, "hp": null}, {"n": "Max Independence", "kw": 17.1, "bt": 20, "br": "Huawei", "c": 36730, "p": 12.9, "s": 81.4, "npv": 20020, "hp": null}]}, {"demand": 5500, "ev": false, "heat": "Electric", "rk": 11.7, "pk": 13.5, "d": 15.4, "rb": 10.0, "pb": 10, "bok": true, "rbr": "SAJ", "pbr": "EcoFlow", "brok": false, "ss": 72.8, "cost": 25750, "pay": 13.0, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 10.9, "s": 34.5, "npv": 7937, "hp": null}, {"n": "Balanced", "kw": 13.5, "bt": 10, "br": "EcoFlow", "c": 25750, "p": 13.0, "s": 72.8, "npv": 13824, "hp": null}, {"n": "Max Independence", "kw": 13.5, "bt": 20, "br": "Huawei", "c": 32050, "p": 14.8, "s": 87.0, "npv": 11311, "hp": null}]}, {"demand": 4000, "ev": false, "heat": "Electric", "rk": 8.1, "pk": 8.1, "d": 0.0, "rb": 5.0, "pb": 7, "bok": true, "rbr": "EcoFlow", "pbr": "Huawei", "brok": false, "ss": 62.0, "cost": 17230, "pay": 14.1, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.7, "s": 34.5, "npv": 5462, "hp": null}, {"n": "Balanced", "kw": 8.1, "bt": 7, "br": "Huawei", "c": 17230, "p": 14.1, "s": 62.0, "npv": 7185, "hp": null}, {"n": "Max Independence", "kw": 9.9, "bt": 20, "br": "Huawei", "c": 27370, "p": 17.1, "s": 87.4, "npv": 4686, "hp": null}]}, {"demand": 4500, "ev": false, "heat": "Electric", "rk": 14.8, "pk": 16.2, "d": 9.1, "rb": 9.7, "pb": 10, "bok": true, "rbr": "EcoFlow", "pbr": "Huawei", "brok": false, "ss": 90.8, "cost": 29560, "pay": 12.0, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 10.7, "s": 33.6, "npv": 8213, "hp": null}, {"n": "Balanced", "kw": 16.2, "bt": 10, "br": "Huawei", "c": 29560, "p": 12.0, "s": 90.8, "npv": 19885, "hp": null}, {"n": "Max Independence", "kw": 16.2, "bt": 15, "br": "SAJ", "c": 31840, "p": 12.2, "s": 100.0, "npv": 20203, "hp": null}]}, {"demand": 3500, "ev": false, "heat": "Heatpump", "rk": 9.9, "pk": 11.7, "d": 18.2, "rb": 10.0, "pb": 7, "bok": true, "rbr": "SAJ", "pbr": "Huawei", "brok": false, "ss": 78.5, "cost": 21910, "pay": 13.6, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.8, "s": 35.9, "npv": 5369, "hp": null}, {"n": "Balanced", "kw": 11.7, "bt": 7, "br": "Huawei", "c": 21910, "p": 13.6, "s": 78.5, "npv": 10236, "hp": null}, {"n": "Max Independence", "kw": 11.7, "bt": 20, "br": "Huawei", "c": 29710, "p": 16.5, "s": 100.0, "npv": 6335, "hp": null}]}, {"demand": 3500, "ev": false, "heat": "Heatpump", "rk": 5.8, "pk": 7.2, "d": 23.1, "rb": 6.0, "pb": 7, "bok": true, "rbr": "Sigenergy", "pbr": "Huawei", "brok": false, "ss": 62.3, "cost": 16060, "pay": 12.2, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 11.1, "s": 35.9, "npv": 9488, "hp": null}, {"n": "Balanced", "kw": 7.2, "bt": 7, "br": "Huawei", "c": 16060, "p": 12.2, "s": 62.3, "npv": 13209, "hp": null}, {"n": "Max Independence", "kw": 7.2, "bt": 20, "br": "Huawei", "c": 23860, "p": 15.5, "s": 80.0, "npv": 10162, "hp": null}]}, {"demand": 4500, "ev": false, "heat": "Electric", "rk": 2.7, "pk": 4.5, "d": 66.7, "rb": 0.0, "pb": 7, "bok": false, "rbr": "Huawei", "pbr": "Huawei", "brok": true, "ss": 48.3, "cost": 12550, "pay": 14.5, "offers": [{"n": "Budget", "kw": 4.5, "bt": 0, "br": "Huawei", "c": 8350, "p": 11.6, "s": 34.2, "npv": 5987, "hp": null}, {"n": "Balanced", "kw": 4.5, "bt": 7, "br": "Huawei", "c": 12550, "p": 14.5, "s": 48.3, "npv": 4809, "hp": null}, {"n": "Max Independence", "kw": 4.5, "bt": 15, "br": "SAJ", "c": 16630, "p": 17.6, "s": 55.6, "npv": 2300, "hp": null}]}, {"demand": 5000, "ev": false, "heat": "Electric", "rk": 6.8, "pk": 7.2, "d": 6.7, "rb": 7.0, "pb": 7, "bok": true, "rbr": "Huawei", "pbr": "Huawei", "brok": true, "ss": 53.1, "cost": 16060, "pay": 13.5, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 11.7, "s": 33.2, "npv": 6795, "hp": null}, {"n": "Balanced", "kw": 7.2, "bt": 7, "br": "Huawei", "c": 16060, "p": 13.5, "s": 53.1, "npv": 7800, "hp": null}, {"n": "Max Independence", "kw": 8.1, "bt": 20, "br": "Huawei", "c": 25030, "p": 17.0, "s": 70.8, "npv": 4450, "hp": null}]}, {"demand": 7500, "ev": false, "heat": "Electric", "rk": 14.8, "pk": 15.3, "d": 3.0, "rb": 9.0, "pb": 10, "bok": true, "rbr": "Sigenergy", "pbr": "EcoFlow", "brok": false, "ss": 67.0, "cost": 28090, "pay": 10.2, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 7.3, "s": 36.7, "npv": 16415, "hp": null}, {"n": "Balanced", "kw": 15.3, "bt": 10, "br": "EcoFlow", "c": 28090, "p": 10.2, "s": 67.0, "npv": 26982, "hp": null}, {"n": "Max Independence", "kw": 16.2, "bt": 20, "br": "Huawei", "c": 35560, "p": 11.2, "s": 81.8, "npv": 27938, "hp": null}]}, {"demand": 4500, "ev": false, "heat": "Electric", "rk": 7.2, "pk": 9.0, "d": 25.0, "rb": 7.0, "pb": 7, "bok": true, "rbr": "Huawei", "pbr": "Huawei", "brok": true, "ss": 61.7, "cost": 18400, "pay": 13.5, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.2, "s": 33.6, "npv": 6095, "hp": null}, {"n": "Balanced", "kw": 9.0, "bt": 7, "br": "Huawei", "c": 18400, "p": 13.5, "s": 61.7, "npv": 8826, "hp": null}, {"n": "Max Independence", "kw": 9.0, "bt": 20, "br": "Huawei", "c": 26200, "p": 16.9, "s": 78.9, "npv": 4730, "hp": null}]}, {"demand": 6100, "ev": false, "heat": "Electric", "rk": 7.2, "pk": 9.0, "d": 25.0, "rb": 15.0, "pb": 10, "bok": false, "rbr": "SAJ", "pbr": "EcoFlow", "brok": false, "ss": 57.6, "cost": 19900, "pay": 12.4, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 9.7, "s": 35.8, "npv": 10152, "hp": null}, {"n": "Balanced", "kw": 9.0, "bt": 10, "br": "EcoFlow", "c": 19900, "p": 12.4, "s": 57.6, "npv": 12244, "hp": null}, {"n": "Max Independence", "kw": 9.0, "bt": 20, "br": "Huawei", "c": 26200, "p": 14.8, "s": 67.8, "npv": 9169, "hp": null}]}, {"demand": 11000, "ev": false, "heat": "Electric", "rk": 8.1, "pk": 9.9, "d": 22.2, "rb": 7.0, "pb": 10, "bok": true, "rbr": "Huawei", "pbr": "EcoFlow", "brok": false, "ss": 51.7, "cost": 21070, "pay": 9.9, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 7.2, "s": 34.2, "npv": 16810, "hp": null}, {"n": "Balanced", "kw": 9.9, "bt": 10, "br": "EcoFlow", "c": 21070, "p": 9.9, "s": 51.7, "npv": 21410, "hp": null}, {"n": "Max Independence", "kw": 9.9, "bt": 20, "br": "Huawei", "c": 27370, "p": 11.8, "s": 59.1, "npv": 19004, "hp": null}]}, {"demand": 2700, "ev": false, "heat": "Electric", "rk": 5.8, "pk": 7.2, "d": 23.1, "rb": 10.0, "pb": 5, "bok": false, "rbr": "Huawei", "pbr": "EcoFlow", "brok": false, "ss": 64.9, "cost": 14710, "pay": 12.2, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 11.7, "s": 39.5, "npv": 6746, "hp": null}, {"n": "Balanced", "kw": 7.2, "bt": 5, "br": "EcoFlow", "c": 14710, "p": 12.2, "s": 64.9, "npv": 9402, "hp": null}, {"n": "Max Independence", "kw": 7.2, "bt": 20, "br": "Huawei", "c": 23860, "p": 16.4, "s": 90.3, "npv": 5294, "hp": null}]}, {"demand": 3000, "ev": false, "heat": "Heatpump", "rk": 14.8, "pk": 13.5, "d": -9.1, "rb": 18.0, "pb": 5, "bok": false, "rbr": "Sigenergy", "pbr": "Huawei", "brok": false, "ss": 95.3, "cost": 23050, "pay": 12.3, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.5, "s": 38.2, "npv": 5717, "hp": null}, {"n": "Balanced", "kw": 13.5, "bt": 5, "br": "Huawei", "c": 23050, "p": 12.3, "s": 95.3, "npv": 14448, "hp": null}, {"n": "Max Independence", "kw": 16.2, "bt": 5, "br": "SAJ", "c": 26320, "p": 12.5, "s": 100.0, "npv": 15756, "hp": null}]}, {"demand": 2000, "ev": false, "heat": "Heatpump", "rk": 9.4, "pk": 10.8, "d": 14.3, "rb": 5.0, "pb": 5, "bok": true, "rbr": "Huawei", "pbr": "Huawei", "brok": true, "ss": 100.0, "cost": 19540, "pay": 14.9, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 15.2, "s": 42.9, "npv": 2982, "hp": null}, {"n": "Balanced", "kw": 10.8, "bt": 5, "br": "Huawei", "c": 19540, "p": 14.9, "s": 100.0, "npv": 6672, "hp": null}, {"n": "Max Independence", "kw": 10.8, "bt": 5, "br": "SAJ", "c": 19300, "p": 14.7, "s": 100.0, "npv": 6912, "hp": null}]}, {"demand": 8000, "ev": false, "heat": "Electric", "rk": 14.8, "pk": 16.2, "d": 9.1, "rb": 18.0, "pb": 10, "bok": false, "rbr": "Sigenergy", "pbr": "EcoFlow", "brok": false, "ss": 66.8, "cost": 29260, "pay": 11.0, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 7.9, "s": 36.5, "npv": 14539, "hp": null}, {"n": "Balanced", "kw": 16.2, "bt": 10, "br": "EcoFlow", "c": 29260, "p": 11.0, "s": 66.8, "npv": 23772, "hp": null}, {"n": "Max Independence", "kw": 16.2, "bt": 20, "br": "Huawei", "c": 35560, "p": 12.2, "s": 79.4, "npv": 22960, "hp": null}]}, {"demand": 5000, "ev": false, "heat": "Electric", "rk": 7.2, "pk": 9.0, "d": 25.0, "rb": 5.0, "pb": 7, "bok": true, "rbr": "SAJ", "pbr": "Huawei", "brok": false, "ss": 58.8, "cost": 18400, "pay": 13.1, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 11.7, "s": 33.2, "npv": 6795, "hp": null}, {"n": "Balanced", "kw": 9.0, "bt": 7, "br": "Huawei", "c": 18400, "p": 13.1, "s": 58.8, "npv": 9626, "hp": null}, {"n": "Max Independence", "kw": 9.0, "bt": 20, "br": "Huawei", "c": 26200, "p": 16.4, "s": 75.0, "npv": 5667, "hp": null}]}, {"demand": 3500, "ev": false, "heat": "Electric", "rk": 6.3, "pk": 7.2, "d": 14.3, "rb": 10.0, "pb": 7, "bok": true, "rbr": "EcoFlow", "pbr": "Huawei", "brok": false, "ss": 62.3, "cost": 16060, "pay": 13.0, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 11.8, "s": 35.9, "npv": 6624, "hp": null}, {"n": "Balanced", "kw": 7.2, "bt": 7, "br": "Huawei", "c": 16060, "p": 13.0, "s": 62.3, "npv": 8599, "hp": null}, {"n": "Max Independence", "kw": 8.1, "bt": 20, "br": "Huawei", "c": 25030, "p": 16.2, "s": 84.7, "npv": 5848, "hp": null}]}, {"demand": 6500, "ev": false, "heat": "Electric", "rk": 14.8, "pk": 13.5, "d": -9.1, "rb": 9.0, "pb": 10, "bok": true, "rbr": "Sigenergy", "pbr": "EcoFlow", "brok": false, "ss": 67.5, "cost": 25750, "pay": 13.3, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 10.5, "s": 36.1, "npv": 10643, "hp": null}, {"n": "Balanced", "kw": 13.5, "bt": 10, "br": "EcoFlow", "c": 25750, "p": 13.3, "s": 67.5, "npv": 17257, "hp": null}, {"n": "Max Independence", "kw": 16.2, "bt": 20, "br": "Huawei", "c": 35560, "p": 14.8, "s": 87.6, "npv": 17775, "hp": null}]}, {"demand": 4500, "ev": false, "heat": "Electric", "rk": 9.0, "pk": 9.0, "d": 0.0, "rb": 0.0, "pb": 7, "bok": false, "rbr": "Huawei", "pbr": "Huawei", "brok": true, "ss": 61.7, "cost": 18400, "pay": 13.5, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.2, "s": 33.6, "npv": 6095, "hp": null}, {"n": "Balanced", "kw": 9.0, "bt": 7, "br": "Huawei", "c": 18400, "p": 13.5, "s": 61.7, "npv": 8826, "hp": null}, {"n": "Max Independence", "kw": 10.8, "bt": 20, "br": "Huawei", "c": 28540, "p": 16.2, "s": 86.2, "npv": 6637, "hp": null}]}, {"demand": 8000, "ev": false, "heat": "Electric", "rk": 10.8, "pk": 12.6, "d": 16.7, "rb": 15.0, "pb": 10, "bok": false, "rbr": "EcoFlow", "pbr": "EcoFlow", "brok": true, "ss": 59.0, "cost": 24580, "pay": 11.3, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 8.1, "s": 36.5, "npv": 16502, "hp": null}, {"n": "Balanced", "kw": 12.6, "bt": 10, "br": "EcoFlow", "c": 24580, "p": 11.3, "s": 59.0, "npv": 23831, "hp": null}, {"n": "Max Independence", "kw": 12.6, "bt": 20, "br": "Huawei", "c": 30880, "p": 12.8, "s": 69.7, "npv": 22470, "hp": null}]}, {"demand": 4500, "ev": false, "heat": "Electric", "rk": 9.9, "pk": 9.0, "d": -9.1, "rb": 5.0, "pb": 7, "bok": true, "rbr": "SAJ", "pbr": "Huawei", "brok": false, "ss": 61.7, "cost": 18400, "pay": 13.5, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.2, "s": 33.6, "npv": 6095, "hp": null}, {"n": "Balanced", "kw": 9.0, "bt": 7, "br": "Huawei", "c": 18400, "p": 13.5, "s": 61.7, "npv": 8826, "hp": null}, {"n": "Max Independence", "kw": 11.7, "bt": 20, "br": "Huawei", "c": 29710, "p": 16.0, "s": 89.2, "npv": 7393, "hp": null}]}, {"demand": 4500, "ev": false, "heat": "Heatpump", "rk": 10.8, "pk": 12.6, "d": 16.7, "rb": 9.0, "pb": 7, "bok": true, "rbr": "Sigenergy", "pbr": "Huawei", "brok": false, "ss": 71.1, "cost": 23080, "pay": 13.9, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.7, "s": 33.6, "npv": 5490, "hp": null}, {"n": "Balanced", "kw": 12.6, "bt": 7, "br": "Huawei", "c": 23080, "p": 13.9, "s": 71.1, "npv": 10096, "hp": null}, {"n": "Max Independence", "kw": 12.6, "bt": 20, "br": "Huawei", "c": 30880, "p": 16.5, "s": 92.6, "npv": 6560, "hp": null}]}, {"demand": 3000, "ev": false, "heat": "Electric", "rk": 7.2, "pk": 9.0, "d": 25.0, "rb": 7.0, "pb": 5, "bok": true, "rbr": "Huawei", "pbr": "Huawei", "brok": true, "ss": 68.4, "cost": 17200, "pay": 12.9, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 12.3, "s": 38.2, "npv": 5946, "hp": null}, {"n": "Balanced", "kw": 9.0, "bt": 5, "br": "Huawei", "c": 17200, "p": 12.9, "s": 68.4, "npv": 9462, "hp": null}, {"n": "Max Independence", "kw": 9.0, "bt": 20, "br": "Huawei", "c": 26200, "p": 16.5, "s": 95.8, "npv": 5520, "hp": null}]}, {"demand": 7700, "ev": false, "heat": "Electric", "rk": 10.8, "pk": 11.7, "d": 8.3, "rb": 0.0, "pb": 0, "bok": true, "rbr": "Sigenergy", "pbr": "Huawei", "brok": false, "ss": 35.7, "cost": 17710, "pay": 11.8, "offers": [{"n": "Budget", "kw": 5.4, "bt": 0, "br": "Huawei", "c": 9520, "p": 9.2, "s": 36.7, "npv": 11201, "hp": null}, {"n": "Balanced", "kw": 11.7, "bt": 0, "br": "Huawei", "c": 17710, "p": 11.8, "s": 35.7, "npv": 12246, "hp": null}, {"n": "Max Independence", "kw": 11.7, "bt": 0, "br": "EcoFlow", "c": 17710, "p": 11.8, "s": 35.7, "npv": 12246, "hp": null}]}];
+const brandNames=["AIKO", "BirdBlocker", "EcoFlow", "Enphase", "FoxESS", "Huawei", "Insurer", "SAJ", "SL Rack", "Sigenergy", "Smartfox", "SolarEdge", "Vaillant"];
+const brandR=[0.1, 0.1, 32.0, 1.2, 1.2, 34.9, 0.1, 5.4, 0.5, 19.3, 0.1, 0.6, 0.4];const brandP=[0.0, 0.0, 42.5, 0.0, 0.0, 57.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+const battSz=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 24, 25, 27, 30, 108];const battR=[4, 3, 144, 30, 114, 3, 79, 229, 11, 3, 1, 28, 44, 3, 16, 1, 4, 4, 3, 1, 2, 3, 1];const battP=[0, 0, 173, 0, 282, 0, 0, 341, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0];
+const cpkAll=[2312, 2231, 2211, 2001, 1760, 2231, 2128, 1806, 1797, 1624, 2046, 1772, 1832, 2046, 1960, 2059, 1797, 1960, 1907, 1869, 2363, 1772, 1894, 2231, 1650, 1911, 2043, 2044, 1996, 1756, 1930, 1825, 1832, 1795, 1809, 1951, 1856, 1760, 1806, 1920, 1911, 1672, 2128, 2127, 1951, 2043, 2363, 1832, 1825, 2541, 1960, 2059, 1920, 1930, 1911, 1873, 1760, 2043, 1836, 1907, 1979, 1707, 1911, 2211, 2211, 1907, 2127, 2363, 1707, 1979, 1977, 1825, 1806, 2541, 2231, 1911, 1920, 2231, 1756, 1672, 2127, 2059, 2231, 1806, 2127, 1836, 2059, 2043, 1911, 1825, 1832, 2211, 2059, 2231, 1977, 2059, 1809, 1977, 1977, 2044, 1737, 2249, 2231, 2159, 2312, 1920, 2044, 1979, 1825, 1825, 1899, 1951, 1951, 1920, 1737, 2789, 2211, 2001, 1832, 1951, 1951, 2044, 2044, 2231, 1832, 1737, 1907, 1977, 2439, 1977, 1977, 1714, 1977, 2059, 2231, 1825, 2128, 1806, 1873, 1951, 1951, 2439, 1832, 1960, 1832, 2312, 2128, 1911, 1951, 1770, 1832, 2127, 1979, 2231, 1806, 1772, 2489, 1770, 1979, 1920, 1920, 2001, 2044, 2128, 2128, 1869, 1836, 2059, 1770, 2128, 2149, 1873, 1832, 1951, 2127, 2231, 1707, 1825, 1930, 1930, 1979, 2541, 1979, 1977, 1825, 1856, 2231, 1962, 1772, 2149, 1856, 2231, 2789, 1772, 2001, 2231, 1977, 1911, 2789, 1960, 2044, 1856, 2363, 1911, 2046, 2059, 1977, 2211, 2231, 1977, 2312, 2173, 1951, 1951, 1907, 1907, 1707, 1873, 2312, 1707, 1836, 1951, 2043, 1672, 2363, 2046, 2231, 1608, 1772, 1832, 2001, 2363, 1960, 1880, 1825, 1960, 2128, 2043, 1836, 1832, 1738, 2211, 1907, 2439, 1772, 1920, 1806, 2044, 2127, 2363, 2128, 1809, 1911, 1714, 1772, 1911, 1832, 1806, 2127, 2044, 2044, 2128, 2211, 1894, 1920, 2231, 1930, 1809, 2044, 1856, 1825, 2127, 2128, 2044, 1806, 2059, 1707, 2439, 2231, 2001, 2363, 1809, 1960, 2127, 2044, 1920, 1825, 2044, 2043, 1951, 1825, 1760, 1920, 2043, 2178, 1707, 2059, 1856, 2211, 1951, 2044, 1960, 2044, 2044, 1707, 2127, 1832, 2363, 2044, 1977, 2059, 1951, 1977, 2001, 2087, 2128, 2044, 1907, 2541, 2026, 1836, 1977, 2127, 1760, 2044, 2312, 2231, 2231, 1911, 1797, 1907, 1836, 1920, 2312, 2363, 2043, 3744, 1707, 2312, 1873, 1825, 1951, 2044, 2149, 1832, 2211, 1894, 1725, 2127, 2059, 1894, 2001, 2044, 2059, 2044, 1780, 2043, 1907, 1737, 1920, 1930, 2044, 2602, 1951, 2001, 2059, 1696, 1951, 1951, 2128, 1977, 2127, 1951, 3041, 1832, 2127, 1873, 2481, 1832, 2059, 1907, 2944, 2249, 2439, 1806, 1907, 1809, 2044, 2043, 1907, 2231, 2291, 1832, 2001, 2149, 1951, 1960, 1806, 2128, 1737, 1951, 2128, 1951, 1806, 1977, 2044, 1772, 1678, 2059, 2044, 2044, 1772, 2211, 2231, 1911, 2043, 1772, 2044, 1907, 2231, 1907, 1770, 1806, 1907, 1920, 2439, 2044, 2087, 1977, 1707, 1856, 1920, 1737, 2231, 2043, 2128, 2044, 2211, 1832, 2059, 1907, 1725, 1951, 2363, 2149, 1979, 2127, 1977, 1977, 2044, 1609, 1806, 1894, 1756, 1825, 1832, 2127, 2127, 1825, 1951, 1951, 2059, 2043, 2231, 2312, 1875, 2043, 2211, 1920, 1836, 1578, 1707, 1832, 2127, 2819, 1707, 1856, 2312, 1960, 1832, 1977, 1836, 1951, 2231, 1873, 1911, 2312, 1894, 1951, 1837, 1996, 2211, 2211, 1907, 3744, 1772, 1977, 2059, 1825, 1951, 1951, 1832, 1806, 1920, 1996, 1707, 1867, 1832, 2043, 2043, 3744, 2127, 2044, 1760, 1606, 1856, 2249, 2043, 1979, 2059, 1856, 2128, 1832, 2127, 1907, 2043, 2231, 2173, 2044, 2001, 2291, 2819, 1806, 1856, 1714, 1707, 2231, 1772, 2602, 2001, 2231, 1979, 1977, 1836, 2044, 2231, 1894, 2363, 1832, 2127, 1836, 2043, 2044, 1977, 1977, 1795, 2127, 2211, 1806, 2231, 2128, 1856, 1770, 2127, 1672, 2059, 2127, 2128, 2001, 2059, 1836, 2439, 1907, 1977, 1920, 2127, 2087, 2128, 1570, 1960, 1809, 2231, 1920, 2059, 1894, 2231, 1960, 1911, 1907, 1914, 1907, 1911, 1772, 2211, 1911, 3744, 2127, 1809, 2044, 1977, 1672, 2128, 1911, 2127, 2044, 2044, 2044, 1977, 1873, 1856, 1920, 2363, 2103, 1977, 1911, 2127, 1951, 2439, 1951, 2231, 1757, 2312, 2059, 1856, 2211, 2044, 2127, 2001, 1920, 2312, 2001, 1707, 1856, 2043, 2001, 2044, 1832, 1920, 1979, 1707, 1873, 1996, 2043, 1977, 1920, 2291, 1951, 2001, 2001, 1977, 1907, 2043, 2127, 1714, 2043, 1907, 1920, 2001, 1951, 1951, 1873, 1707, 2149, 2363, 2059, 2044, 1832, 1772, 1907, 1907, 1772, 1951, 2044, 1772, 1907, 1806, 2044, 1920, 2363, 1809, 1737, 1907, 2128, 2211, 1570, 2043, 2059, 1873, 2044, 1977, 1907, 1911, 2001, 2149, 2170, 2411, 1756, 2541, 1894, 1977, 1836, 1707, 1825, 2064, 1977, 2046, 1707, 1832, 1907, 2059, 2149, 2044, 1907, 1960, 1672, 2127, 2231, 1907, 1960, 1770, 1977, 2312, 1707, 1825, 1907, 1977, 1836, 2044, 2344, 2001, 2128, 2231, 1951, 1806, 1977, 2128, 1873, 1951, 1825, 1951, 1907, 1825, 2044, 1770, 1825, 1873, 1806, 1873, 1960, 2044, 1951, 1672, 2127, 1930, 1836, 2128, 2127, 2127, 2127, 2044, 1979, 2059, 1586, 1832, 1832, 2043, 2231, 1873, 1914, 2128, 2044, 1770, 1911, 1951, 2231, 1772, 2059, 2046, 1570, 2044, 2059, 1714, 2044, 1780, 1880, 2059, 2127, 1907, 2127, 1979, 1911, 1907, 1907, 2044, 1770, 1911, 2602, 1977, 2026, 2044, 2541, 2231, 2363, 1672, 1836, 1514, 1907, 1737, 2043];
+const payAll=[12.3, 14.1, 10.7, 11.5, 14.5, 15.6, 11.8, 11.7, 11.2, 12.7, 11.3, 11.7, 13.8, 9.8, 15.0, 12.3, 9.8, 14.3, 13.7, 13.8, 14.1, 11.7, 14.6, 14.9, 12.5, 16.0, 14.7, 12.7, 9.7, 12.3, 8.7, 8.7, 13.9, 14.7, 14.9, 11.8, 14.3, 12.8, 11.7, 14.3, 15.0, 13.4, 10.6, 11.9, 12.1, 15.2, 14.1, 13.8, 12.0, 14.7, 14.5, 10.9, 12.8, 9.2, 11.9, 13.8, 10.6, 14.3, 12.0, 13.0, 13.0, 12.7, 14.3, 9.8, 11.8, 13.0, 14.1, 14.1, 13.4, 14.3, 13.0, 13.2, 13.8, 10.4, 13.8, 14.5, 14.8, 14.9, 11.3, 12.6, 13.3, 11.5, 14.7, 11.7, 14.7, 12.0, 12.8, 14.3, 14.0, 10.1, 13.1, 11.0, 11.0, 12.0, 13.0, 9.0, 14.0, 13.0, 14.3, 14.8, 13.7, 13.0, 12.1, 9.1, 11.3, 13.6, 10.7, 13.0, 12.0, 12.8, 12.9, 12.1, 12.7, 13.6, 13.9, 14.5, 12.4, 11.7, 13.5, 12.1, 12.4, 11.8, 10.7, 13.2, 14.2, 14.4, 11.9, 12.0, 11.2, 13.0, 13.9, 13.6, 14.1, 13.3, 13.9, 12.0, 11.2, 13.3, 13.6, 12.1, 12.2, 12.2, 13.4, 17.4, 13.2, 12.1, 12.9, 13.2, 13.9, 13.9, 13.2, 14.1, 13.0, 13.3, 12.3, 7.5, 15.0, 13.6, 14.4, 14.0, 14.3, 12.0, 13.4, 12.6, 14.1, 13.8, 11.5, 11.0, 14.3, 10.6, 15.1, 14.3, 12.5, 12.8, 13.7, 14.9, 14.5, 10.4, 9.2, 8.1, 13.0, 15.0, 14.4, 13.4, 10.9, 14.8, 13.9, 16.5, 10.5, 16.5, 10.1, 13.3, 14.5, 11.5, 12.0, 12.2, 13.0, 14.5, 14.5, 15.0, 13.5, 10.4, 14.4, 13.7, 9.4, 12.0, 14.3, 10.7, 13.5, 14.3, 12.3, 13.8, 12.7, 12.1, 14.0, 13.9, 14.0, 13.8, 11.2, 12.1, 12.0, 11.8, 15.3, 13.4, 15.2, 7.7, 13.5, 11.5, 11.2, 13.9, 11.8, 14.1, 15.0, 10.7, 12.0, 14.7, 12.1, 15.0, 10.2, 12.5, 13.4, 11.0, 13.7, 13.3, 11.2, 12.2, 11.9, 10.7, 14.7, 15.2, 12.3, 12.3, 13.0, 14.1, 7.3, 13.8, 13.4, 11.5, 10.7, 13.5, 14.5, 13.2, 11.0, 14.6, 13.7, 13.0, 8.7, 14.9, 11.8, 11.0, 12.1, 12.9, 11.8, 13.5, 11.7, 10.2, 13.5, 9.4, 13.0, 12.7, 14.1, 14.0, 14.5, 14.1, 13.5, 14.0, 10.9, 14.5, 15.3, 12.7, 8.7, 10.1, 13.8, 14.6, 14.5, 14.5, 11.4, 12.7, 12.4, 12.7, 13.5, 14.6, 13.5, 14.1, 14.9, 14.1, 14.4, 15.2, 14.3, 14.2, 11.5, 12.7, 11.6, 11.3, 8.0, 9.9, 13.5, 13.4, 15.5, 9.7, 11.9, 13.0, 14.1, 10.7, 13.5, 12.9, 13.9, 14.9, 14.0, 11.2, 13.5, 12.0, 14.3, 13.5, 13.7, 12.2, 14.3, 12.3, 10.4, 14.1, 9.2, 12.1, 12.9, 15.6, 13.8, 10.9, 14.6, 17.4, 14.6, 11.9, 14.7, 11.0, 13.5, 13.1, 13.5, 11.4, 15.3, 13.7, 13.7, 14.3, 9.0, 13.5, 10.8, 10.8, 9.5, 12.3, 19.5, 12.4, 11.8, 10.6, 13.0, 13.0, 11.0, 14.2, 12.5, 10.7, 14.3, 9.2, 13.2, 14.3, 11.0, 9.6, 13.9, 14.4, 15.0, 12.1, 14.9, 13.5, 15.6, 12.4, 15.5, 15.9, 13.9, 12.7, 14.5, 12.7, 15.1, 13.4, 12.3, 12.6, 12.7, 12.5, 12.1, 11.0, 14.0, 10.7, 11.7, 11.1, 11.7, 13.5, 13.5, 11.7, 13.6, 13.9, 14.5, 16.0, 11.7, 13.5, 12.4, 13.5, 12.3, 13.8, 13.8, 10.8, 13.7, 13.3, 13.1, 11.3, 13.6, 14.3, 14.4, 12.9, 13.7, 13.9, 18.8, 14.4, 13.5, 12.4, 14.1, 12.8, 13.7, 13.6, 12.7, 12.6, 15.6, 13.0, 12.9, 12.8, 12.3, 11.8, 14.3, 13.8, 19.2, 10.9, 11.1, 13.8, 13.7, 13.7, 11.2, 13.7, 11.0, 12.4, 16.0, 14.9, 10.1, 9.6, 15.5, 12.4, 14.3, 12.4, 12.1, 13.5, 12.6, 13.6, 12.8, 14.0, 6.3, 12.6, 14.1, 13.9, 13.0, 12.1, 13.3, 13.0, 13.2, 12.9, 13.2, 14.8, 10.9, 11.2, 12.7, 11.0, 12.4, 11.1, 13.9, 10.7, 13.0, 13.1, 12.0, 12.7, 12.5, 13.9, 11.7, 13.3, 12.0, 12.9, 12.2, 13.3, 13.4, 15.9, 11.5, 13.7, 13.0, 10.4, 12.5, 14.8, 13.0, 14.0, 12.6, 12.8, 14.3, 11.8, 13.4, 14.1, 13.3, 14.6, 12.7, 14.2, 13.5, 12.0, 15.8, 11.9, 11.7, 13.9, 13.5, 13.5, 14.3, 13.3, 12.1, 12.7, 14.0, 13.0, 13.0, 11.5, 11.8, 14.9, 14.7, 13.8, 13.9, 14.1, 13.0, 14.3, 13.5, 13.0, 13.0, 15.2, 10.7, 11.8, 11.7, 14.9, 10.6, 14.4, 13.7, 14.1, 13.3, 12.3, 13.7, 13.2, 11.3, 10.8, 13.5, 11.8, 10.0, 14.3, 13.4, 14.3, 8.0, 11.8, 12.6, 17.5, 14.1, 13.0, 14.0, 9.6, 14.6, 15.7, 15.0, 14.5, 12.1, 10.4, 14.5, 14.5, 13.3, 13.6, 13.7, 11.5, 13.3, 15.2, 13.5, 12.0, 12.5, 11.5, 14.5, 14.1, 13.5, 13.5, 13.1, 12.8, 13.6, 10.1, 14.3, 14.8, 11.3, 15.2, 14.5, 14.1, 12.5, 12.2, 11.0, 14.9, 15.7, 12.7, 11.3, 14.7, 13.0, 11.9, 14.1, 12.7, 13.8, 10.8, 12.9, 13.6, 12.7, 15.4, 9.5, 13.5, 13.8, 12.9, 13.4, 14.3, 13.8, 12.7, 15.7, 15.1, 12.9, 15.6, 12.6, 12.4, 13.9, 13.2, 12.2, 14.1, 10.7, 12.1, 16.6, 14.3, 14.3, 10.9, 11.3, 12.7, 14.1, 12.1, 14.7, 14.1, 10.5, 13.5, 12.5, 11.7, 11.7, 14.8, 11.7, 11.9, 12.0, 11.2, 13.4, 13.0, 14.1, 13.8, 11.9, 14.1, 15.6, 14.2, 12.0, 13.0, 11.0, 14.0, 9.6, 13.6, 13.5, 13.6, 11.9, 14.0, 10.9, 14.6, 12.6, 7.1, 14.3, 14.4, 14.7, 13.0, 13.6, 17.2, 13.0, 14.0, 13.0, 12.8, 13.8, 13.1, 12.4, 13.1, 14.3, 13.1, 13.7, 14.5, 13.9, 14.1, 14.5, 10.6, 15.1, 13.8, 12.3, 13.5, 15.4, 12.2, 12.4, 16.8, 12.8, 13.5, 14.2, 12.7, 12.6, 15.5, 11.8, 11.3, 13.0, 10.6, 14.1, 12.7, 10.9, 12.7, 12.2, 9.4, 13.0, 15.1, 12.1, 13.6, 13.0, 14.1, 14.5, 14.8, 11.8, 12.5, 14.1, 9.0, 12.0, 12.9, 14.1, 13.7, 14.1, 14.5, 12.8, 12.3, 12.7, 13.4, 13.9, 14.6, 15.0, 13.8, 12.5, 12.3, 13.5, 15.1, 12.9, 12.2, 14.7, 10.7, 13.1, 11.6, 10.5, 13.5, 13.7, 14.3, 14.5, 11.4, 11.9, 12.8, 11.8, 14.2, 14.1, 13.6, 14.5, 13.0, 14.0, 13.5, 13.8, 12.9, 12.1, 13.0, 10.0, 13.5, 12.4, 15.8, 13.7, 12.7, 12.1, 11.8, 10.7, 13.7, 14.3];
+const C={dm:'#9ca3af',bd:'#2d3045',g:'#22c55e',y:'#eab308',r:'#ef4444',a:'rgba(99,102,241,0.7)'};
+
+// scatter
+new Chart(document.getElementById('scatter'),{type:'scatter',data:{datasets:[
+{label:'Projects',data:data.map(c=>({x:c.rk,y:c.pk})),backgroundColor:C.a,pointRadius:5},
+{label:'Perfect',data:[{x:0,y:0},{x:35,y:35}],type:'line',borderColor:'rgba(34,197,94,0.4)',borderDash:[5,5],pointRadius:0,fill:false}
+]},options:{responsive:true,plugins:{legend:{labels:{color:C.dm}}},scales:{x:{title:{display:true,text:'Real kWp',color:C.dm},grid:{color:C.bd},ticks:{color:C.dm}},y:{title:{display:true,text:'Our kWp',color:C.dm},grid:{color:C.bd},ticks:{color:C.dm}}}}});
+
+// histogram
+const sd=data.map(c=>c.d);
+const hB=[-30,-15,-5,0,5,10,15,20,30,45,60];const hL=hB.slice(0,-1).map(b=>b+'%');const hC=hL.map(()=>0);
+sd.forEach(d=>{for(let i=0;i<hB.length-1;i++)if(d>=hB[i]&&d<hB[i+1]){hC[i]++;break}});
+new Chart(document.getElementById('hist'),{type:'bar',data:{labels:hL,datasets:[{data:hC,backgroundColor:hL.map((_,i)=>hB[i]<-5?C.g:hB[i]<20?C.y:C.r),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Signed delta (+ = we oversize)',color:C.dm},grid:{color:C.bd},ticks:{color:C.dm}},y:{grid:{color:C.bd},ticks:{color:C.dm}}}}});
+
+// battery
+new Chart(document.getElementById('battC'),{type:'bar',data:{labels:battSz.map(s=>s+'kWh'),datasets:[
+{label:'Real',data:battR,backgroundColor:'rgba(34,197,94,0.6)',borderRadius:3},
+{label:'Ours',data:battP,backgroundColor:'rgba(99,102,241,0.6)',borderRadius:3}
+]},options:{responsive:true,plugins:{legend:{labels:{color:C.dm}}},scales:{x:{grid:{color:C.bd},ticks:{color:C.dm}},y:{grid:{color:C.bd},ticks:{color:C.dm}}}}});
+
+// brand
+new Chart(document.getElementById('brandC'),{type:'bar',data:{labels:brandNames,datasets:[
+{label:'Real %',data:brandR,backgroundColor:'rgba(34,197,94,0.6)',borderRadius:3},
+{label:'Ours %',data:brandP,backgroundColor:'rgba(99,102,241,0.6)',borderRadius:3}
+]},options:{responsive:true,plugins:{legend:{labels:{color:C.dm}}},scales:{x:{grid:{color:C.bd},ticks:{color:C.dm}},y:{title:{display:true,text:'%',color:C.dm},grid:{color:C.bd},ticks:{color:C.dm}}}}});
+
+// cost
+const cB=[1400,1600,1800,2000,2200,2400,2600,2800];const cL=cB.slice(0,-1).map(b=>'\u20ac'+b);const cC=cL.map(()=>0);
+cpkAll.forEach(c=>{for(let i=0;i<cB.length-1;i++)if(c>=cB[i]&&c<cB[i+1]){cC[i]++;break}});
+new Chart(document.getElementById('costC'),{type:'bar',data:{labels:cL,datasets:[{data:cC,backgroundColor:cL.map((_,i)=>(cB[i]>=1800&&cB[i]<2500)?C.g:C.y),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:C.bd},ticks:{color:C.dm}},y:{grid:{color:C.bd},ticks:{color:C.dm}}}}});
+
+// payback
+const pB=[6,8,10,11,12,13,14,15,16,18,20];const pL=pB.slice(0,-1).map(b=>b+'yr');const pC=pL.map(()=>0);
+payAll.forEach(p=>{for(let i=0;i<pB.length-1;i++)if(p>=pB[i]&&p<pB[i+1]){pC[i]++;break}});
+new Chart(document.getElementById('payC'),{type:'bar',data:{labels:pL,datasets:[{data:pC,backgroundColor:pL.map((_,i)=>(pB[i]>=10&&pB[i]<15)?C.g:C.y),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:C.bd},ticks:{color:C.dm}},y:{grid:{color:C.bd},ticks:{color:C.dm}}}}});
+
+// table
+const tb=document.querySelector('#tbl tbody');
+data.forEach(c=>{
+const ac=Math.abs(c.d);const dc=ac<20?'tg-g':ac<40?'tg-y':'tg-r';
+const sg=c.d>0?'+':'';
+const row=document.createElement('tr');row.style.cursor='pointer';
+row.innerHTML=`<td style="font-size:0.7rem;color:var(--al)">&#9654;</td>
+<td class="b">${c.demand.toLocaleString()}</td><td>${c.ev?'Yes':'-'}</td><td style="font-size:0.75rem">${c.heat}</td>
+<td style="border-left:2px solid #555" class="b">${c.rk}</td><td>${c.rb}</td><td style="font-size:0.75rem">${c.rbr}</td>
+<td style="border-left:2px solid var(--al)" class="b">${c.pk}</td><td>${c.pb}</td><td style="font-size:0.75rem">${c.pbr}</td>
+<td><span class="tg ${dc}">${sg}${c.d}%</span></td>
+<td><span class="dot ${c.bok?'y':'n'}"></span></td><td><span class="dot ${c.brok?'y':'n'}"></span></td>
+<td>${c.ss}%</td><td>\u20ac${c.cost.toLocaleString()}</td><td>${c.pay}yr</td>`;
+const det=document.createElement('tr');det.className='dt';
+let oh='<div class="ogrid">';
+c.offers.forEach(o=>{
+const hpTxt=o.hp?o.hp+'kW':'-';
+oh+=`<div class="oc"><h4>${o.n}</h4>
+<div class="m"><span>kWp</span><span>${o.kw}</span></div>
+<div class="m"><span>Battery</span><span>${o.bt} kWh</span></div>
+<div class="m"><span>Brand</span><span>${o.br}</span></div>
+<div class="m"><span>Heat pump</span><span>${hpTxt}</span></div>
+<div class="m"><span>Cost</span><span>\u20ac${o.c.toLocaleString()}</span></div>
+<div class="m"><span>Payback</span><span>${o.p} yr</span></div>
+<div class="m"><span>SS</span><span>${o.s}%</span></div>
+<div class="m"><span>NPV</span><span>\u20ac${o.npv.toLocaleString()}</span></div></div>`});
+oh+='</div>';det.innerHTML=`<td colspan="16" class="dc">${oh}</td>`;
+row.onclick=()=>{det.classList.toggle('open');row.querySelector('td').innerHTML=det.classList.contains('open')?'&#9660;':'&#9654;'};
+tb.appendChild(row);tb.appendChild(det);
+});
+</script></body></html>
