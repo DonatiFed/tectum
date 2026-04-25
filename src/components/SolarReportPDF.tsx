@@ -137,8 +137,9 @@ function EnergyPage({ intake, cfg, yield_ }: { intake: IntakeData; cfg: SystemCo
           <Field label="Roof area"   value={`${intake.roofArea} m²`} />
           <Field label="Orientation" value={intake.orientation} />
           <Field label="Monthly bill" value={`${intake.monthlyBill} €`} />
-          <Field label="EV"          value={intake.hasEV ? 'Yes' : 'No'} />
-          <Field label="Heat pump"   value={intake.hasHeatPump ? 'Yes' : 'No'} />
+          <Field label="EV / Wallbox"  value={intake.evStatus === 'has' ? 'Installed' : intake.evStatus === 'wants' ? 'Requested' : 'None'} />
+          <Field label="Heat pump"    value={intake.wantsHeatPump ? 'Requested' : intake.heatingType === 'heat_pump' ? 'Already installed' : 'Not included'} />
+          <Field label="Heating type" value={intake.heatingType} />
         </View>
 
         <SubTitle>Proposed System</SubTitle>

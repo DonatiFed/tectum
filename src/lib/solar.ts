@@ -1,15 +1,27 @@
 export type RoofType = "gable" | "hip" | "flat" | "shed";
 export type Orientation = "S" | "SE" | "SW" | "E" | "W" | "N";
 
+export type HeatingType = 'gas' | 'oil' | 'electric' | 'heat_pump' | 'other';
+export type EvStatus = 'has' | 'wants' | 'none';
+export type BatteryStatus = 'has' | 'wants' | 'none';
+
 export interface IntakeData {
+  name: string;
+  email: string;
+  isOwner: boolean;
+  numPeople: number;
+  houseSize: number; // m²
   address: string;
   postalCode: string;
   roofType: RoofType;
   roofArea: number; // m²
   orientation: Orientation;
   monthlyBill: number; // EUR
-  hasEV: boolean;
-  hasHeatPump: boolean;
+  evStatus: EvStatus;
+  batteryStatus: BatteryStatus;
+  batteryCapacityKwh: number;
+  heatingType: HeatingType;
+  wantsHeatPump: boolean;
 }
 
 export interface SystemConfig {
@@ -61,8 +73,8 @@ export function recommendSystem(intake: IntakeData): SystemConfig {
     panelCount,
     panelWattage: 430,
     batteryKwh,
-    includeHeatPump: intake.hasHeatPump,
-    includeWallbox: intake.hasEV,
+    includeHeatPump: intake.wantsHeatPump,
+    includeWallbox: intake.evStatus !== 'none',
   };
 }
 

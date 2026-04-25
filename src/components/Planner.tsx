@@ -74,7 +74,7 @@ export function Planner({ intake, onBack }: PlannerProps) {
 
   const scenarios = useMemo(() => {
     const s1: SystemConfig = { ...initial, batteryKwh: 0, includeHeatPump: false, includeWallbox: false };
-    const s2: SystemConfig = { ...initial, batteryKwh: Math.max(10, initial.batteryKwh), includeWallbox: intake.hasEV, includeHeatPump: false };
+    const s2: SystemConfig = { ...initial, batteryKwh: Math.max(10, initial.batteryKwh), includeWallbox: intake.evStatus !== 'none', includeHeatPump: false };
     const s3: SystemConfig = { ...initial, batteryKwh: Math.max(12, initial.batteryKwh), includeHeatPump: true, includeWallbox: true };
     return [
       { id: 'essentials', label: 'Solar essentials', sub: 'Panels only', cfg: s1, cost: calculateCosts(s1), yld: estimateYield(s1, intake) },
@@ -97,8 +97,8 @@ export function Planner({ intake, onBack }: PlannerProps) {
     if (intake.orientation === 'S') ts.push("South-facing — ideal exposure (~12% extra yield).");
     if (intake.orientation === 'N') ts.push("North-facing reduces yield ~40%.");
     if (intake.monthlyBill > 180 && cfg.batteryKwh < 8) ts.push("Add a 10 kWh battery to lift self-use to ~70%.");
-    if (intake.hasEV && !cfg.includeWallbox) ts.push("Wallbox unlocks €600 subsidy + solar charging.");
-    if (intake.hasHeatPump && !cfg.includeHeatPump) ts.push("Combining HP + solar cuts heating cost ~60%.");
+    if (intake.evStatus !== 'none' && !cfg.includeWallbox) ts.push("Wallbox unlocks €600 subsidy + solar charging.");
+    if (intake.wantsHeatPump && !cfg.includeHeatPump) ts.push("Combining HP + solar cuts heating cost ~60%.");
     if (cfg.panelCount === maxPanels) ts.push("Roof fully utilised — extra demand → battery.");
     if (yield_.paybackYears > 0 && yield_.paybackYears < 9) ts.push("Strong economics — beats DE average of ~11 yrs.");
     return ts.slice(0, 3);
