@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar Roof Planner</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #e0e0e0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    #loading-screen {
+      position: fixed; inset: 0; background: #1a1a2e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 100; gap: 16px;
+    }
+    #loading-screen h1 { font-size: 2rem; color: #f5a623; }
+    #loading-screen p { color: #aaa; }
+    .spinner {
+      width: 48px; height: 48px; border: 4px solid #333;
+      border-top-color: #f5a623; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #file-select-screen {
+      position: fixed; inset: 0; background: #1a1a2e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 99; gap: 24px;
+    }
+    #file-select-screen h1 { font-size: 1.8rem; color: #f5a623; margin-bottom: 8px; }
+    #file-select-screen p { color: #aaa; font-size: 0.9rem; }
+    .model-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 520px; width: 100%; padding: 0 16px; }
+    .model-card {
+      background: #16213e; border: 1px solid #2a2a4a; border-radius: 12px;
+      padding: 24px 16px; cursor: pointer; text-align: center;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .model-card:hover { border-color: #f5a623; transform: translateY(-2px); box-shadow: 0 6px 24px rgba(245,166,35,0.15); }
+    .model-card .icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .model-card .name { font-weight: 600; font-size: 0.95rem; }
+    .model-card .sub { font-size: 0.75rem; color: #888; margin-top: 4px; }
+
+    #main-ui { display: none; flex: 1; overflow: hidden; position: relative; }
+    #viewer { width: 100%; height: 100%; display: block; }
+
+    #sidebar {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 300px;
+      background: rgba(22, 33, 62, 0.95); backdrop-filter: blur(8px);
+      border-left: 1px solid #2a2a4a; overflow-y: auto;
+      padding: 16px; display: flex; flex-direction: column; gap: 16px;
+      transform: translateX(100%); transition: transform 0.3s ease;
+    }
+    #sidebar.open { transform: translateX(0); }
+
+    #toggle-sidebar {
+      position: absolute; top: 12px; right: 12px; z-index: 10;
+      background: #f5a623; color: #1a1a2e; border: none; border-radius: 8px;
+      padding: 8px 14px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+    }
+
+    #back-btn {
+      position: absolute; top: 12px; left: 12px; z-index: 10;
+      background: #16213e; color: #e0e0e0; border: 1px solid #2a2a4a; border-radius: 8px;
+      padding: 8px 14px; cursor: pointer; font-size: 0.85rem;
+    }
+    #back-btn:hover { border-color: #f5a623; }
+
+    #model-label {
+      position: absolute; top: 12px; left: 90px; z-index: 10;
+      background: rgba(22,33,62,0.85); border: 1px solid #2a2a4a;
+      border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; color: #aaa;
+    }
+
+    .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 4px; }
+    .panel-section { display: flex; flex-direction: column; gap: 8px; }
+
+    select, input[type=range] { width: 100%; }
+    select {
+      background: #0f172a; color: #e0e0e0; border: 1px solid #2a2a4a;
+      border-radius: 6px; padding: 7px 10px; font-size: 0.85rem;
+    }
+    select:focus { outline: none; border-color: #f5a623; }
+
+    .info-box {
+      background: #0f172a; border-radius: 8px; padding: 12px; font-size: 0.82rem;
+      border: 1px solid #2a2a4a; display: flex; flex-direction: column; gap: 6px;
+    }
+    .info-row { display: flex; justify-content: space-between; }
+    .info-row .label { color: #888; }
+    .info-row .value { font-weight: 600; color: #f5a623; }
+
+    .btn {
+      border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #f5a623; color: #1a1a2e; }
+    .btn-danger { background: #e74c3c; color: #fff; }
+    .btn-secondary { background: #2a2a4a; color: #e0e0e0; }
+
+    #hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(22,33,62,0.9); border: 1px solid #2a2a4a;
+      border-radius: 20px; padding: 8px 20px; font-size: 0.78rem; color: #aaa;
+      pointer-events: none; transition: opacity 0.4s;
+    }
+
+    #roof-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+    .roof-item {
+      background: #0f172a; border: 1px solid #2a2a4a; border-radius: 6px;
+      padding: 8px 10px; font-size: 0.8rem; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .roof-item.active { border-color: #f5a623; color: #f5a623; }
+    .roof-item .del { color: #e74c3c; font-size: 0.75rem; padding: 2px 6px; cursor: pointer; }
+
+    input[type=range] {
+      accent-color: #f5a623; background: transparent;
+    }
+    .range-row { display: flex; align-items: center; gap: 10px; }
+    .range-row span { min-width: 36px; text-align: right; font-size: 0.82rem; color: #f5a623; }
+
+    .divider { height: 1px; background: #2a2a4a; }
+
+    #solar-overlay { position: absolute; inset: 0; pointer-events: none; }
+
+    #crop-overlay {
+      position: absolute; inset: 0; pointer-events: none; z-index: 50;
+    }
+    #crop-rect {
+      position: absolute; border: 2px dashed #f5a623;
+      background: rgba(245,166,35,0.18); display: none;
+      pointer-events: none; box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+    }
+    #crop-overlay.active { pointer-events: auto; cursor: crosshair; background: rgba(0,0,0,0.05); }
+    #crop-overlay.active #crop-rect { display: block; }
+
+    #debug-hud {
+      position: absolute; top: 56px; left: 12px; z-index: 20;
+      background: rgba(0,0,0,0.75); border: 1px solid #2a2a4a;
+      border-radius: 6px; padding: 8px 10px; font: 11px/1.5 monospace;
+      color: #9ad; max-width: 360px; pointer-events: none;
+      white-space: pre-wrap; display: none;
+    }
+    #debug-hud.on { display: block; }
+
+    .controls-bar {
+      position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; background: rgba(22,33,62,0.9); border: 1px solid #2a2a4a;
+      border-radius: 12px; padding: 8px 12px;
+    }
+    .ctl-btn {
+      background: #2a2a4a; border: none; color: #e0e0e0; border-radius: 6px;
+      padding: 6px 10px; cursor: pointer; font-size: 0.8rem;
+    }
+    .ctl-btn:hover { background: #3a3a5a; }
+  </style>
+</head>
+<body>
+
+<!-- File Select -->
+<div id="file-select-screen">
+  <div>
+    <h1>☀️ Solar Roof Planner</h1>
+    <p style="text-align:center; margin-top:6px;">Select a 3D model to get started</p>
+  </div>
+  <div class="model-grid" id="model-grid"></div>
+</div>
+
+<!-- Loading -->
+<div id="loading-screen" style="display:none;">
+  <div class="spinner"></div>
+  <h1>Loading Model</h1>
+  <p id="loading-label">Please wait…</p>
+</div>
+
+<!-- Main UI -->
+<div id="main-ui">
+  <canvas id="viewer"></canvas>
+  <svg id="solar-overlay"></svg>
+  <button id="back-btn">← Back</button>
+  <div id="model-label"></div>
+  <button id="toggle-sidebar">⚙ Panel</button>
+
+  <div id="sidebar">
+    <div class="panel-section">
+      <div class="section-title">Workflow</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="mode-orbit-btn" style="flex:1; min-width:80px;" title="Orbit / pan / zoom">🖱 Navigate</button>
+        <button class="btn btn-secondary" id="mode-crop-btn" style="flex:1; min-width:80px;" title="Drag a rectangle from bird's-eye view to focus on a region">✂ Crop</button>
+        <button class="btn btn-secondary" id="mode-select-btn" style="flex:1; min-width:80px;" title="Click roof to detect its plane">🏠 Roof</button>
+      </div>
+      <button class="btn btn-secondary" id="reset-crop-btn" style="font-size:0.75rem; padding:6px;">⊠ Reset Crop</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="panel-section">
+      <div class="section-title">Solar Panel Type</div>
+      <select id="panel-type"></select>
+      <div class="info-box" id="panel-info">
+        <div class="info-row"><span class="label">Width</span><span class="value" id="pi-w">—</span></div>
+        <div class="info-row"><span class="label">Height</span><span class="value" id="pi-h">—</span></div>
+        <div class="info-row"><span class="label">Power</span><span class="value" id="pi-p">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Panel Scale</div>
+      <div class="range-row">
+        <input type="range" id="panel-scale" min="0.3" max="3" step="0.05" value="1" />
+        <span id="panel-scale-val">1.0×</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Panel Gap (m)</div>
+      <div class="range-row">
+        <input type="range" id="panel-gap" min="0" max="0.5" step="0.01" value="0.05" />
+        <span id="panel-gap-val">0.05</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="panel-section">
+      <div class="section-title">Detected Roof Planes</div>
+      <div id="roof-list"><span style="color:#666; font-size:0.8rem;">Click a roof in Select mode…</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="panel-section">
+      <div class="section-title">Summary</div>
+      <div class="info-box">
+        <div class="info-row"><span class="label">Panels placed</span><span class="value" id="s-panels">0</span></div>
+        <div class="info-row"><span class="label">Total kWp</span><span class="value" id="s-kwp">0</span></div>
+        <div class="info-row"><span class="label">Est. area</span><span class="value" id="s-area">0 m²</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" id="place-panels-btn" style="flex:1; min-width:120px;" disabled>Place Panels</button>
+      <button class="btn btn-secondary" id="clear-panels-btn" style="flex:1; min-width:100px;">Clear Panels</button>
+      <button class="btn btn-danger" id="clear-btn" style="flex:1; min-width:100px;">Clear All</button>
+    </div>
+  </div>
+
+  <div class="controls-bar">
+    <button class="ctl-btn" id="zoom-in">＋ Zoom</button>
+    <button class="ctl-btn" id="zoom-out">－ Zoom</button>
+    <button class="ctl-btn" id="reset-cam">⟳ Reset</button>
+    <button class="ctl-btn" id="top-view">🛰 Bird's-eye</button>
+    <button class="ctl-btn" id="perspective-view">🏔 3D</button>
+    <button class="ctl-btn" id="debug-toggle">🐞 Debug</button>
+  </div>
+
+  <div id="hint">Navigate mode: drag to orbit · scroll to zoom · right-drag to pan</div>
+  <div id="debug-hud"></div>
+  <div id="crop-overlay"><div id="crop-rect"></div></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── Panel catalogue (real-world sizes in metres, watt-peak)
+const PANEL_TYPES = [
+  { name: 'Standard 400W (1.7×1.0m)', w: 1.0, h: 1.7, wp: 400 },
+  { name: 'Compact 300W (1.5×0.9m)',  w: 0.9, h: 1.5, wp: 300 },
+  { name: 'Large 600W (2.1×1.1m)',    w: 1.1, h: 2.1, wp: 600 },
+  { name: 'Half-Cut 380W (1.7×1.0m)',  w: 1.0, h: 1.7, wp: 380 },
+  { name: 'Bifacial 450W (1.8×1.0m)', w: 1.0, h: 1.8, wp: 450 },
+];
+
+// Read module_watt_peak values from embedded CSV rows and add unique entries
+const CSV_WP = [440,430,410,390,375,350];
+CSV_WP.forEach(wp => {
+  if (!PANEL_TYPES.find(p => p.wp === wp)) {
+    const h = +(1.6 + (wp - 350) * 0.002).toFixed(2);
+    PANEL_TYPES.push({ name: `CSV Module ${wp}Wp (${h}×1.0m)`, w: 1.0, h, wp });
+  }
+});
+
+const MODELS = [
+  { name: 'Brandenburg', file: 'Exp 3D-Modells/3D_Modell Brandenburg.glb' },
+  { name: 'Hamburg',     file: 'Exp 3D-Modells/3D_Modell Hamburg.glb' },
+  { name: 'North Germany', file: 'Exp 3D-Modells/3D_Modell North Germany.glb' },
+  { name: 'Ruhr',        file: 'Exp 3D-Modells/3D_Modell Ruhr.glb' },
+];
+
+const ICONS = ['🏗', '⚓', '🌿', '🏭'];
+
+// ── DOM refs
+const fileScreen  = document.getElementById('file-select-screen');
+const loadScreen  = document.getElementById('loading-screen');
+const loadLabel   = document.getElementById('loading-label');
+const mainUI      = document.getElementById('main-ui');
+const canvas      = document.getElementById('viewer');
+const modelLabel  = document.getElementById('model-label');
+const sidebar     = document.getElementById('sidebar');
+const toggleSB    = document.getElementById('toggle-sidebar');
+const backBtn     = document.getElementById('back-btn');
+const hintEl      = document.getElementById('hint');
+const roofListEl  = document.getElementById('roof-list');
+const panelTypeSel = document.getElementById('panel-type');
+const panelScale  = document.getElementById('panel-scale');
+const panelScaleV = document.getElementById('panel-scale-val');
+const panelGap    = document.getElementById('panel-gap');
+const panelGapV   = document.getElementById('panel-gap-val');
+const placePanelsBtn = document.getElementById('place-panels-btn');
+const clearBtn    = document.getElementById('clear-btn');
+const modSelBtn   = document.getElementById('mode-select-btn');
+const modOrbBtn   = document.getElementById('mode-orbit-btn');
+const sPanels     = document.getElementById('s-panels');
+const sKwp        = document.getElementById('s-kwp');
+const sArea       = document.getElementById('s-area');
+const piW = document.getElementById('pi-w');
+const piH = document.getElementById('pi-h');
+const piP = document.getElementById('pi-p');
+
+// ── Populate model grid
+const grid = document.getElementById('model-grid');
+MODELS.forEach((m, i) => {
+  const card = document.createElement('div');
+  card.className = 'model-card';
+  card.innerHTML = `<div class="icon">${ICONS[i]}</div><div class="name">${m.name}</div><div class="sub">.glb</div>`;
+  card.addEventListener('click', () => loadModel(m, i));
+  grid.appendChild(card);
+});
+
+// ── Populate panel selector
+PANEL_TYPES.forEach((p, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = p.name;
+  panelTypeSel.appendChild(opt);
+});
+updatePanelInfo();
+
+panelTypeSel.addEventListener('change', updatePanelInfo);
+panelScale.addEventListener('input', () => { panelScaleV.textContent = (+panelScale.value).toFixed(2) + '×'; });
+panelGap.addEventListener('input', () => { panelGapV.textContent = (+panelGap.value).toFixed(2); });
+
+function updatePanelInfo() {
+  const p = PANEL_TYPES[+panelTypeSel.value];
+  piW.textContent = p.w + ' m';
+  piH.textContent = p.h + ' m';
+  piP.textContent = p.wp + ' Wp';
+}
+
+// ── Three.js state
+let renderer, scene, camera, controls, model;
+let mode = 'orbit'; // 'orbit' | 'crop' | 'select'
+const roofPlanes = [];
+let activeRoof = null;
+let totalPanels = 0;
+
+// Cached upward-facing triangles (world space) for fast roof detection
+let upTriangles = [];   // [{ a:Vec3, b:Vec3, c:Vec3, n:Vec3, c2:Vec2(centroid xz), cy:number, area:number }]
+let modelBox = null;
+let cropBounds = null;  // { minX, maxX, minZ, maxZ }
+let cropHelper = null;  // visual rectangle on ground
+
+function initThree() {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'low-power' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.shadowMap.enabled = false;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0d1b2a);
+  scene.fog = new THREE.Fog(0x0d1b2a, 300, 1200);
+
+  const aspect = canvas.clientWidth / canvas.clientHeight;
+  camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 5000);
+  camera.position.set(0, 120, 200);
+
+  controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI;       // allow full 360° rotation
+  controls.minPolarAngle = 0;
+  controls.screenSpacePanning = true;
+  controls.minDistance = 1;
+  controls.maxDistance = 5000;
+
+  // Lights – minimal for performance
+  const amb = new THREE.AmbientLight(0xffffff, 1.4);
+  scene.add(amb);
+  const sun = new THREE.DirectionalLight(0xfff5e0, 1.8);
+  sun.position.set(100, 200, 80);
+  scene.add(sun);
+
+  // Enable global clipping for crop region
+  renderer.localClippingEnabled = false;
+
+  resize();
+  window.addEventListener('resize', resize);
+  renderer.setAnimationLoop(render);
+}
+
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+function render() {
+  controls.update();
+  renderer.render(scene, camera);
+  updateDebugHUD();
+}
+
+// ── Debug HUD
+let hudEl = null;
+let lastMouse = { x: 0, y: 0 };
+let lastHit = null;
+function updateDebugHUD() {
+  if (!hudEl) hudEl = document.getElementById('debug-hud');
+  if (!hudEl || !hudEl.classList.contains('on')) return;
+  if (!modelBox) return;
+  const sz = modelBox.getSize(new THREE.Vector3());
+  const ct = modelBox.getCenter(new THREE.Vector3());
+  let s = `mode: ${mode}\n`;
+  s += `model bounds: x[${modelBox.min.x.toFixed(1)}..${modelBox.max.x.toFixed(1)}] y[${modelBox.min.y.toFixed(1)}..${modelBox.max.y.toFixed(1)}] z[${modelBox.min.z.toFixed(1)}..${modelBox.max.z.toFixed(1)}]\n`;
+  s += `model size: ${sz.x.toFixed(1)} × ${sz.y.toFixed(1)} × ${sz.z.toFixed(1)}\n`;
+  s += `camera pos: ${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)}, ${camera.position.z.toFixed(1)}\n`;
+  s += `camera target: ${controls.target.x.toFixed(1)}, ${controls.target.y.toFixed(1)}, ${controls.target.z.toFixed(1)}\n`;
+  s += `up triangles: ${upTriangles.length}\n`;
+  s += `crop: ${cropBounds ? `[${cropBounds.minX.toFixed(0)},${cropBounds.minZ.toFixed(0)}]→[${cropBounds.maxX.toFixed(0)},${cropBounds.maxZ.toFixed(0)}]` : 'none'}\n`;
+  s += `clipping planes: ${renderer.clippingPlanes.length}\n`;
+  s += `roofs: ${roofPlanes.length} · active: ${activeRoof ? activeRoof.id : 'none'}\n`;
+  if (lastHit) s += `last hit: (${lastHit.x.toFixed(1)}, ${lastHit.y.toFixed(1)}, ${lastHit.z.toFixed(1)})\n`;
+  hudEl.textContent = s;
+}
+
+document.addEventListener('mousemove', e => { lastMouse.x = e.clientX; lastMouse.y = e.clientY; });
+
+// ── Load model
+function loadModel(m, idx) {
+  fileScreen.style.display = 'none';
+  loadScreen.style.display = 'flex';
+  loadLabel.textContent = `Loading ${m.name}…`;
+
+  if (!renderer) initThree();
+
+  // Remove previous model
+  if (model) { scene.remove(model); model = null; }
+  roofPlanes.length = 0;
+  activeRoof = null;
+  totalPanels = 0;
+  updateSummary();
+  roofListEl.innerHTML = '<span style="color:#666; font-size:0.8rem;">Click a roof in Select mode…</span>';
+
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/libs/draco/gltf/');
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(dracoLoader);
+  loader.load(m.file, (gltf) => {
+    model = gltf.scene;
+    scene.add(model);
+
+    // Auto-detect "up" axis from face-area dominance, then re-orient so +Y is up
+    autoOrientModel();
+
+    // Center horizontally and ground at y=0
+    const box1 = new THREE.Box3().setFromObject(model);
+    const center1 = box1.getCenter(new THREE.Vector3());
+    model.position.x -= center1.x;
+    model.position.z -= center1.z;
+    model.position.y -= box1.min.y;
+
+    // Auto-scale so longest horizontal extent ≈ 200 units
+    const box2 = new THREE.Box3().setFromObject(model);
+    const sz2 = box2.getSize(new THREE.Vector3());
+    const horizontal = Math.max(sz2.x, sz2.z);
+    if (horizontal > 0) {
+      const s = 200 / horizontal;
+      model.scale.setScalar(s);
+      model.position.multiplyScalar(s);
+    }
+
+    // Re-ground after scale
+    const box3 = new THREE.Box3().setFromObject(model);
+    model.position.y -= box3.min.y;
+
+    modelBox = new THREE.Box3().setFromObject(model);
+    buildUpwardTriangleIndex();
+
+    // Add ground reference grid sized to model
+    addGroundReference();
+
+    setPerspectiveView();
+
+    loadScreen.style.display = 'none';
+    mainUI.style.display = 'block';
+    modelLabel.textContent = m.name;
+    sidebar.classList.add('open');
+    setMode('orbit');
+    updatePlaceBtn();
+    hintEl.textContent = `Loaded ${upTriangles.length.toLocaleString()} roof faces · model: ${modelBox.getSize(new THREE.Vector3()).x.toFixed(0)}×${modelBox.getSize(new THREE.Vector3()).y.toFixed(0)}×${modelBox.getSize(new THREE.Vector3()).z.toFixed(0)}`;
+  }, (xhr) => {
+    const pct = Math.round(xhr.loaded / xhr.total * 100);
+    loadLabel.textContent = `Loading ${m.name}… ${pct}%`;
+  }, (err) => {
+    loadLabel.textContent = 'Error loading model: ' + err.message;
+    console.error(err);
+  });
+}
+
+// ── Auto-orient: pick the world axis that most face-normal area aligns with as "up"
+function autoOrientModel() {
+  const sums = { px:0, nx:0, py:0, ny:0, pz:0, nz:0 };
+  model.updateWorldMatrix(true, true);
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  let sampled = 0;
+  model.traverse(o => {
+    if (!o.isMesh || !o.geometry || sampled > 50000) return;
+    const geo = o.geometry;
+    const pos = geo.attributes.position;
+    if (!pos) return;
+    const idx = geo.index;
+    const triCount = idx ? idx.count / 3 : pos.count / 3;
+    const matWorld = o.matrixWorld;
+    const stride = Math.max(1, Math.floor(triCount / 5000));
+    for (let f = 0; f < triCount; f += stride) {
+      const i0 = idx ? idx.array[f*3]   : f*3;
+      const i1 = idx ? idx.array[f*3+1] : f*3+1;
+      const i2 = idx ? idx.array[f*3+2] : f*3+2;
+      a.fromBufferAttribute(pos, i0).applyMatrix4(matWorld);
+      b.fromBufferAttribute(pos, i1).applyMatrix4(matWorld);
+      c.fromBufferAttribute(pos, i2).applyMatrix4(matWorld);
+      const e1 = b.clone().sub(a);
+      const e2 = c.clone().sub(a);
+      const n = e1.cross(e2);
+      const area = n.length() * 0.5;
+      if (area < 1e-8) continue;
+      n.normalize();
+      const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
+      // Only count "almost-axis-aligned" faces (likely floors/roofs/walls)
+      const maxC = Math.max(ax, ay, az);
+      if (maxC < 0.7) continue;
+      if (ax === maxC) sums[n.x > 0 ? 'px' : 'nx'] += area;
+      else if (ay === maxC) sums[n.y > 0 ? 'py' : 'ny'] += area;
+      else sums[n.z > 0 ? 'pz' : 'nz'] += area;
+      sampled++;
+    }
+  });
+  // Pick the axis pair (positive+negative) with max sum; the "up" is the positive face direction
+  // (because more roof+ground faces typically point up)
+  const pairs = {
+    y: { score: sums.py + sums.ny, up: sums.py > sums.ny ? 'py' : 'ny' },
+    x: { score: sums.px + sums.nx, up: sums.px > sums.nx ? 'px' : 'nx' },
+    z: { score: sums.pz + sums.nz, up: sums.pz > sums.nz ? 'pz' : 'nz' },
+  };
+  let bestAxis = 'y', bestScore = -1;
+  for (const k of ['y','x','z']) if (pairs[k].score > bestScore) { bestScore = pairs[k].score; bestAxis = k; }
+  const upDir = pairs[bestAxis].up;
+
+  // Apply rotation to map upDir → +Y
+  const rot = { px:'-z', nx:'+z', py:'',   ny:'x',  pz:'+x', nz:'-x' }[upDir];
+  if (rot === '')      { /* already up */ }
+  else if (rot === 'x')   model.rotation.x = Math.PI;
+  else if (rot === '+x')  model.rotation.x = -Math.PI/2;
+  else if (rot === '-x')  model.rotation.x =  Math.PI/2;
+  else if (rot === '+z')  model.rotation.z =  Math.PI/2;
+  else if (rot === '-z')  model.rotation.z = -Math.PI/2;
+  model.updateWorldMatrix(true, true);
+  console.log('[auto-orient] face sums:', sums, '→ up:', upDir);
+}
+
+// Reference grid + axes so user can see model context
+let groundRef = null;
+function addGroundReference() {
+  if (groundRef) scene.remove(groundRef);
+  const sz = modelBox.getSize(new THREE.Vector3());
+  const maxXZ = Math.max(sz.x, sz.z);
+  const grid = new THREE.GridHelper(maxXZ * 1.5, 30, 0x335577, 0x223344);
+  grid.position.y = 0.01;
+  groundRef = new THREE.Group();
+  groundRef.add(grid);
+  scene.add(groundRef);
+}
+
+// ── Mode switching
+const modCropBtn = document.getElementById('mode-crop-btn');
+const cropOverlay = document.getElementById('crop-overlay');
+const cropRect = document.getElementById('crop-rect');
+const resetCropBtn = document.getElementById('reset-crop-btn');
+
+function setMode(m) {
+  mode = m;
+  controls.enabled = (m === 'orbit');
+  cropOverlay.classList.toggle('active', m === 'crop');
+
+  for (const [btn, id] of [[modOrbBtn,'orbit'], [modCropBtn,'crop'], [modSelBtn,'select']]) {
+    const on = (id === m);
+    btn.style.background = on ? '#f5a623' : '#2a2a4a';
+    btn.style.color      = on ? '#1a1a2e' : '#e0e0e0';
+  }
+
+  if (m === 'select') {
+    hintEl.textContent = cropBounds
+      ? 'Roof mode: click on a roof inside the cropped region'
+      : 'Roof mode: click on a roof. (Tip: ✂ Crop first for better results)';
+  } else if (m === 'crop') {
+    hintEl.textContent = "Crop mode: drag a rectangle from the bird's-eye view to focus on a building";
+    setBirdsEyeView();
+  } else {
+    hintEl.textContent = 'Navigate: drag to orbit · scroll to zoom · right-drag to pan';
+  }
+}
+
+modSelBtn.addEventListener('click', () => setMode('select'));
+modOrbBtn.addEventListener('click', () => setMode('orbit'));
+modCropBtn.addEventListener('click', () => setMode('crop'));
+resetCropBtn.addEventListener('click', clearCrop);
+toggleSB.addEventListener('click', () => sidebar.classList.toggle('open'));
+backBtn.addEventListener('click', () => {
+  mainUI.style.display = 'none';
+  fileScreen.style.display = 'flex';
+});
+
+// ── Camera helpers (FOV-aware fit-to-view)
+function getRegionBox() {
+  if (cropBounds) {
+    return new THREE.Box3(
+      new THREE.Vector3(cropBounds.minX, modelBox.min.y, cropBounds.minZ),
+      new THREE.Vector3(cropBounds.maxX, modelBox.max.y, cropBounds.maxZ)
+    );
+  }
+  return modelBox.clone();
+}
+
+function setBirdsEyeView() {
+  if (!modelBox) return;
+  const box = getRegionBox();
+  const sz = box.getSize(new THREE.Vector3());
+  const ct = box.getCenter(new THREE.Vector3());
+  const fovV = camera.fov * Math.PI / 180;
+  const fovH = 2 * Math.atan(Math.tan(fovV / 2) * camera.aspect);
+  // Add 15% padding so the whole model fits with breathing room
+  const distZ = (sz.z * 0.5 * 1.15) / Math.tan(fovV / 2);
+  const distX = (sz.x * 0.5 * 1.15) / Math.tan(fovH / 2);
+  const dist = Math.max(distX, distZ, sz.y * 2);
+  controls.target.set(ct.x, 0, ct.z);
+  camera.up.set(0, 0, -1);
+  camera.position.set(ct.x, dist, ct.z);
+  camera.lookAt(controls.target);
+  controls.update();
+}
+
+function setPerspectiveView() {
+  if (!modelBox) return;
+  const box = getRegionBox();
+  const sz = box.getSize(new THREE.Vector3());
+  const ct = box.getCenter(new THREE.Vector3());
+  const radius = sz.length() * 0.5;
+  const fovV = camera.fov * Math.PI / 180;
+  const dist = (radius * 1.4) / Math.tan(fovV / 2);
+  controls.target.copy(ct);
+  camera.up.set(0, 1, 0);
+  camera.position.set(ct.x + dist * 0.6, ct.y + dist * 0.55, ct.z + dist * 0.6);
+  camera.lookAt(ct);
+  controls.update();
+}
+
+// ── Apply / clear crop clipping (hide everything outside crop)
+function applyCropClipping() {
+  if (!renderer) return;
+  if (!cropBounds) {
+    renderer.clippingPlanes = [];
+    return;
+  }
+  const { minX, maxX, minZ, maxZ } = cropBounds;
+  renderer.clippingPlanes = [
+    new THREE.Plane(new THREE.Vector3( 1, 0, 0), -minX),
+    new THREE.Plane(new THREE.Vector3(-1, 0, 0),  maxX),
+    new THREE.Plane(new THREE.Vector3( 0, 0, 1), -minZ),
+    new THREE.Plane(new THREE.Vector3( 0, 0,-1),  maxZ),
+  ];
+}
+
+// ── Crop drag rectangle
+let cropDragStart = null;
+cropOverlay.addEventListener('pointerdown', (e) => {
+  if (mode !== 'crop') return;
+  cropDragStart = { x: e.clientX, y: e.clientY };
+  cropRect.style.left = e.clientX + 'px';
+  cropRect.style.top  = e.clientY + 'px';
+  cropRect.style.width = '0px';
+  cropRect.style.height = '0px';
+});
+cropOverlay.addEventListener('pointermove', (e) => {
+  if (!cropDragStart) return;
+  const x = Math.min(cropDragStart.x, e.clientX);
+  const y = Math.min(cropDragStart.y, e.clientY);
+  const w = Math.abs(e.clientX - cropDragStart.x);
+  const h = Math.abs(e.clientY - cropDragStart.y);
+  cropRect.style.left = x + 'px';
+  cropRect.style.top  = y + 'px';
+  cropRect.style.width = w + 'px';
+  cropRect.style.height = h + 'px';
+});
+cropOverlay.addEventListener('pointerup', (e) => {
+  if (!cropDragStart) return;
+  const ax = cropDragStart.x, ay = cropDragStart.y;
+  const bx = e.clientX, by = e.clientY;
+  cropDragStart = null;
+  if (Math.abs(bx - ax) < 8 || Math.abs(by - ay) < 8) return;
+  applyCropFromScreenRect(ax, ay, bx, by);
+});
+
+function applyCropFromScreenRect(x1, y1, x2, y2) {
+  // Project the 4 screen corners onto the model's mid-plane (y = midY) using raycaster
+  const rect = canvas.getBoundingClientRect();
+  const corners = [
+    [Math.min(x1,x2), Math.min(y1,y2)],
+    [Math.max(x1,x2), Math.min(y1,y2)],
+    [Math.max(x1,x2), Math.max(y1,y2)],
+    [Math.min(x1,x2), Math.max(y1,y2)],
+  ];
+  const midY = (modelBox.min.y + modelBox.max.y) / 2;
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0,1,0), -midY);
+  const pts = [];
+  const tmp = new THREE.Vector3();
+  for (const [sx, sy] of corners) {
+    const ndc = new THREE.Vector2(
+      ((sx - rect.left) / rect.width) * 2 - 1,
+      -((sy - rect.top) / rect.height) * 2 + 1
+    );
+    raycaster.setFromCamera(ndc, camera);
+    if (raycaster.ray.intersectPlane(groundPlane, tmp)) pts.push(tmp.clone());
+  }
+  if (pts.length < 4) return;
+  let mnX = Infinity, mxX = -Infinity, mnZ = Infinity, mxZ = -Infinity;
+  pts.forEach(p => {
+    if (p.x < mnX) mnX = p.x;
+    if (p.x > mxX) mxX = p.x;
+    if (p.z < mnZ) mnZ = p.z;
+    if (p.z > mxZ) mxZ = p.z;
+  });
+  cropBounds = { minX: mnX, maxX: mxX, minZ: mnZ, maxZ: mxZ };
+  cropRect.style.width = '0px';
+  cropRect.style.height = '0px';
+  drawCropHelper();
+  applyCropClipping();
+  setBirdsEyeView();
+  setMode('select');
+}
+
+function clearCrop() {
+  cropBounds = null;
+  if (cropHelper) { scene.remove(cropHelper); cropHelper = null; }
+  applyCropClipping();
+  hintEl.textContent = 'Crop cleared';
+  if (mode === 'crop') setBirdsEyeView();
+}
+
+function drawCropHelper() {
+  if (cropHelper) scene.remove(cropHelper);
+  const { minX, maxX, minZ, maxZ } = cropBounds;
+  const y = modelBox.min.y + 0.05;
+  const pts = [
+    new THREE.Vector3(minX, y, minZ),
+    new THREE.Vector3(maxX, y, minZ),
+    new THREE.Vector3(maxX, y, maxZ),
+    new THREE.Vector3(minX, y, maxZ),
+    new THREE.Vector3(minX, y, minZ),
+  ];
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color: 0xf5a623 });
+  cropHelper = new THREE.Line(geo, mat);
+  scene.add(cropHelper);
+}
+
+// ── Build cached upward-facing triangle index (world space)
+function buildUpwardTriangleIndex() {
+  upTriangles = [];
+  const meshes = [];
+  model.traverse(o => { if (o.isMesh && o.geometry) meshes.push(o); });
+
+  for (const mesh of meshes) {
+    mesh.updateWorldMatrix(true, false);
+    const geo = mesh.geometry;
+    const posAttr = geo.attributes.position;
+    if (!posAttr) continue;
+    const idxAttr = geo.index;
+    const matWorld = mesh.matrixWorld;
+    const triCount = idxAttr ? idxAttr.count / 3 : posAttr.count / 3;
+
+    for (let f = 0; f < triCount; f++) {
+      const i0 = idxAttr ? idxAttr.array[f*3]   : f*3;
+      const i1 = idxAttr ? idxAttr.array[f*3+1] : f*3+1;
+      const i2 = idxAttr ? idxAttr.array[f*3+2] : f*3+2;
+      const a = new THREE.Vector3().fromBufferAttribute(posAttr, i0).applyMatrix4(matWorld);
+      const b = new THREE.Vector3().fromBufferAttribute(posAttr, i1).applyMatrix4(matWorld);
+      const c = new THREE.Vector3().fromBufferAttribute(posAttr, i2).applyMatrix4(matWorld);
+      const e1 = b.clone().sub(a);
+      const e2 = c.clone().sub(a);
+      const n = e1.clone().cross(e2);
+      const len = n.length();
+      if (len < 1e-8) continue;
+      n.divideScalar(len);
+      if (n.y < 0.10) continue; // include all roofs except walls/overhangs
+      const cx = (a.x + b.x + c.x) / 3;
+      const cy = (a.y + b.y + c.y) / 3;
+      const cz = (a.z + b.z + c.z) / 3;
+      upTriangles.push({ a, b, c, n, cx, cy, cz, area: len * 0.5 });
+    }
+  }
+}
+
+// ── Click handler
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+canvas.addEventListener('click', (e) => {
+  if (mode !== 'select' || !model) return;
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const meshes = [];
+  model.traverse(o => { if (o.isMesh) meshes.push(o); });
+  const hits = raycaster.intersectObjects(meshes, false);
+
+  if (!hits.length) {
+    hintEl.textContent = 'No surface under cursor';
+    return;
+  }
+  const hit = hits[0];
+  const seedPoint = hit.point.clone();
+  const seedNormal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+
+  if (seedNormal.y < 0.20) {
+    hintEl.textContent = `Surface normal y=${seedNormal.y.toFixed(2)} — too steep. Click flatter roof area.`;
+    return;
+  }
+
+  detectRoofPlane(seedPoint, seedNormal);
+  lastHit = seedPoint;
+});
+
+// ── Robust roof plane detection: cluster coplanar upward triangles near the click
+function detectRoofPlane(seedPoint, seedNormal) {
+  if (upTriangles.length === 0) {
+    hintEl.textContent = 'No roof faces indexed';
+    return;
+  }
+
+  // 1) Restrict to crop region (or local neighbourhood around click)
+  const localR = 8; // metres around click when no crop
+  let minX, maxX, minZ, maxZ;
+  if (cropBounds) {
+    ({ minX, maxX, minZ, maxZ } = cropBounds);
+  } else {
+    minX = seedPoint.x - localR; maxX = seedPoint.x + localR;
+    minZ = seedPoint.z - localR; maxZ = seedPoint.z + localR;
+  }
+
+  // 2) Collect candidate triangles with similar normal
+  const angleTol = Math.cos(THREE.MathUtils.degToRad(20));
+  const heightTol = 3.0; // metres above/below seed
+  const candidates = [];
+  for (const t of upTriangles) {
+    if (t.cx < minX || t.cx > maxX || t.cz < minZ || t.cz > maxZ) continue;
+    if (t.n.dot(seedNormal) < angleTol) continue;
+    if (Math.abs(t.cy - seedPoint.y) > heightTol) continue;
+    candidates.push(t);
+  }
+
+  if (candidates.length < 3) {
+    hintEl.textContent = `Only ${candidates.length} matching faces (search area ${(maxX-minX).toFixed(0)}×${(maxZ-minZ).toFixed(0)} m). Try Crop, or zoom in.`;
+    return;
+  }
+
+  // 3) Refine plane via weighted average normal & point
+  let nx = 0, ny = 0, nz = 0, totalA = 0;
+  let cx = 0, cy = 0, cz = 0;
+  for (const t of candidates) {
+    nx += t.n.x * t.area; ny += t.n.y * t.area; nz += t.n.z * t.area;
+    cx += t.cx * t.area; cy += t.cy * t.area; cz += t.cz * t.area;
+    totalA += t.area;
+  }
+  const avgN = new THREE.Vector3(nx, ny, nz).normalize();
+  const avgC = new THREE.Vector3(cx/totalA, cy/totalA, cz/totalA);
+
+  // 4) Re-filter using the refined plane: distance to plane within tol
+  const planeD = -avgN.dot(avgC);
+  const distTol = 0.4;
+  const inliers = candidates.filter(t => {
+    const pt = new THREE.Vector3(t.cx, t.cy, t.cz);
+    return Math.abs(avgN.dot(pt) + planeD) < distTol && t.n.dot(avgN) > angleTol;
+  });
+  if (inliers.length < 3) {
+    hintEl.textContent = 'Plane fit failed — try a more uniform area';
+    return;
+  }
+
+  // 5) Build local 2D frame on the plane: u = horizontal, v = up-tilt direction
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  let u = new THREE.Vector3().crossVectors(worldUp, avgN);
+  if (u.lengthSq() < 1e-6) u.set(1, 0, 0); // plane is horizontal
+  u.normalize();
+  let v = new THREE.Vector3().crossVectors(avgN, u).normalize();
+
+  // 6) Project inlier vertices to 2D
+  const pts2 = [];
+  const centroid = new THREE.Vector3();
+  for (const t of inliers) {
+    centroid.add(t.a).add(t.b).add(t.c);
+    for (const p of [t.a, t.b, t.c]) {
+      const d = p.clone().sub(avgC);
+      pts2.push([d.dot(u), d.dot(v)]);
+    }
+  }
+  centroid.divideScalar(inliers.length * 3);
+
+  // 7) PCA on 2D points to align with the roof's principal direction
+  let mx = 0, my = 0;
+  pts2.forEach(p => { mx += p[0]; my += p[1]; });
+  mx /= pts2.length; my /= pts2.length;
+  let cxx = 0, cxy = 0, cyy = 0;
+  pts2.forEach(p => {
+    const dx = p[0] - mx, dy = p[1] - my;
+    cxx += dx*dx; cxy += dx*dy; cyy += dy*dy;
+  });
+  // Eigenvector of 2x2 covariance (largest eigenvalue)
+  const theta = 0.5 * Math.atan2(2*cxy, cxx - cyy);
+  const cosT = Math.cos(theta), sinT = Math.sin(theta);
+  const u2 = new THREE.Vector3().copy(u).multiplyScalar(cosT).addScaledVector(v, sinT).normalize();
+  const v2 = new THREE.Vector3().copy(u).multiplyScalar(-sinT).addScaledVector(v, cosT).normalize();
+
+  // 8) Bounds in PCA frame
+  let pMinX = Infinity, pMaxX = -Infinity, pMinY = Infinity, pMaxY = -Infinity;
+  for (const t of inliers) {
+    for (const p of [t.a, t.b, t.c]) {
+      const d = p.clone().sub(avgC);
+      const lx = d.dot(u2);
+      const ly = d.dot(v2);
+      if (lx < pMinX) pMinX = lx;
+      if (lx > pMaxX) pMaxX = lx;
+      if (ly < pMinY) pMinY = ly;
+      if (ly > pMaxY) pMaxY = ly;
+    }
+  }
+
+  const planeW = pMaxX - pMinX;
+  const planeH = pMaxY - pMinY;
+  if (planeW * planeH < 2) {
+    hintEl.textContent = 'Detected plane too small';
+    return;
+  }
+
+  // Compute true (oriented) centre on the plane
+  const planeCentre = avgC.clone()
+    .addScaledVector(u2, (pMinX + pMaxX) / 2)
+    .addScaledVector(v2, (pMinY + pMaxY) / 2);
+
+  // 9) Visualise
+  const planeGeo = new THREE.PlaneGeometry(planeW, planeH);
+  const planeMat = new THREE.MeshBasicMaterial({ color: 0xf5a623, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+  const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+  planeMesh.position.copy(planeCentre).addScaledVector(avgN, 0.05);
+  // Orient plane: its local +Z must equal avgN, +X equal u2, +Y equal v2
+  const m = new THREE.Matrix4().makeBasis(u2, v2, avgN);
+  planeMesh.quaternion.setFromRotationMatrix(m);
+
+  // Outline
+  const outlinePts = [
+    new THREE.Vector3(-planeW/2,-planeH/2, 0.01),
+    new THREE.Vector3( planeW/2,-planeH/2, 0.01),
+    new THREE.Vector3( planeW/2, planeH/2, 0.01),
+    new THREE.Vector3(-planeW/2, planeH/2, 0.01),
+    new THREE.Vector3(-planeW/2,-planeH/2, 0.01),
+  ];
+  const outlineGeo = new THREE.BufferGeometry().setFromPoints(outlinePts);
+  const outline = new THREE.Line(outlineGeo, new THREE.LineBasicMaterial({ color: 0xffd700 }));
+  planeMesh.add(outline);
+
+  const pg = new THREE.Group();
+  scene.add(pg);
+  pg.add(planeMesh);
+
+  const roofId = 'Roof ' + (roofPlanes.length + 1);
+  const tiltDeg = (THREE.MathUtils.radToDeg(Math.acos(Math.min(1, avgN.y)))).toFixed(0);
+  const azDeg = (THREE.MathUtils.radToDeg(Math.atan2(u2.x, u2.z))).toFixed(0);
+  const roofEntry = {
+    id: roofId, group: pg, mesh: planeMesh,
+    normal: avgN.clone(), centre: planeCentre.clone(),
+    u: u2.clone(), v: v2.clone(),
+    width: planeW, height: planeH, area: planeW * planeH,
+    tilt: tiltDeg, azimuth: azDeg, panelCount: 0,
+  };
+  roofPlanes.push(roofEntry);
+  addRoofToList(roofEntry);
+  selectRoof(roofEntry);
+  hintEl.textContent = `${roofId}: ${planeW.toFixed(1)}×${planeH.toFixed(1)} m · tilt ${tiltDeg}° · azimuth ${azDeg}°`;
+}
+
+function selectRoof(roof) {
+  activeRoof = roof;
+  document.querySelectorAll('.roof-item').forEach(el => el.classList.toggle('active', el.dataset.id === roof.id));
+  updatePlaceBtn();
+}
+
+function updatePlaceBtn() {
+  const btn = document.getElementById('place-panels-btn');
+  if (activeRoof) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+function addRoofToList(roof) {
+  roofListEl.querySelectorAll('[data-id="init"]').forEach(e => e.remove());
+  roofListEl.querySelector('span')?.remove();
+  const item = document.createElement('div');
+  item.className = 'roof-item';
+  item.dataset.id = roof.id;
+  item.innerHTML = `<span>${roof.id} (${roof.area.toFixed(1)} m²)</span><span class="del" data-id="${roof.id}">✕</span>`;
+  item.addEventListener('click', (e) => {
+    if (e.target.classList.contains('del')) { removeRoof(roof); return; }
+    selectRoof(roof);
+  });
+  roofListEl.appendChild(item);
+  selectRoof(roof);
+}
+
+function removeRoof(roof) {
+  scene.remove(roof.group);
+  const i = roofPlanes.indexOf(roof);
+  if (i > -1) roofPlanes.splice(i, 1);
+  document.querySelector(`.roof-item[data-id="${roof.id}"]`)?.remove();
+  if (activeRoof === roof) activeRoof = roofPlanes[0] || null;
+  if (roofListEl.children.length === 0) {
+    roofListEl.innerHTML = '<span style="color:#666; font-size:0.8rem;">Click a roof in Select mode…</span>';
+  }
+  recountPanels();
+  updatePlaceBtn();
+}
+
+// ── Place solar panels
+placePanelsBtn.addEventListener('click', () => {
+  if (!activeRoof) { hintEl.textContent = 'Select a roof plane first'; return; }
+  placePanels(activeRoof);
+});
+
+function placePanels(roof) {
+  // Remove old panels on this roof
+  roof.group.children.filter(c => c.userData.isPanel).forEach(c => roof.group.remove(c));
+  roof.panelCount = 0;
+
+  const p = PANEL_TYPES[+panelTypeSel.value];
+  const scale = +panelScale.value;
+  const gap = +panelGap.value;
+  const pw = p.w * scale;
+  const ph = p.h * scale;
+  const stepW = pw + gap;
+  const stepH = ph + gap;
+
+  const margin = 0.3;
+  const halfW = roof.width / 2 - margin;
+  const halfH = roof.height / 2 - margin;
+
+  const panelGeo = new THREE.BoxGeometry(pw, 0.04, ph);
+  const panelMat = new THREE.MeshBasicMaterial({ color: 0x1a237e });
+
+  const cols = Math.floor((halfW * 2 + gap) / stepW);
+  const rows = Math.floor((halfH * 2 + gap) / stepH);
+  const totalGridW = cols * stepW - gap;
+  const totalGridH = rows * stepH - gap;
+  const startU = -totalGridW / 2 + pw / 2;
+  const startV = -totalGridH / 2 + ph / 2;
+
+  // Raycast each panel position straight down onto the actual roof surface
+  const meshes = [];
+  model.traverse(o => { if (o.isMesh) meshes.push(o); });
+  const downRay = new THREE.Raycaster();
+  const negN = roof.normal.clone().negate();
+  const cosTol = Math.cos(THREE.MathUtils.degToRad(20));
+
+  let count = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const offU = startU + c * stepW;
+      const offV = startV + r * stepH;
+      // Start above the plane and shoot along -normal
+      const start = roof.centre.clone()
+        .addScaledVector(roof.u, offU)
+        .addScaledVector(roof.v, offV)
+        .addScaledVector(roof.normal, 30);
+      downRay.set(start, negN);
+      downRay.far = 80;
+      const hits = downRay.intersectObjects(meshes, false);
+      if (!hits.length) continue;
+      const h = hits[0];
+      const hn = h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize();
+      // Skip if surface here doesn't match the roof plane (chimney, gap, wrong pitch)
+      if (hn.dot(roof.normal) < cosTol) continue;
+
+      // Build orientation aligned with roof's principal axis but lying on actual face
+      const uProj = roof.u.clone().addScaledVector(hn, -roof.u.dot(hn)).normalize();
+      const vProj = new THREE.Vector3().crossVectors(hn, uProj).normalize();
+      const m = new THREE.Matrix4().makeBasis(uProj, hn, vProj);
+
+      const panel = new THREE.Mesh(panelGeo, panelMat);
+      panel.position.copy(h.point).addScaledVector(hn, 0.05);
+      panel.quaternion.setFromRotationMatrix(m);
+      panel.userData.isPanel = true;
+      roof.group.add(panel);
+      count++;
+    }
+  }
+
+  roof.panelCount = count;
+  recountPanels();
+  hintEl.textContent = `${roof.id}: placed ${count} panels (grid was ${cols}×${rows})`;
+}
+
+function recountPanels() {
+  totalPanels = roofPlanes.reduce((s, r) => s + r.panelCount, 0);
+  const p = PANEL_TYPES[+panelTypeSel.value];
+  const kwp = (totalPanels * p.wp / 1000).toFixed(2);
+  const area = roofPlanes.reduce((s, r) => s + r.area, 0).toFixed(1);
+  sPanels.textContent = totalPanels;
+  sKwp.textContent = kwp;
+  sArea.textContent = area + ' m²';
+}
+
+function updateSummary() { recountPanels(); }
+
+// ── Clear all
+const clearPanelsBtn = document.getElementById('clear-panels-btn');
+clearPanelsBtn.addEventListener('click', () => {
+  roofPlanes.forEach(r => {
+    r.group.children.filter(c => c.userData.isPanel).forEach(c => r.group.remove(c));
+    r.panelCount = 0;
+  });
+  recountPanels();
+  hintEl.textContent = 'All panels cleared (roof planes kept)';
+});
+
+clearBtn.addEventListener('click', () => {
+  roofPlanes.forEach(r => scene.remove(r.group));
+  roofPlanes.length = 0;
+  activeRoof = null;
+  totalPanels = 0;
+  updateSummary();
+  roofListEl.innerHTML = '<span style="color:#666; font-size:0.8rem;">Click a roof in Select mode…</span>';
+  updatePlaceBtn();
+});
+
+// ── Camera controls
+document.getElementById('zoom-in').addEventListener('click', () => { camera.position.lerp(controls.target, 0.15); controls.update(); });
+document.getElementById('zoom-out').addEventListener('click', () => {
+  const dir = camera.position.clone().sub(controls.target);
+  camera.position.copy(controls.target).addScaledVector(dir, 1.18);
+  controls.update();
+});
+document.getElementById('reset-cam').addEventListener('click', () => {
+  // Full reset: clear panels, roofs, crop, and fit to model
+  roofPlanes.forEach(r => scene.remove(r.group));
+  roofPlanes.length = 0;
+  activeRoof = null;
+  totalPanels = 0;
+  updateSummary();
+  roofListEl.innerHTML = '<span style="color:#666; font-size:0.8rem;">Click a roof in Select mode…</span>';
+  updatePlaceBtn();
+  clearCrop();
+  setPerspectiveView();
+  setMode('orbit');
+  hintEl.textContent = 'Reset complete — fit to view';
+});
+document.getElementById('top-view').addEventListener('click', setBirdsEyeView);
+document.getElementById('perspective-view').addEventListener('click', setPerspectiveView);
+document.getElementById('debug-toggle').addEventListener('click', () => {
+  const el = document.getElementById('debug-hud');
+  el.classList.toggle('on');
+});
+</script>
+</body>
+</html>
