@@ -11,7 +11,7 @@ import { cn } from '../lib/utils';
 import { RoofModel } from './RoofModel';
 
 const IconPanel = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white drop-shadow-sm">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm">
     <rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor" fillOpacity="0.15"/>
     <line x1="9" y1="4" x2="9" y2="20" />
     <line x1="15" y1="4" x2="15" y2="20" />
@@ -20,7 +20,7 @@ const IconPanel = () => (
 );
 
 const IconBattery = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white drop-shadow-sm">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm">
     <rect x="6" y="5" width="12" height="16" rx="2" fill="currentColor" fillOpacity="0.15"/>
     <line x1="9" y1="2" x2="15" y2="2" />
     <line x1="10" y1="13" x2="14" y2="13" />
@@ -29,7 +29,7 @@ const IconBattery = () => (
 );
 
 const IconHeatPump = () => (
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white drop-shadow-sm">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm">
     <rect x="3" y="5" width="18" height="14" rx="2" fill="currentColor" fillOpacity="0.15"/>
     <circle cx="15" cy="12" r="4" />
     <line x1="6" y1="9" x2="9" y2="9" />
@@ -39,7 +39,7 @@ const IconHeatPump = () => (
 );
 
 const IconWallbox = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white drop-shadow-sm">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm">
     <rect x="5" y="4" width="9" height="15" rx="2" fill="currentColor" fillOpacity="0.15"/>
     <circle cx="9.5" cy="11.5" r="2.5" />
     <path d="M14 14c3 0 5-1 5-4v-1" />
@@ -112,7 +112,7 @@ export function Planner({ intake, onBack }: PlannerProps) {
           <span className="font-display text-2xl text-primary">tectum</span>
         </div>
         <div className="text-sm text-muted-foreground font-medium flex items-center gap-2">
-          {intake.address || "Your home"}
+          {intake.address}
         </div>
         <div className="w-[100px] flex justify-end">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground gap-2">
@@ -148,19 +148,19 @@ export function Planner({ intake, onBack }: PlannerProps) {
 
           {/* Hotbar */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-            <div className="bg-[#111] p-1.5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] flex gap-1.5">
-              <div className={cn("relative w-14 h-14 rounded-lg bg-[#222] border transition-all flex items-center justify-center", cfg.panelCount > 0 ? "border-accent bg-[#333]" : "border-[#333]")}>
+            <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-xl shadow-[0_10px_30px_rgba(45,55,119,0.15)] border border-white flex gap-1.5">
+              <div className={cn("relative w-14 h-14 rounded-lg border transition-all flex items-center justify-center", cfg.panelCount > 0 ? "bg-primary border-primary text-white" : "bg-secondary border-border text-foreground/60")}>
                 <IconPanel />
                 {cfg.panelCount > 0 && <span className="absolute bottom-1 right-1 text-white text-[10px] font-bold">{cfg.panelCount}</span>}
               </div>
-              <div className={cn("relative w-14 h-14 rounded-lg bg-[#222] border transition-all flex items-center justify-center", cfg.batteryKwh > 0 ? "border-accent bg-[#333]" : "border-[#333]")}>
+              <div className={cn("relative w-14 h-14 rounded-lg border transition-all flex items-center justify-center", cfg.batteryKwh > 0 ? "bg-primary border-primary text-white" : "bg-secondary border-border text-foreground/60")}>
                 <IconBattery />
                 {cfg.batteryKwh > 0 && <span className="absolute bottom-1 right-1 text-white text-[10px] font-bold">{cfg.batteryKwh}</span>}
               </div>
-              <div className={cn("relative w-14 h-14 rounded-lg bg-[#222] border transition-all flex items-center justify-center", cfg.includeHeatPump ? "border-accent bg-[#333]" : "border-[#333] opacity-40")}>
+              <div className={cn("relative w-14 h-14 rounded-lg border transition-all flex items-center justify-center", cfg.includeHeatPump ? "bg-primary border-primary text-white" : "bg-secondary border-border text-foreground/60")}>
                 <IconHeatPump />
               </div>
-              <div className={cn("relative w-14 h-14 rounded-lg bg-[#222] border transition-all flex items-center justify-center", cfg.includeWallbox ? "border-accent bg-[#333]" : "border-[#333] opacity-40")}>
+              <div className={cn("relative w-14 h-14 rounded-lg border transition-all flex items-center justify-center", cfg.includeWallbox ? "bg-primary border-primary text-white" : "bg-secondary border-border text-foreground/60")}>
                 <IconWallbox />
               </div>
             </div>
@@ -168,7 +168,7 @@ export function Planner({ intake, onBack }: PlannerProps) {
         </div>
 
         {/* Right Rail */}
-        <div className="h-full overflow-y-auto bg-background border-l z-20 flex flex-col w-full lg:w-[480px]">
+        <div className="h-full overflow-y-auto scrollbar-hide bg-background border-l z-20 flex flex-col w-full">
           <div className="p-8 flex-1 flex flex-col gap-10">
             
             <section>
@@ -212,8 +212,11 @@ export function Planner({ intake, onBack }: PlannerProps) {
               </div>
             </section>
 
-            {tips.length > 0 && (
-              <section className="space-y-3">
+            <section
+              className="overflow-hidden transition-all duration-500 ease-in-out"
+              style={{ maxHeight: tips.length > 0 ? tips.length * 80 + 48 : 0, opacity: tips.length > 0 ? 1 : 0 }}
+            >
+              <div className="space-y-3 pb-1">
                 <div className="text-xs font-semibold tracking-[0.05em] uppercase text-muted-foreground flex items-center gap-2">
                   <Lightbulb className="w-4 h-4" /> Smart tips
                 </div>
@@ -222,8 +225,8 @@ export function Planner({ intake, onBack }: PlannerProps) {
                     <span className="leading-relaxed">{tip}</span>
                   </div>
                 ))}
-              </section>
-            )}
+              </div>
+            </section>
 
             <section className="space-y-6 pt-2">
                <div className="text-xs font-semibold tracking-[0.05em] uppercase text-muted-foreground">Refine your design</div>
