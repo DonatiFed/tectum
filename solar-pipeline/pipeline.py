@@ -1,70 +1,237 @@
 """
-Reonic Solar Offer Generation Pipeline
+Tectum Solar Offer Generation Pipeline
 
-Stateless pipeline: form JSON → 3 offer options with BOM.
+Stateless pipeline: form JSON + overrides → 3 offer options with BOM.
 Each slider change re-runs the entire pipeline (<50ms).
+
+Every economic/catalog constant is overridable via the `overrides` dict.
+Physics constants (_SC_TABLE, battery lift, discount rate) stay locked.
 """
 
 import math
 
 # ──────────────────────────────────────────────────────────────────────
-# Constants
+# Defaults  (all overridable via the `overrides` dict)
 # ──────────────────────────────────────────────────────────────────────
 
-MODULE_WP = 450
-SPECIFIC_YIELD = 950  # kWh/kWp/yr, Germany average
+DEFAULTS = {
+    # ── Panel catalog ────────────────────────────────────────────────
+    # Each entry: id, brand, model, wp (watt-peak), width_m, height_m,
+    #             efficiency_pct, weight_kg, cost_eur (per panel)
+    "panel_catalog": [
+        {
+            "id": "aiko_2s54",
+            "brand": "AIKO",
+            "model": "NEOSTAR 2S54 Mono-Glass",
+            "wp": 440,
+            "width_m": 1.134,
+            "height_m": 1.757,
+            "efficiency_pct": 22.1,
+            "weight_kg": 21.5,
+            "cost_eur": 195,
+        },
+        {
+            "id": "aiko_2p60",
+            "brand": "AIKO",
+            "model": "NEOSTAR 2P60 Mono-Glass",
+            "wp": 505,
+            "width_m": 1.134,
+            "height_m": 1.954,
+            "efficiency_pct": 22.6,
+            "weight_kg": 24.2,
+            "cost_eur": 230,
+        },
+        {
+            "id": "aiko_2s60",
+            "brand": "AIKO",
+            "model": "NEOSTAR 2S60 Mono-Glass",
+            "wp": 500,
+            "width_m": 1.134,
+            "height_m": 1.954,
+            "efficiency_pct": 22.6,
+            "weight_kg": 23.1,
+            "cost_eur": 220,
+        },
+        {
+            "id": "trina_vertex_s_plus",
+            "brand": "Trina",
+            "model": "Vertex S+ NEG9R.25",
+            "wp": 440,
+            "width_m": 1.134,
+            "height_m": 1.762,
+            "efficiency_pct": 22.0,
+            "weight_kg": 21.0,
+            "cost_eur": 185,
+        },
+        {
+            "id": "trina_vertex_650",
+            "brand": "Trina",
+            "model": "Vertex TSM-DEG21C.20",
+            "wp": 650,
+            "width_m": 1.303,
+            "height_m": 2.172,
+            "efficiency_pct": 23.0,
+            "weight_kg": 33.4,
+            "cost_eur": 310,
+        },
+        {
+            "id": "trina_vertex_s_625",
+            "brand": "Trina",
+            "model": "Vertex S TSM-NEG9.28",
+            "wp": 625,
+            "width_m": 1.134,
+            "height_m": 2.382,
+            "efficiency_pct": 23.1,
+            "weight_kg": 28.0,
+            "cost_eur": 290,
+        },
+        {
+            "id": "trina_vertex_s_plus_gg",
+            "brand": "Trina",
+            "model": "Vertex S+ Glass-Glass",
+            "wp": 440,
+            "width_m": 1.134,
+            "height_m": 1.762,
+            "efficiency_pct": 22.0,
+            "weight_kg": 23.5,
+            "cost_eur": 200,
+        },
+        {
+            "id": "trina_vertex_s_plus_505",
+            "brand": "Trina",
+            "model": "Vertex S+ Glass-Glass 505W",
+            "wp": 505,
+            "width_m": 1.134,
+            "height_m": 1.961,
+            "efficiency_pct": 22.7,
+            "weight_kg": 24.8,
+            "cost_eur": 235,
+        },
+        {
+            "id": "generic_bifacial_655",
+            "brand": "Generic",
+            "model": "Glass-Glass Bifacial 655W",
+            "wp": 655,
+            "width_m": 1.134,
+            "height_m": 2.465,
+            "efficiency_pct": 23.4,
+            "weight_kg": 30.0,
+            "cost_eur": 280,
+        },
+    ],
 
-BRAND_BATTERIES = {
-    "Huawei":     [5, 7, 10, 14, 15, 20],
-    "EcoFlow":    [5, 10, 15],
-    "Sigenergy":  [6, 9, 12, 15],
-    "SAJ":        [5, 10, 15],
-    "SolarEdge":  [5, 10, 14],
-    "Enphase":    [5, 10],
+    # Which panel from the catalog to use (by id).  "auto" = cheapest eur/Wp.
+    "selected_panel_id": "auto",
+
+    # ── Yield ────────────────────────────────────────────────────────
+    "specific_yield": 950,  # kWh/kWp/yr, Germany average
+
+    # ── Battery brands ───────────────────────────────────────────────
+    "brand_batteries": {
+        "Huawei":     [5, 7, 10, 14, 15, 20],
+        "EcoFlow":    [5, 10, 15],
+        "Sigenergy":  [6, 9, 12, 15],
+        "SAJ":        [5, 10, 15],
+        "SolarEdge":  [5, 10, 14],
+        "Enphase":    [5, 10],
+    },
+
+    "brand_cost_factor": {
+        "Huawei":    1.00,
+        "EcoFlow":   0.95,
+        "Sigenergy": 1.03,
+        "SAJ":       0.92,
+        "SolarEdge": 1.12,
+        "Enphase":   1.08,
+    },
+
+    "brand_prior": {
+        "Huawei": 1.0, "EcoFlow": 0.92, "Sigenergy": 0.55,
+        "SAJ": 0.15, "SolarEdge": 0.10, "Enphase": 0.08,
+    },
+
+    # ── Cost levers ──────────────────────────────────────────────────
+    "base_pv_cost_per_kwp": 1300,       # €/kWp (inverter + wiring, on top of panel cost)
+    "base_battery_cost_per_kwh": 600,   # €/kWh
+    "wallbox_cost": 1200,               # € flat
+    "service_cost_with_pv": 2500,       # € labor when PV included
+    "service_cost_without_pv": 1000,    # € labor without PV
+    "heatpump_cost_per_kw": 1800,       # €/kW thermal
+    "gas_cost_per_kwh": 0.12,           # €/kWh gas (German avg)
+
+    # ── Tariffs ──────────────────────────────────────────────────────
+    "feed_in_tariff_small": 0.082,      # €/kWh for ≤10 kWp
+    "feed_in_tariff_large": 0.071,      # €/kWh for >10 kWp portion
+
+    # ── Selection tuning ─────────────────────────────────────────────
+    "balanced_weight_npv": 0.30,
+    "balanced_weight_realism": 0.45,
+    "balanced_weight_self_sufficiency": 0.25,
+    "max_payback_years": 20,            # without heat pump
+    "max_payback_years_hp": 25,         # with heat pump
+    "min_battery_kwh": 5,               # floor for full_system / retrofit
+
+    # ── Heat pump sizes ──────────────────────────────────────────────
+    "heatpump_sizes_kw": [5.5, 7.5, 10.5, 12.5],
 }
 
-BRAND_COST_FACTOR = {
-    "Huawei":    1.00,
-    "EcoFlow":   0.95,
-    "Sigenergy": 1.03,
-    "SAJ":       0.92,
-    "SolarEdge": 1.12,
-    "Enphase":   1.08,
-}
 
-HEATPUMP_SIZES_KW = [5.5, 7.5, 10.5, 12.5]
+# ──────────────────────────────────────────────────────────────────────
+# Config resolver — merges overrides on top of defaults
+# ──────────────────────────────────────────────────────────────────────
 
-FEED_IN_TARIFF_SMALL = 0.082   # €/kWh for ≤10 kWp
-FEED_IN_TARIFF_LARGE = 0.071   # €/kWh for >10 kWp portion
-BASE_PV_COST_PER_KWP = 1300
-BASE_BATTERY_COST_PER_KWH = 600
-WALLBOX_COST = 1200
-SERVICE_COST_WITH_PV = 2500
-SERVICE_COST_WITHOUT_PV = 1000
-HEATPUMP_COST_PER_KW = 1800
-GAS_COST_PER_KWH = 0.12          # €/kWh gas (German avg 2024)
-GAS_BOILER_EFFICIENCY = 0.90
+def _resolve_config(overrides=None):
+    import copy
+    cfg = copy.deepcopy(DEFAULTS)
+    if overrides:
+        for k, v in overrides.items():
+            if k in cfg:
+                cfg[k] = v
+    return cfg
+
+
+def _resolve_panel(cfg):
+    """Pick the active panel from the catalog."""
+    catalog = cfg["panel_catalog"]
+    sel = cfg["selected_panel_id"]
+
+    if sel == "auto":
+        return min(catalog, key=lambda p: p["cost_eur"] / p["wp"])
+
+    for p in catalog:
+        if p["id"] == sel:
+            return p
+
+    return min(catalog, key=lambda p: p["cost_eur"] / p["wp"])
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Physics constants (locked — not overridable)
+# ──────────────────────────────────────────────────────────────────────
+
 DISCOUNT_RATE = 0.03
+GAS_BOILER_EFFICIENCY = 0.90
+
+_SC_TABLE = [
+    (0.0, 1.00), (0.2, 0.95), (0.4, 0.80), (0.6, 0.60),
+    (0.8, 0.45), (1.0, 0.33), (1.2, 0.28), (1.5, 0.24),
+    (2.0, 0.20), (2.5, 0.17), (3.0, 0.15),
+]
 
 COMMON_BATTERY_SIZES = {
     10: 1.0, 5: 0.8, 7: 0.7, 9: 0.65, 15: 0.6,
     14: 0.5, 6: 0.35, 12: 0.3, 20: 0.25, 0: 0.4,
 }
 
-BRAND_PRIOR = {
-    "Huawei": 1.0, "EcoFlow": 0.92, "Sigenergy": 0.55,
-    "SAJ": 0.15, "SolarEdge": 0.10, "Enphase": 0.08,
-}
 
 # ──────────────────────────────────────────────────────────────────────
-# Product Catalogs
+# Product catalogs (static — BOM labels only)
 # ──────────────────────────────────────────────────────────────────────
 
 BATTERY_CATALOG = {
     "Huawei": {
         5: "Battery 5kWh", 7: "Battery 7kWh", 10: "Battery 10kWh",
-        14: "Battery 14kWh", 15: "Battery 15kWh",
-        20: "Battery 5kWh Extension B",
+        14: "Battery 14kWh", 15: "Battery 15kWh", 20: "Battery 5kWh Extension B",
     },
     "EcoFlow": {
         5: "Battery LFP 5kWh", 10: "Battery LFP 10kWh", 15: "Battery LFP 15kWh",
@@ -179,7 +346,10 @@ def _select_mode(form):
     return "full_system"
 
 
-def build_context(form):
+def build_context(form, cfg):
+    panel = _resolve_panel(cfg)
+    module_wp = panel["wp"]
+
     base_demand = form["energy_demand_kwh"]
 
     ev_demand = 0
@@ -188,7 +358,7 @@ def build_context(form):
 
     effective_demand = base_demand + ev_demand
     max_modules = form["max_modules"]
-    max_kwp = max_modules * MODULE_WP / 1000
+    max_kwp = max_modules * module_wp / 1000
 
     hp_candidate = (
         form.get("heating_existing_type") in ("Gas", "Oil")
@@ -199,14 +369,16 @@ def build_context(form):
 
     return {
         **form,
-        "module_wp": MODULE_WP,
-        "specific_yield": SPECIFIC_YIELD,
+        "panel": panel,
+        "module_wp": module_wp,
+        "specific_yield": cfg["specific_yield"],
         "base_demand_kwh": base_demand,
         "ev_demand_kwh": ev_demand,
         "effective_demand_kwh": effective_demand,
         "max_kwp": max_kwp,
         "hp_candidate": hp_candidate,
         "mode": mode,
+        "_cfg": cfg,
     }
 
 
@@ -215,6 +387,7 @@ def build_context(form):
 # ──────────────────────────────────────────────────────────────────────
 
 def generate_candidates(ctx):
+    cfg = ctx["_cfg"]
     mode = ctx["mode"]
     candidates = []
 
@@ -229,17 +402,20 @@ def generate_candidates(ctx):
     else:
         battery_range = [0, 5, 6, 7, 9, 10, 12, 14, 15, 20]
 
+    brand_batteries = cfg["brand_batteries"]
+
     if ctx["preferred_brand"] != "auto":
         brands = [ctx["preferred_brand"]]
     else:
-        brands = list(BRAND_BATTERIES.keys())
+        brands = list(brand_batteries.keys())
 
     hp_options = [None]
     if ctx["hp_candidate"]:
         heating_wh = ctx.get("heating_existing_heating_demand_wh")
+        heatpump_sizes = cfg["heatpump_sizes_kw"]
         if heating_wh and heating_wh > 0:
             target_kw = heating_wh / 1000 / 2000
-            best_hp = min(HEATPUMP_SIZES_KW, key=lambda x: abs(x - target_kw))
+            best_hp = min(heatpump_sizes, key=lambda x: abs(x - target_kw))
         else:
             best_hp = 10.5
         hp_options = [None, best_hp]
@@ -248,7 +424,7 @@ def generate_candidates(ctx):
         kwp = modules * ctx["module_wp"] / 1000
         for battery_kwh in battery_range:
             for brand in brands:
-                if battery_kwh > 0 and battery_kwh not in BRAND_BATTERIES[brand]:
+                if battery_kwh > 0 and battery_kwh not in brand_batteries.get(brand, []):
                     continue
                 if battery_kwh == 0 and modules == 0:
                     continue
@@ -271,21 +447,6 @@ def generate_candidates(ctx):
 # ──────────────────────────────────────────────────────────────────────
 # Step 3 — Physics + Economics Simulator
 # ──────────────────────────────────────────────────────────────────────
-
-_SC_TABLE = [
-    (0.0, 1.00),
-    (0.2, 0.95),
-    (0.4, 0.80),
-    (0.6, 0.60),
-    (0.8, 0.45),
-    (1.0, 0.33),
-    (1.2, 0.28),
-    (1.5, 0.24),
-    (2.0, 0.20),
-    (2.5, 0.17),
-    (3.0, 0.15),
-]
-
 
 def _sc_no_battery(R):
     if R <= 0:
@@ -345,32 +506,43 @@ def simulate_energy(candidate, ctx):
 
 
 def simulate_economics(candidate, ctx, energy):
+    cfg = ctx["_cfg"]
+    panel = ctx["panel"]
+
     price = ctx["energy_price_ct_kwh"] / 100
     escalation = ctx["energy_price_increase_pct"] / 100
     kwp = candidate["kwp"]
 
+    fit_small = cfg["feed_in_tariff_small"]
+    fit_large = cfg["feed_in_tariff_large"]
+
     if kwp <= 10:
-        fit = FEED_IN_TARIFF_SMALL
+        fit = fit_small
     else:
-        fit = (10 * FEED_IN_TARIFF_SMALL + (kwp - 10) * FEED_IN_TARIFF_LARGE) / kwp
+        fit = (10 * fit_small + (kwp - 10) * fit_large) / kwp
 
     year1_savings = energy["self_consumed_kwh"] * price + energy["exported_kwh"] * fit
 
-    # Heat pump displaces gas/oil heating → net savings from fuel switch
     if candidate.get("heatpump_kw"):
-        hp_thermal = candidate["heatpump_kw"] * 2000  # kWh thermal output
+        hp_thermal = candidate["heatpump_kw"] * 2000
         cop = 3.0
-        hp_elec = hp_thermal / cop  # already in demand via simulate_energy
-        old_gas_cost = (hp_thermal / GAS_BOILER_EFFICIENCY) * GAS_COST_PER_KWH
+        hp_elec = hp_thermal / cop
+        old_gas_cost = (hp_thermal / GAS_BOILER_EFFICIENCY) * cfg["gas_cost_per_kwh"]
         new_elec_cost = hp_elec * price
         year1_savings += old_gas_cost - new_elec_cost
 
-    brand_factor = BRAND_COST_FACTOR.get(candidate["brand"], 1.0)
-    pv_cost = kwp * BASE_PV_COST_PER_KWP
-    batt_cost = candidate["battery_kwh"] * BASE_BATTERY_COST_PER_KWH * brand_factor
-    wb_cost = WALLBOX_COST if candidate["wallbox"] else 0
-    hp_cost = candidate["heatpump_kw"] * HEATPUMP_COST_PER_KW if candidate.get("heatpump_kw") else 0
-    svc_cost = SERVICE_COST_WITH_PV if kwp > 0 else SERVICE_COST_WITHOUT_PV
+    brand_factor = cfg["brand_cost_factor"].get(candidate["brand"], 1.0)
+
+    # Panel cost: per-panel cost × number of modules
+    panel_total_cost = candidate["modules"] * panel["cost_eur"]
+    # BOS (balance of system): inverter, wiring, etc. — scaled by kWp
+    bos_cost = kwp * cfg["base_pv_cost_per_kwp"]
+    pv_cost = panel_total_cost + bos_cost
+
+    batt_cost = candidate["battery_kwh"] * cfg["base_battery_cost_per_kwh"] * brand_factor
+    wb_cost = cfg["wallbox_cost"] if candidate["wallbox"] else 0
+    hp_cost = candidate["heatpump_kw"] * cfg["heatpump_cost_per_kw"] if candidate.get("heatpump_kw") else 0
+    svc_cost = cfg["service_cost_with_pv"] if kwp > 0 else cfg["service_cost_without_pv"]
     total_cost = pv_cost + batt_cost + wb_cost + hp_cost + svc_cost
 
     if ctx.get("budget_cap_eur") and total_cost > ctx["budget_cap_eur"]:
@@ -384,6 +556,9 @@ def simulate_economics(candidate, ctx, energy):
 
     return {
         "total_cost_eur": round(total_cost),
+        "panel_cost_eur": round(panel_total_cost),
+        "bos_cost_eur": round(bos_cost),
+        "battery_cost_eur": round(batt_cost),
         "year1_savings_eur": round(year1_savings),
         "payback_years": round(payback, 1),
         "npv_20yr": round(npv),
@@ -403,6 +578,7 @@ def simulate(candidate, ctx):
 # ──────────────────────────────────────────────────────────────────────
 
 def realism_score(c, ctx):
+    cfg = ctx["_cfg"]
     s = 0.0
 
     if c["kwp"] > 0 and c["battery_kwh"] > 0:
@@ -417,17 +593,15 @@ def realism_score(c, ctx):
 
     s += 10 * COMMON_BATTERY_SIZES.get(c["battery_kwh"], 0.1)
 
-    # Demand-proportional battery: real installers pick smaller batteries for low demand
     if c["battery_kwh"] > 0 and ctx["effective_demand_kwh"] > 0:
         demand = ctx["effective_demand_kwh"]
-        batt = c["battery_kwh"]
         if demand < 3500:
             ideal = 5
         elif demand < 5500:
             ideal = 7
         else:
             ideal = 10
-        diff = abs(batt - ideal)
+        diff = abs(c["battery_kwh"] - ideal)
         if diff <= 1:
             s += 12
         elif diff <= 3:
@@ -435,7 +609,7 @@ def realism_score(c, ctx):
         else:
             s -= 2
 
-    s += 12 * BRAND_PRIOR.get(c["brand"], 0.1)
+    s += 12 * cfg["brand_prior"].get(c["brand"], 0.1)
 
     if 7 <= c["kwp"] <= 14:
         s += 15
@@ -449,16 +623,15 @@ def realism_score(c, ctx):
         elif 0.15 <= ratio <= 1.0:
             s += 5
 
-    # Demand-proportional sizing: penalize oversizing relative to demand
-    # Real installers typically size PV at 1.0-1.5× demand ratio
+    specific_yield = cfg["specific_yield"]
     if c["kwp"] > 0 and ctx["effective_demand_kwh"] > 0:
-        R = (c["kwp"] * SPECIFIC_YIELD) / ctx["effective_demand_kwh"]
+        R = (c["kwp"] * specific_yield) / ctx["effective_demand_kwh"]
         if 0.8 <= R <= 1.5:
-            s += 15  # sweet spot
+            s += 15
         elif 0.6 <= R <= 2.0:
             s += 8
         else:
-            s -= 5  # heavily over/undersized
+            s -= 5
 
     return max(min(s, 100), 0)
 
@@ -468,9 +641,10 @@ def realism_score(c, ctx):
 # ──────────────────────────────────────────────────────────────────────
 
 def _apply_floor(candidates, ctx):
+    cfg = ctx["_cfg"]
     min_kwp = min(5, ctx["max_kwp"])
-    min_batt = 5 if ctx["mode"] in ("full_system", "battery_retrofit") else 0
-    max_payback = 25 if ctx.get("hp_candidate") else 20
+    min_batt = cfg["min_battery_kwh"] if ctx["mode"] in ("full_system", "battery_retrofit") else 0
+    max_payback = cfg["max_payback_years_hp"] if ctx.get("hp_candidate") else cfg["max_payback_years"]
 
     return [
         c for c in candidates
@@ -520,6 +694,7 @@ def _enforce_diversity(picks, labels, pool):
 
 
 def select_options(simulated, ctx):
+    cfg = ctx["_cfg"]
     valid = _apply_floor(simulated, ctx)
     if not valid:
         return []
@@ -534,8 +709,13 @@ def select_options(simulated, ctx):
     npvs = _normalize([c["npv_20yr"] for c in no_hp])
     reals = _normalize([c["realism"] for c in no_hp])
     sss = _normalize([c["self_sufficiency"] for c in no_hp])
+
+    w_npv = cfg["balanced_weight_npv"]
+    w_real = cfg["balanced_weight_realism"]
+    w_ss = cfg["balanced_weight_self_sufficiency"]
+
     for i, c in enumerate(no_hp):
-        c["_balanced_score"] = 0.30 * npvs[i] + 0.45 * reals[i] + 0.25 * sss[i]
+        c["_balanced_score"] = w_npv * npvs[i] + w_real * reals[i] + w_ss * sss[i]
     balanced = max(no_hp, key=lambda c: c["_balanced_score"])
 
     def _green_score(c):
@@ -557,8 +737,15 @@ def select_options(simulated, ctx):
 
 def map_products(option, ctx):
     brand = option["brand"]
+    panel = ctx["panel"]
     return {
         **option,
+        "panel_product": {
+            "brand": panel["brand"],
+            "model": panel["model"],
+            "wp": panel["wp"],
+            "cost_eur": panel["cost_eur"],
+        },
         "battery_product": BATTERY_CATALOG[brand].get(option["battery_kwh"]) if option["battery_kwh"] > 0 else None,
         "wallbox_product": WALLBOX_CATALOG[brand] if option["wallbox"] else None,
         "heatpump_product": HEATPUMP_CATALOG.get(option.get("heatpump_kw")) if option.get("heatpump_kw") else None,
@@ -584,6 +771,10 @@ def generate_bom(option, ctx):
             "quantity": qty,
             "technology": tech,
         })
+
+    if option["modules"] > 0:
+        pp = option["panel_product"]
+        add("SolarModule", f"{pp['brand']} {pp['model']} ({pp['wp']}W)", pp["brand"], option["modules"], "solar")
 
     if option["battery_product"]:
         add("BatteryStorage", option["battery_product"], brand, 1, "ses")
@@ -670,8 +861,8 @@ def validate(option, bom, ctx):
         if not any("Optimizer" in b["component_name"] for b in bom):
             errors.append("SolarEdge missing mandatory optimizer")
 
-    if not (5 <= len(bom) <= 22):
-        errors.append(f"BOM has {len(bom)} items, expected 5-22")
+    if not (5 <= len(bom) <= 25):
+        errors.append(f"BOM has {len(bom)} items, expected 5-25")
 
     if option.get("sc_rate", 0) > 0.90:
         errors.append("self-consumption rate suspiciously high")
@@ -686,8 +877,9 @@ def validate(option, bom, ctx):
 # Step 9 — Main Pipeline
 # ──────────────────────────────────────────────────────────────────────
 
-def generate_offer(form):
-    ctx = build_context(form)
+def generate_offer(form, overrides=None):
+    cfg = _resolve_config(overrides)
+    ctx = build_context(form, cfg)
     candidates = generate_candidates(ctx)
 
     simulated = []
@@ -697,6 +889,8 @@ def generate_offer(form):
             simulated.append(result)
 
     options = select_options(simulated, ctx)
+
+    panel = ctx["panel"]
 
     offers = []
     for option in options:
@@ -715,6 +909,13 @@ def generate_offer(form):
                 "brand": option["brand"],
                 "wallbox": option["wallbox"],
                 "heatpump_kw": option.get("heatpump_kw"),
+                "panel": {
+                    "id": panel["id"],
+                    "brand": panel["brand"],
+                    "model": panel["model"],
+                    "wp": panel["wp"],
+                    "cost_per_panel_eur": panel["cost_eur"],
+                },
             },
             "metrics": {
                 "total_demand_kwh": option["total_demand_kwh"],
@@ -722,6 +923,9 @@ def generate_offer(form):
                 "self_consumption_rate": option["sc_rate"],
                 "self_sufficiency_rate": option["self_sufficiency"],
                 "total_cost_eur": option["total_cost_eur"],
+                "panel_cost_eur": option["panel_cost_eur"],
+                "bos_cost_eur": option["bos_cost_eur"],
+                "battery_cost_eur": option["battery_cost_eur"],
                 "year1_savings_eur": option["year1_savings_eur"],
                 "payback_years": option["payback_years"],
                 "npv_20yr": option["npv_20yr"],
@@ -729,4 +933,19 @@ def generate_offer(form):
             "bom": bom,
         })
 
-    return {"project_context": ctx, "offers": offers}
+    # Strip internal keys from context before returning
+    public_ctx = {k: v for k, v in ctx.items() if not k.startswith("_")}
+    public_ctx.pop("panel", None)
+
+    return {
+        "project_context": public_ctx,
+        "active_panel": {
+            "id": panel["id"],
+            "brand": panel["brand"],
+            "model": panel["model"],
+            "wp": panel["wp"],
+            "efficiency_pct": panel["efficiency_pct"],
+            "cost_eur": panel["cost_eur"],
+        },
+        "offers": offers,
+    }
