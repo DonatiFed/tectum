@@ -279,9 +279,6 @@ function DraftEditor() {
 
       <Divider />
 
-      {/* Summary + Production by roof — pinned to the top of the draft panel
-          so the headline numbers stay visible while the installer scrolls
-          through the panel + display settings below. */}
       <Section title="Summary">
         <InfoBox rows={[
           ['Roofs',         roofs.length],
@@ -334,10 +331,6 @@ function DraftEditor() {
 
       <Divider />
 
-      {/* Solar Panel Settings — every layout knob (panel type, rotation,
-          auto/manual placement, portrait/landscape, scale, gap, lift)
-          collapsed into one section so the panel doesn't feel busy. */}
-      <Collapsible title="Solar Panel Settings" defaultOpen>
       <Section title="Panel type">
         <PanelCatalogue selected={panelIdx} onChange={i => store.set({ panelTypeIdx: i })} />
         {isCustom && (
@@ -441,10 +434,8 @@ function DraftEditor() {
           Hover height of the panel mesh above the roof surface — keeps panels visually distinct from the roof and matches typical mounting clearance.
         </div>
       </Section>
-      </Collapsible>
 
-      <Collapsible title="Display Settings" defaultOpen={false}>
-      <Section title={`Panels · ${panelsVisible ? 'on' : 'off'} · ${Math.round(panelOpacity * 100)}%`}>
+      <Section title={`Display · ${panelsVisible ? 'on' : 'off'} · ${Math.round(panelOpacity * 100)}%`}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
           <button
             onClick={() => store.set({ panelsVisible: !panelsVisible })}
@@ -462,13 +453,23 @@ function DraftEditor() {
           Lower opacity to see the roof surface through the panels. Toggle off to inspect the bare roof without losing the layout.
         </div>
       </Section>
-      </Collapsible>
 
-      <Section title={`Recipe clipboard (${targetLabel})`}>
+      <Section title={`Place / clear (${targetLabel})`}>
         <div style={{ fontSize: '0.7rem', color: '#888', marginBottom: 4 }}>
-          Place / Clear are available per-panel — click a panel in the 3D
-          view to open its pop-up. Copy / Paste reuses the current recipe
-          (type / orientation / scale / gap) on every targeted roof.
+          Tip: shift-click roofs in the scene to multi-select, then place
+          the same layout on every selected roof at once.
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <button
+            disabled={!targets}
+            onClick={() => dispatch('panels:place')}
+            style={{ ...btnStyle('primary'), flex: 1, minWidth: 110, opacity: targets ? 1 : 0.4, cursor: targets ? 'pointer' : 'not-allowed' }}
+          >▦ Place</button>
+          <button
+            disabled={!targets}
+            onClick={() => dispatch('panels:clear')}
+            style={{ ...btnStyle('secondary'), flex: 1, minWidth: 100, opacity: targets ? 1 : 0.4, cursor: targets ? 'pointer' : 'not-allowed' }}
+          >✕ Clear</button>
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button
@@ -492,10 +493,6 @@ function DraftEditor() {
           >▶ Paste</button>
         </div>
       </Section>
-
-      <Divider />
-
-      <PanelSandbox />
 
       <Divider />
 
@@ -752,41 +749,6 @@ function Section({ title, children }) {
   );
 }
 function Divider() { return <div style={{ height: 1, background: '#2a2a4a' }} />; }
-
-// Collapsible group used to bundle the long list of panel-layout settings
-// (and the display toggles) into a single click-to-toggle block at the top
-// of the draft panel, so the headline stats stay in view as the installer
-// scrolls through tweaks.
-function Collapsible({ title, defaultOpen = true, children }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div style={{
-      background: '#0f172a',
-      border: '1px solid #2a2a4a',
-      borderRadius: 8,
-      overflow: 'hidden',
-    }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          background: 'transparent', border: 'none', width: '100%',
-          padding: '10px 12px', textAlign: 'left', cursor: 'pointer',
-          color: '#f5a623', fontSize: '0.78rem', fontWeight: 700,
-          textTransform: 'uppercase', letterSpacing: '0.08em',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}
-      >
-        <span>{title}</span>
-        <span style={{ fontSize: '0.85rem' }}>{open ? '▾' : '▸'}</span>
-      </button>
-      {open && (
-        <div style={{ padding: '4px 12px 12px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
 function Empty({ msg }) {
   return <div style={{ fontSize: '0.78rem', color: '#666' }}>{msg}</div>;
 }

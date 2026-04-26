@@ -12,7 +12,6 @@ export default function PanelDashboard() {
   const roofs     = useStore(s => s.roofs);
   const panelIdx  = useStore(s => s.panelTypeIdx);
   const custom    = useStore(s => s.customPanel);
-  const panelAngle = useStore(s => s.panelAngleDeg);
 
   if (!db) return null;
   const roof  = roofs.find(r => r.id === db.roofId);
@@ -32,12 +31,12 @@ export default function PanelDashboard() {
     <DashboardCard
       panel={panel} irr={irr} area={area} power={power} panelEff={panelEff}
       sun={sun} solarTime={solarTime} solarDay={solarDay} solarLat={solarLat}
-      roofId={db.roofId} panelIndex={db.index} panelAngle={panelAngle}
+      roofId={db.roofId} panelIndex={db.index}
     />
   );
 }
 
-function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, solarDay, solarLat, roofId, panelIndex, panelAngle }) {
+function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, solarDay, solarLat, roofId, panelIndex }) {
   // Curve memoised on lat/day/quat — doesn't change with time
   const qx = panel.quat.x, qy = panel.quat.y, qz = panel.quat.z, qw = panel.quat.w;
   const curve = useMemo(
@@ -54,26 +53,6 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
   const polyPts = curve.map(p => `${(p.hour / 24) * CW},${CH - (p.irr / 1000) * CH}`).join(' ');
   const nowX    = (solarTime / 24) * CW;
   const nowY    = CH - (irr / 1000) * CH;
-
-  // Per-panel actions: Place / Clear act on THIS panel's roof so the
-  // pop-up stays scoped to the panel the user clicked. Rotation drives
-  // the draft-level panelAngleDeg so the layout re-runs and this panel
-  // (and its siblings on the same roof) re-orients in real time.
-  const targetThisRoof = () => {
-    store.set({ activeRoofId: roofId, selectedRoofIds: [] });
-  };
-  const handlePlace = () => {
-    targetThisRoof();
-    window.dispatchEvent(new CustomEvent('panels:place'));
-  };
-  const handleClear = () => {
-    targetThisRoof();
-    window.dispatchEvent(new CustomEvent('panels:clear'));
-  };
-  const setRotation = (deg) => {
-    targetThisRoof();
-    store.set({ panelAngleDeg: deg });
-  };
 
   const incidenceAngle = sun.belowHorizon
     ? '—'
@@ -119,51 +98,6 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
       }}>
         <span>Sun elev: <b style={{ color: '#cbd5e1' }}>{sun.belowHorizon ? '—' : `${sun.elevationDeg.toFixed(1)}°`}</b></span>
         <span>Efficiency: <b style={{ color: '#cbd5e1' }}>{(irr / 10).toFixed(0)}%</b></span>
-      </div>
-
-      {/* Per-panel rotation — drives the draft-level panelAngleDeg so the
-          layout re-runs immediately. */}
-      <div>
-        <div style={{
-          fontSize: '0.62rem', color: '#666', marginBottom: 4,
-          textTransform: 'uppercase', letterSpacing: '0.06em',
-          display: 'flex', justifyContent: 'space-between',
-        }}>
-          <span>Rotation</span>
-          <span style={{ color: '#f5a623', fontWeight: 700 }}>
-            {panelAngle >= 0 ? '+' : ''}{panelAngle.toFixed(0)}°
-          </span>
-        </div>
-        <input
-          type="range" min="-90" max="90" step="1" value={panelAngle}
-          onChange={e => setRotation(+e.target.value)}
-          style={{ width: '100%', accentColor: '#f5a623' }}
-        />
-      </div>
-
-      {/* Place / Clear for this panel's roof */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button
-          onClick={handlePlace}
-          style={{
-            flex: 1, padding: '6px 8px', borderRadius: 6, cursor: 'pointer',
-            background: '#f5a623', color: '#1a1a2e', border: 'none',
-            fontWeight: 700, fontSize: '0.78rem',
-          }}
-          title="Re-run the panel layout on this roof using the current settings"
-        >▦ Place panel</button>
-        <button
-          onClick={handleClear}
-          style={{
-            flex: 1, padding: '6px 8px', borderRadius: 6, cursor: 'pointer',
-            background: '#2a2a4a', color: '#e0e0e0', border: 'none',
-            fontWeight: 700, fontSize: '0.78rem',
-          }}
-          title="Remove every panel from this roof"
-        >✕ Clear panel</button>
-      </div>
-      <div style={{ fontSize: '0.66rem', color: '#666', lineHeight: 1.4, marginTop: -4 }}>
-        Drag a panel in the 3D view to reposition it on the roof.
       </div>
 
       {/* Daily irradiance chart */}
