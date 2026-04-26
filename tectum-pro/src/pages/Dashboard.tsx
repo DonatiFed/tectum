@@ -34,12 +34,12 @@ function timeAgo(ts: number): string {
 }
 
 const THUMB_GRADIENTS = [
-  'linear-gradient(135deg, #232d6e 0%, #3b5998 50%, #6b8cce 100%)',
-  'linear-gradient(135deg, #1a365d 0%, #2a4a7f 50%, #4a7ab5 100%)',
-  'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #5a8ab5 100%)',
-  'linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #718096 100%)',
-  'linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%)',
-  'linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #6bb5e0 100%)',
+  'linear-gradient(135deg, #1a1008 0%, #2a1e10 50%, #3d2e18 100%)',
+  'linear-gradient(135deg, #1c1209 0%, #33240e 50%, #4a3520 100%)',
+  'linear-gradient(135deg, #201510 0%, #352818 50%, #4d3a22 100%)',
+  'linear-gradient(135deg, #1a1008 0%, #2e2010 50%, #45331a 100%)',
+  'linear-gradient(135deg, #1c1209 0%, #2a1e10 50%, #3d2e18 100%)',
+  'linear-gradient(135deg, #201510 0%, #3a2a16 50%, #52401e 100%)',
 ];
 
 export default function Dashboard({ email, onLogout, onOpenProject, onNewProject }: DashboardProps) {
@@ -80,7 +80,7 @@ export default function Dashboard({ email, onLogout, onOpenProject, onNewProject
       <header className="border-b bg-card sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>Tectum</span>
+            <img src="/logo-liquid.svg" alt="Tectum" className="h-8" />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-[13px] text-muted-foreground hidden sm:block">{email}</span>
@@ -101,13 +101,6 @@ export default function Dashboard({ email, onLogout, onOpenProject, onNewProject
               {loading ? 'Loading…' : `${projects.length} project${projects.length !== 1 ? 's' : ''} on this dashboard`}
             </p>
           </motion.div>
-          <motion.button
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-            onClick={onNewProject}
-            className="h-10 px-5 rounded-xl bg-primary text-primary-foreground font-semibold text-[14px] flex items-center gap-2 hover:opacity-90 transition-opacity"
-          >
-            <Plus className="w-4 h-4" /> New project
-          </motion.button>
         </div>
 
         {/* Search */}
@@ -160,7 +153,7 @@ export default function Dashboard({ email, onLogout, onOpenProject, onNewProject
                 <div
                   className="w-full aspect-[4/3] flex items-center justify-center relative"
                   style={project.thumbnail
-                    ? { background: `#f0f0f0 url(${project.thumbnail}) center/cover no-repeat` }
+                    ? { background: `#1a1008 url(${project.thumbnail}) center/cover no-repeat` }
                     : { background: THUMB_GRADIENTS[i % THUMB_GRADIENTS.length] }
                   }
                 >

@@ -76,7 +76,7 @@ export default function Login({ onLogin }: LoginProps) {
   }, []);
 
   useEffect(() => {
-    document.body.style.backgroundColor = '#0f172a';
+    document.body.style.backgroundColor = '#1a1008';
     return () => { document.body.style.backgroundColor = ''; };
   }, []);
 
@@ -108,13 +108,13 @@ export default function Login({ onLogin }: LoginProps) {
           background: transparent;
           color: white;
           font-size: 0.95rem;
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: 'Manrope', system-ui, sans-serif;
           outline: none;
           width: 100%;
           box-sizing: border-box;
         }
         .login-input:focus {
-          border-color: #3b82f6;
+          border-color: #ff8800;
         }
         .login-input::placeholder {
           color: rgba(255,255,255,0.4);
@@ -124,17 +124,17 @@ export default function Login({ onLogin }: LoginProps) {
           padding: 1rem;
           border: none;
           border-radius: 8px;
-          background-color: #3b82f6;
+          background-color: #ff8800;
           color: white;
           font-size: 1rem;
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: 'Manrope', system-ui, sans-serif;
           font-weight: 600;
           cursor: pointer;
           width: 100%;
           transition: background-color 0.2s;
           letter-spacing: 0.01em;
         }
-        .login-btn:hover { background-color: #2563eb; }
+        .login-btn:hover { background-color: #ff7b00; }
         .login-btn:disabled { opacity: 0.5; cursor: default; }
       `}</style>
 
@@ -179,7 +179,7 @@ export default function Login({ onLogin }: LoginProps) {
                 letterSpacing: '-0.02em',
                 lineHeight: 0.85,
                 color: '#f8fafc',
-                fontFamily: "'Inter', system-ui, sans-serif",
+                fontFamily: "'Manrope', system-ui, sans-serif",
                 textShadow: '0 4px 30px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3)',
               }}
             >
@@ -187,7 +187,7 @@ export default function Login({ onLogin }: LoginProps) {
             </h1>
             <p
               style={{
-                fontFamily: "'Inter', system-ui, sans-serif",
+                fontFamily: "'Manrope', system-ui, sans-serif",
                 fontSize: '0.75rem',
                 fontWeight: 500,
                 letterSpacing: '0.3em',
@@ -229,9 +229,9 @@ export default function Login({ onLogin }: LoginProps) {
                 style={{
                   color: '#f8fafc',
                   fontSize: '1.75rem',
-                  fontWeight: 400,
+                  fontWeight: 700,
                   marginBottom: '2rem',
-                  fontFamily: "'Instrument Serif', Georgia, serif",
+                  fontFamily: "'Manrope', system-ui, sans-serif",
                   letterSpacing: '-0.01em',
                 }}
               >

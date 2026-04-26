@@ -64,14 +64,14 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
       transform: 'translateX(-50%)',
       zIndex: 50,
       background: 'rgba(10,18,34,0.97)',
-      border: '1px solid #f5a623', borderRadius: 14,
+      border: '1px solid #ff9500', borderRadius: 14,
       padding: '14px 16px', width: 300,
       boxShadow: '0 20px 60px rgba(0,0,0,0.65)',
       display: 'flex', flexDirection: 'column', gap: 10,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: '#f5a623', fontWeight: 700, fontSize: '0.85rem' }}>
+        <span style={{ color: '#ff9500', fontWeight: 700, fontSize: '0.85rem' }}>
           ☀️ Panel {panelIndex + 1} &nbsp;·&nbsp;
           <span style={{ color: '#888', fontWeight: 400 }}>{roofId.slice(-8)}</span>
         </span>
@@ -114,10 +114,10 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
             fill="rgba(245,166,35,0.12)"
           />
           {/* Line */}
-          <polyline points={polyPts} fill="none" stroke="#f5a623" strokeWidth="1.5" strokeLinejoin="round" />
+          <polyline points={polyPts} fill="none" stroke="#ff9500" strokeWidth="1.5" strokeLinejoin="round" />
           {/* Current time cursor */}
           <line x1={nowX} y1={0} x2={nowX} y2={CH} stroke="rgba(255,255,255,0.25)" strokeWidth="1" strokeDasharray="3,3" />
-          <circle cx={nowX} cy={nowY} r="4" fill="#fff" stroke="#f5a623" strokeWidth="1.5" />
+          <circle cx={nowX} cy={nowY} r="4" fill="#fff" stroke="#ff9500" strokeWidth="1.5" />
           {/* Axis labels */}
           <text x={1}       y={CH + 12} fontSize="9" fill="#555">00:00</text>
           <text x={CW/2-12} y={CH + 12} fontSize="9" fill="#555">12:00</text>
@@ -135,7 +135,7 @@ function Stat({ label, value, hi }) {
       borderRadius: 6, padding: '6px 10px',
     }}>
       <div style={{ fontSize: '0.62rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-      <div style={{ fontSize: '0.9rem', color: hi ? '#f5a623' : '#cbd5e1', fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: '0.9rem', color: hi ? '#ff9500' : '#cbd5e1', fontWeight: 700 }}>{value}</div>
     </div>
   );
 }

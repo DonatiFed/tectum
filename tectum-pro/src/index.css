@@ -1,5 +1,8 @@
-@import '@fontsource/instrument-serif';
-@import '@fontsource/inter';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+@import '@fontsource/manrope/800.css';
 @import "tailwindcss";
 
 @theme {
@@ -24,8 +27,8 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Manrope', system-ui, sans-serif;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -34,30 +37,30 @@
 
 @layer base {
   :root {
-    --background: 40 30% 97%;
-    --foreground: 220 25% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
-    --primary: 232 45% 32%;
-    --primary-foreground: 40 30% 97%;
-    --primary-glow: 232 60% 55%;
-    --secondary: 40 25% 92%;
-    --secondary-foreground: 220 25% 12%;
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 75 70% 55%;
-    --accent-foreground: 220 25% 12%;
-    --solar: 45 95% 55%;
-    --solar-foreground: 220 25% 12%;
+    --background: 30 50% 6%;
+    --foreground: 30 10% 88%;
+    --card: 28 46% 11%;
+    --card-foreground: 30 10% 88%;
+    --primary: 33 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 40 100% 55%;
+    --secondary: 30 35% 9%;
+    --secondary-foreground: 30 15% 80%;
+    --muted: 30 25% 13%;
+    --muted-foreground: 30 12% 55%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 30 50% 6%;
+    --solar: 45 100% 55%;
+    --solar-foreground: 30 50% 6%;
     --success: 145 55% 42%;
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 40 30% 97%;
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
-    --ring: 232 45% 32%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 32 35% 17%;
+    --input: 32 35% 17%;
+    --ring: 33 100% 50%;
     --radius: 0.75rem;
 
-    --gradient-sky: linear-gradient(180deg, #c3daee 0%, #e1edf8 100%);
+    --gradient-sky: linear-gradient(180deg, #ffdd00 0%, #ff8800 100%);
   }
 }
 
@@ -80,8 +83,8 @@
   }
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
   }
 }
 

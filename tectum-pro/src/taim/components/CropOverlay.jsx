@@ -57,7 +57,7 @@ export default function CropOverlay() {
       {rect && (
         <div style={{
           position: 'absolute', left, top, width, height,
-          border: '2px dashed #f5a623',
+          border: '2px dashed #ff9500',
           background: 'rgba(245, 166, 35, 0.10)',
           boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)',
           pointerEvents: 'none',
