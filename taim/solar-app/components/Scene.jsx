@@ -14,7 +14,7 @@ import { PANEL_TYPES } from '@/lib/catalog';
 export default function Scene() {
   return (
     <Canvas
-      gl={{ antialias: false, powerPreference: 'low-power', localClippingEnabled: true }}
+      gl={{ antialias: false, powerPreference: 'low-power', localClippingEnabled: true, preserveDrawingBuffer: true }}
       dpr={[1, 1.5]}
       camera={{ fov: 55, near: 0.1, far: 5000, position: [200, 200, 200] }}
       style={{ position: 'absolute', inset: 0, background: '#0d1b2a' }}
@@ -116,14 +116,26 @@ function SceneContents() {
         // ── 4. Pre-index upward-facing triangles
         upTrisRef.current = buildUpwardTriangles(model);
 
+        // If we're resuming a saved project from the dashboard, restore
+        // the previously detected roofs / saved templates / drafts AFTER
+        // the GLB has loaded, instead of resetting them. The dashboard
+        // sets `_resume` on the store right before flipping selectedModel.
+        const resume = store.get()._resume;
         store.set({
           loaded: true,
           loadProgress: 1,
           mode: 'orbit',
           cropBounds: null,
-          roofs: [],
+          roofs: resume?.roofs ?? [],
           activeRoofId: null,
-          hint: `Loaded · ${upTrisRef.current.length.toLocaleString()} roof faces · auto-up=${orient.dominant}`,
+          templates: resume?.templates ?? store.get().templates,
+          drafts: resume?.drafts ?? store.get().drafts,
+          activeTemplateId: resume?.activeTemplateId ?? null,
+          activeDraftId: resume?.activeDraftId ?? null,
+          _resume: null,
+          hint: resume
+            ? `Resumed project · ${(resume.roofs?.length ?? 0)} roof${(resume.roofs?.length ?? 0) === 1 ? '' : 's'}, ${(resume.templates?.length ?? 0)} template${(resume.templates?.length ?? 0) === 1 ? '' : 's'}`
+            : `Loaded · ${upTrisRef.current.length.toLocaleString()} roof faces · auto-up=${orient.dominant}`,
         });
 
         // Frame the model
@@ -155,6 +167,65 @@ function SceneContents() {
     store.set(s => ({ hud: { ...s.hud, clipPlanes: 4, cropRegion: `[${minX.toFixed(0)},${minZ.toFixed(0)}]→[${maxX.toFixed(0)},${maxZ.toFixed(0)}]` } }));
   }, [cropBounds, gl, scene]);
 
+  // ── Snapshot the current scene at a fixed 45° view (used as the
+  // dashboard card thumbnail). Caller passes a callback in event.detail.done.
+  // We temporarily reposition the camera, render once, grab the JPEG data
+  // URL, then restore the camera so the user doesn't notice.
+  useEffect(() => {
+    const onSnapshot = (e) => {
+      const done = e.detail?.done;
+      if (typeof done !== 'function') return;
+      const box = modelBoxRef.current;
+      if (!box) { done(null); return; }
+      const ctr = box.getCenter(new THREE.Vector3());
+      const sz  = box.getSize(new THREE.Vector3());
+      // 45° elevation, 45° azimuth around the model. Project AABB corners
+      // onto the camera plane to get a tight fit, then pull in slightly so
+      // the dashboard thumbnail crops to the model rather than empty sky.
+      const dir = new THREE.Vector3(1, 1, 1).normalize();
+      const fovV = (camera.fov * Math.PI / 180);
+      const fovH = 2 * Math.atan(Math.tan(fovV / 2) * camera.aspect);
+      const fwd   = dir.clone().multiplyScalar(-1);
+      const right = new THREE.Vector3(0, 1, 0).cross(fwd).normalize();
+      const up    = fwd.clone().cross(right).normalize();
+      let halfW = 0, halfH = 0;
+      for (let xi = -1; xi <= 1; xi += 2)
+      for (let yi = -1; yi <= 1; yi += 2)
+      for (let zi = -1; zi <= 1; zi += 2) {
+        const corner = new THREE.Vector3(
+          xi * sz.x * 0.5,
+          yi * sz.y * 0.5,
+          zi * sz.z * 0.5,
+        );
+        halfW = Math.max(halfW, Math.abs(corner.dot(right)));
+        halfH = Math.max(halfH, Math.abs(corner.dot(up)));
+      }
+      const distH = halfH / Math.tan(fovV / 2);
+      const distW = halfW / Math.tan(fovH / 2);
+      // 0.92 = ~8% zoom-in past the perfect fit so the model fills the card.
+      const dist  = Math.max(distH, distW) * 0.92;
+      const savedPos    = camera.position.clone();
+      const savedTarget = controlsRef.current?.target.clone();
+      camera.position.copy(ctr).addScaledVector(dir, dist);
+      camera.lookAt(ctr);
+      camera.updateProjectionMatrix();
+      // Render once into the (preserved) drawing buffer, then grab pixels.
+      gl.render(scene, camera);
+      let url = null;
+      try { url = gl.domElement.toDataURL('image/jpeg', 0.7); } catch (err) { console.warn('[snapshot] toDataURL failed:', err); }
+      // Restore camera + controls so the user doesn't see the swing.
+      camera.position.copy(savedPos);
+      if (savedTarget && controlsRef.current) {
+        controlsRef.current.target.copy(savedTarget);
+        controlsRef.current.update();
+      }
+      gl.render(scene, camera);
+      done(url);
+    };
+    window.addEventListener('project:snapshot', onSnapshot);
+    return () => window.removeEventListener('project:snapshot', onSnapshot);
+  }, [gl, camera, scene]);
+
   // ── Camera control event handlers
   useEffect(() => {
     const handlers = {
@@ -164,7 +235,9 @@ function SceneContents() {
       // (looking straight down) around the current target/distance — no
       // reframe. Use the rotation pad to glide back from there.
       'cam:top':    () => animatePolar(camera, controlsRef.current, camAnimRef, 0.001),
-      'cam:persp':  () => fitCameraToBox(camera, controlsRef.current, regionBox(modelBoxRef.current, store.get().cropBounds), 'persp'),
+      // "45°" tweens the polar (vertical) angle to 45° from straight up,
+      // matching how "Top" animates without changing distance / target.
+      'cam:persp':  () => animatePolar(camera, controlsRef.current, camAnimRef, Math.PI / 4),
       'cam:rotate': (e) => { camAnimRef.current = null; rotateOrbit(camera, controlsRef.current, e.detail); },
       // Cardinal preset: tween the camera azimuth to N / E / S / W while
       // keeping the current tilt + distance + target. Lets the user snap
@@ -1393,10 +1466,18 @@ function Panel({ panel, roofId, index }) {
   };
   if (!visible) return null;
   const transparent = opacity < 1;
+  // Defensive: panel.pos / panel.quat may have been round-tripped through
+  // IndexedDB (structured-clone strips THREE.* prototypes), in which case
+  // they're plain {x,y,z[,w]} objects without `.toArray()`. Coerce here
+  // so no upstream code path can crash this render.
+  const p = panel.pos  || {};
+  const q = panel.quat || {};
+  const posArr  = [p.x ?? 0, p.y ?? 0, p.z ?? 0];
+  const quatArr = [q.x ?? 0, q.y ?? 0, q.z ?? 0, q.w ?? 1];
   return (
     <mesh
-      position={panel.pos.toArray()}
-      quaternion={panel.quat.toArray()}
+      position={posArr}
+      quaternion={quatArr}
       onClick={onClick}
     >
       <boxGeometry args={[panel.w, 0.04, panel.h]} />
@@ -1434,19 +1515,45 @@ function fitCameraToBox(camera, controls, box, kind) {
     camera.up.set(0, 0, -1);
     camera.position.set(ct.x, dist, ct.z);
   } else {
-    // 45° down from top, looking from front-right corner
+    // 45° down from top, looking from front-right corner.
+    // Fit by projecting the AABB onto the camera's view plane and sizing
+    // distance to the larger of the projected width/height — tighter than
+    // a bounding-sphere fit, which was overshooting on elongated models.
     const phi = Math.PI / 4;          // polar angle from +Y
     const theta = Math.PI / 4;        // azimuth around Y
     const sinP = Math.sin(phi);
-    // Distance: fit bounding sphere with 15% padding using vertical FOV
-    const radius = sz.length() * 0.5;
-    const dist   = (radius * 1.15) / Math.sin(fovV / 2);
+    const dir = new THREE.Vector3(
+      sinP * Math.sin(theta),
+      Math.cos(phi),
+      sinP * Math.cos(theta),
+    ).normalize();
+    // Build a camera-aligned basis: forward = -dir, up ≈ world Y, right = up × forward.
+    const fwd   = dir.clone().multiplyScalar(-1);
+    const right = new THREE.Vector3(0, 1, 0).cross(fwd).normalize();
+    const up    = fwd.clone().cross(right).normalize();
+    // Project every AABB corner onto (right, up) to get the screen-space half-extents.
+    let halfW = 0, halfH = 0;
+    const c = ct;
+    for (let xi = -1; xi <= 1; xi += 2)
+    for (let yi = -1; yi <= 1; yi += 2)
+    for (let zi = -1; zi <= 1; zi += 2) {
+      const corner = new THREE.Vector3(
+        c.x + xi * sz.x * 0.5,
+        c.y + yi * sz.y * 0.5,
+        c.z + zi * sz.z * 0.5,
+      ).sub(c);
+      halfW = Math.max(halfW, Math.abs(corner.dot(right)));
+      halfH = Math.max(halfH, Math.abs(corner.dot(up)));
+    }
+    const distH = halfH / Math.tan(fovV / 2);
+    const distW = halfW / Math.tan(fovH / 2);
+    const dist  = Math.max(distH, distW) * 1.05; // 5% breathing room
     controls.target.copy(ct);
     camera.up.set(0, 1, 0);
     camera.position.set(
-      ct.x + dist * sinP * Math.sin(theta),
-      ct.y + dist * Math.cos(phi),
-      ct.z + dist * sinP * Math.cos(theta),
+      ct.x + dist * dir.x,
+      ct.y + dist * dir.y,
+      ct.z + dist * dir.z,
     );
   }
   camera.lookAt(controls.target);
@@ -1575,28 +1682,38 @@ function panCamera(camera, controls, dir) {
 // objects so we clone() them; mask is a plain [u,v][] array so we copy by
 // shape. Panels are intentionally dropped — templates are the BASE only.
 function cloneRoofForTemplate(roof) {
-  const p = roof.plane;
+  const p = roof.plane || {};
+  const v = (o) => {
+    const x = o || {};
+    return new THREE.Vector3(x.x ?? 0, x.y ?? 0, x.z ?? 0);
+  };
   const cloned = {
     id: roof.id,
     panels: [],
     erased: (roof.erased ?? []).map(e => ({ ...e })),
     plane: {
       ...p,
-      centre: p.centre?.clone?.() ?? p.centre,
-      normal: p.normal?.clone?.() ?? p.normal,
-      u:      p.u?.clone?.()      ?? p.u,
-      v:      p.v?.clone?.()      ?? p.v,
+      centre: v(p.centre),
+      normal: v(p.normal),
+      u:      v(p.u),
+      v:      v(p.v),
       mask:   Array.isArray(p.mask) ? p.mask.map(([a, b]) => [a, b]) : p.mask,
     },
   };
   return cloned;
 }
 
-// Deep-clone a single panel placement (Vector3 + Quaternion are mutable).
+// Deep-clone a single panel placement. Always rebuilds real
+// THREE.Vector3 / THREE.Quaternion instances so it works for both
+// freshly-generated panels and ones that have been round-tripped through
+// IndexedDB (structured-clone strips the prototypes, leaving plain
+// `{x,y,z[,w]}` objects that crash on `.toArray()`).
 function clonePanel(panel) {
+  const p = panel.pos  || {};
+  const q = panel.quat || {};
   return {
-    pos:  panel.pos?.clone?.()  ?? panel.pos,
-    quat: panel.quat?.clone?.() ?? panel.quat,
+    pos:  new THREE.Vector3(p.x ?? 0, p.y ?? 0, p.z ?? 0),
+    quat: new THREE.Quaternion(q.x ?? 0, q.y ?? 0, q.z ?? 0, q.w ?? 1),
     w: panel.w, h: panel.h,
   };
 }

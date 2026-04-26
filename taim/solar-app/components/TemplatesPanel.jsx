@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { store, useStore } from '@/lib/store';
 import { PANEL_TYPES } from '@/lib/catalog';
 import { btnStyle } from './SolarPlanner';
@@ -37,7 +37,15 @@ function TemplatesOverview() {
   const roofs        = useStore(s => s.roofs);
   const selectedIds  = useStore(s => s.selectedRoofIds);
   const drafts       = useStore(s => s.drafts);
-  const [name, setName] = useState('');
+  const pendingProjectName = useStore(s => s.pendingProjectName);
+  const intake             = useStore(s => s.intake);
+  // Pre-seed the template name with the project name carried over from the
+  // import screen / Tectum intake form, so saving "Template for client X"
+  // is a single click for the most common workflow.
+  const [name, setName] = useState(pendingProjectName || '');
+  useEffect(() => {
+    if (pendingProjectName && !name) setName(pendingProjectName);
+  }, [pendingProjectName]); // eslint-disable-line react-hooks/exhaustive-deps
   const [expanded, setExpanded] = useState(() => new Set(activeTplId ? [activeTplId] : []));
   const toggleExp = (id) => setExpanded(prev => {
     const next = new Set(prev);
@@ -66,6 +74,7 @@ function TemplatesOverview() {
             if (!subsetCount) return;
             dispatch('template:save', { name });
             setName('');
+            store.set({ pendingProjectName: null });
           }}
           disabled={subsetCount === 0}
           style={{

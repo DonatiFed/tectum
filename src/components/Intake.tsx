@@ -365,7 +365,33 @@ export function Intake({ onComplete }: IntakeProps) {
         </div>
 
         <div className="flex justify-end mt-8">
-          <Button onClick={() => onComplete(data)} className="gap-2 h-11 px-8 rounded-xl text-[15px] font-semibold">
+          <Button onClick={() => {
+            // Hand the customer off to the Tectum Roof Planner (taim app).
+            // Each customer = one Project = one Template inside the planner.
+            // The planner reads these query params on its Import screen and
+            // pre-fills the project name so the user only needs to upload
+            // the customer's 3D roof model and start designing.
+            try {
+              sessionStorage.setItem('tectum.intake.v1', JSON.stringify(data));
+            } catch {}
+            const sp = new URLSearchParams({
+              client: data.name || '',
+              email: data.email || '',
+              address: data.address || '',
+              postal: data.postalCode || '',
+              bill: String(data.monthlyBill || ''),
+              roofType: data.roofType || '',
+              orientation: data.orientation || '',
+            });
+            const plannerOrigin = (typeof window !== 'undefined' && window.location.hostname)
+              ? `${window.location.protocol}//${window.location.hostname}:3000`
+              : 'http://localhost:3000';
+            window.location.href = `${plannerOrigin}/?${sp.toString()}`;
+            // Keep the legacy in-app preview path as a fallback so dev can
+            // still reach the original Planner component if the planner
+            // server is not running.
+            // onComplete(data);
+          }} className="gap-2 h-11 px-8 rounded-xl text-[15px] font-semibold">
             Generate design
             <ArrowRight className="w-5 h-5" />
           </Button>

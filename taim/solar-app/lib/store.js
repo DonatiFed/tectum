@@ -20,6 +20,26 @@ export const store = createStore({
   loadProgress: 0,             // 0..1
   loaded: false,
 
+  // Sales-funnel context carried over from the Tectum intake page (src/).
+  // Shape: { name, email, address, postalCode, monthlyBill, roofType, orientation }
+  // Null when the planner was opened directly without going through intake.
+  intake: null,
+  // Suggested template name carried over from the import screen / intake.
+  // Pre-fills the "Save as Template" input on the Templates tab so saving
+  // the first template for this project is one click.
+  pendingProjectName: null,
+
+  // Persistence — id of the current project record in IndexedDB. Set when
+  // the user imports a new model OR resumes a saved project from the
+  // dashboard. The auto-saver writes templates / drafts / roofs back under
+  // this id whenever they change.
+  currentProjectId: null,
+  // Set when resuming a project from the dashboard. Scene.jsx finishes
+  // loading the GLB → if `_resume` is set, it hydrates roofs/templates/
+  // drafts from it instead of resetting them, then clears the field.
+  // Shape: { roofs, templates, drafts, activeTemplateId?, activeDraftId? }
+  _resume: null,
+
   mode: 'orbit',               // 'orbit' | 'crop' | 'select' | 'polygon' | 'pick' | 'erase'
   cropBounds: null,            // {minX, maxX, minZ, maxZ} world coords
   roofs: [],                   // [{ id, plane, panels, erased: [{u1,v1,u2,v2}] }]
