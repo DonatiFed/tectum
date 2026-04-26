@@ -1,12 +1,12 @@
 """
 Reonic Challenge — Datasheet URL Finder & Auto-Extractor v5.0 (Discovery Mode)
 ==============================================================================
-Focus: Generare un JSON pulito e minimale + Scoperta di nuovi prodotti.
+Focus: Generate a clean, minimal JSON + Discovery of new products.
 
-Novità v5.0:
-Aggiunto il flag `--discover`. Se usato, lo script cercherà su internet
-le ultime news di settore per i brand noti, estrarrà i nuovi codici modello,
-li aggiungerà al JSON e cercherà automaticamente i loro datasheet.
+What's new in v5.0:
+Added the `--discover` flag. When used, the script searches the internet
+for the latest industry news for known brands, extracts new model codes,
+adds them to the JSON, and automatically searches for their datasheets.
 """
 
 import os
@@ -63,12 +63,12 @@ def _is_safe_url(url: str) -> bool:
             pass  # mixed IPv4/IPv6 comparison
     return True
 
-# Configurazione
+# Configuration
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "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")
 CATALOGUE_FILE = "catalogue.json"
 RATE_LIMIT     = 1.0
 
-# Domini ufficiali e Keywords
+# Official domains and keywords
 OFFICIAL_DOMAINS = [
     "huawei.com", "solar.huawei.com", "ecoflow.com", "saj-electric.com",
     "solaredge.com", "enphase.com", "vaillant.com", "vaillant.de",
@@ -93,66 +93,66 @@ MODEL_BRAND_MAP = {
 
 
 # =============================================================================
-# 1. LOGICA DI SCOPERTA NUOVI PRODOTTI (DISCOVERY)
+# 1. NEW PRODUCT DISCOVERY LOGIC
 # =============================================================================
 
 def discover_latest_releases(client, products):
-    """Cerca le ultime novità di mercato e aggiunge i nuovi modelli al catalogo."""
+    """Search for the latest market releases and add new models to the catalogue."""
     current_year = datetime.now().year
-    # Set di modelli già noti (per evitare duplicati, in minuscolo per confronto sicuro)
+    # Set of already-known models (lower-cased for safe deduplication)
     known_models = {p.get("model", "").lower() for p in products}
     
     brands_to_monitor = ["Huawei", "Enphase", "SolarEdge", "Fronius", "Trina", "SMA"]
     new_discoveries = []
 
-    print(f"\n--- AVVIO FASE DI DISCOVERY ({current_year}) ---")
+    print(f"\n--- STARTING DISCOVERY PHASE ({current_year}) ---")
     
     for brand in brands_to_monitor:
-        # Cerca annunci, press release o notizie sui nuovi prodotti dell'anno in corso
+        # Search for announcements, press releases, or news about new products this year
         query = f'"{brand}" new solar product release announcements {current_year}'
-        print(f"Scansione web per novità {brand}...")
+        print(f"Scanning web for new releases from {brand}...")
         
         try:
-            # Ricerca avanzata per avere gli snippet di testo più lunghi
+            # Advanced search to get longer text snippets
             res = client.search(query=query, search_depth="advanced", max_results=3)
             time.sleep(RATE_LIMIT)
             
             for result in res.get("results", []):
                 content = result.get("content", "")
                 
-                # REGEX: Cerca parole che sembrano codici prodotto tecnici.
-                # Inizia con 2+ lettere MAIUSCOLE, seguite da Numeri, ed eventuali trattini.
-                # Es. "SUN2000", "IQ8-PLUS", "SE10K"
+                # REGEX: Look for tokens that look like technical product codes.
+                # Starts with 2+ UPPERCASE letters followed by digits and optional hyphens.
+                # e.g. "SUN2000", "IQ8-PLUS", "SE10K"
                 potential_models = re.findall(r'\b[A-Z]{2,}[0-9]+(?:-[A-Z0-9]+)*\b', content)
                 
                 for mod in set(potential_models):
-                    # Filtriamo falsi positivi comuni come ISO9001 o anni attaccati a lettere (Q12026)
+                    # Filter common false positives like ISO9001 or year-suffix tokens (Q12026)
                     if len(mod) > 4 and "ISO" not in mod and str(current_year) not in mod:
                         if mod.lower() not in known_models:
-                            print(f"  🌟 NUOVO MODELLO SCOPERTO! {brand} {mod}")
+                            print(f"  🌟 NEW MODEL DISCOVERED! {brand} {mod}")
                             new_discoveries.append({
-                                "id": str(uuid.uuid4())[:8], # Genera un ID univoco breve
-                                "category": "unknown",       # Categoria da definire
+                                "id": str(uuid.uuid4())[:8], # Generate a short unique ID
+                                "category": "unknown",       # Category to be determined
                                 "brand": brand,
                                 "model": mod,
-                                "sources": [result.get("url")] # Salviamo la fonte della news
+                                "sources": [result.get("url")] # Save the news source URL
                             })
                             known_models.add(mod.lower())
                             
         except Exception as e:
-            print(f"  Errore durante la discovery di {brand}: {e}")
+            print(f"  Error during discovery for {brand}: {e}")
 
-    # Aggiungi i nuovi modelli alla lista dei prodotti
+    # Add the newly discovered models to the product list
     if new_discoveries:
-        print(f"Aggiunti {len(new_discoveries)} nuovi prodotti al catalogo per l'arricchimento.")
+        print(f"Added {len(new_discoveries)} new products to the catalogue for enrichment.")
         products.extend(new_discoveries)
     else:
-        print("Nessuna nuova uscita rilevata al momento.")
+        print("No new releases detected at this time.")
         
     return products
 
 # =============================================================================
-# 2. LOGICA DI ESTRAZIONE AUTOMATICA (REGEX)
+# 2. AUTOMATIC EXTRACTION LOGIC (REGEX)
 # =============================================================================
 
 def auto_extract_power_capacity(model_name):
@@ -199,7 +199,7 @@ def auto_extract_weight(text):
 # =============================================================================
 
 def infer_modules(model_name):
-    """LUNA2000-10kWh -> 2 moduli da 5kWh."""
+    """LUNA2000-10kWh -> 2 modules of 5 kWh."""
     m = re.search(r'(\d+[\.,]?\d*)\s*kwh', model_name, re.IGNORECASE)
     if m:
         kwh = float(m.group(1).replace(',', '.'))
@@ -209,8 +209,8 @@ def infer_modules(model_name):
 
 def extract_middledot_nth(text, label_pattern, unit_pattern, n):
     """
-    Estrae l'ennesimo valore da righe con separatore · (middledot Huawei).
-    Es: "Battery usable energy · 5 kWh · 10 kWh · 15 kWh" con n=2 -> 10.0
+    Extract the n-th value from lines using the · separator (Huawei middledot format).
+    e.g. "Battery usable energy · 5 kWh · 10 kWh · 15 kWh" with n=2 -> 10.0
     """
     pattern = rf"{label_pattern}[^\n·]*·(.+)"
     m = re.search(pattern, text, re.IGNORECASE)
@@ -232,8 +232,8 @@ def extract_middledot_nth(text, label_pattern, unit_pattern, n):
 
 def extract_specs_from_text(text, category, model_name=""):
     """
-    Estrae tutte le specifiche tecniche dal testo grezzo del PDF.
-    Gestisce 4 categorie: battery, heatpump, inverter, panel.
+    Extract all technical specifications from raw PDF text.
+    Handles 4 categories: battery, heatpump, inverter, panel.
     """
     specs = {}
     t = text.lower()
@@ -368,7 +368,7 @@ def extract_specs_from_text(text, category, model_name=""):
     return specs
 
 # =============================================================================
-# 3. LOGICA DI RICERCA URL
+# 3. URL SEARCH LOGIC
 # =============================================================================
 
 def is_url_reachable(url):
@@ -434,7 +434,7 @@ def find_best_datasheet(client, product):
     return None, None
 
 # =============================================================================
-# ESECUZIONE PRINCIPALE E CREAZIONE JSON PULITO
+# MAIN EXECUTION AND CLEAN JSON GENERATION
 # =============================================================================
 
 def process_product(client, product):
@@ -442,7 +442,7 @@ def process_product(client, product):
     model = product.get('model', '')
     if brand == "Unknown": brand = detect_brand(model, product.get("sources", []))
 
-    print(f"Analisi: {brand} {model}")
+    print(f"Processing: {brand} {model}")
     url, stype = find_best_datasheet(client, product)
     
     clean_product = {
@@ -457,10 +457,10 @@ def process_product(client, product):
     power_key, power_val = auto_extract_power_capacity(model)
     if power_key:
         clean_product["specs"][power_key] = power_val
-        print(f"      ⚡ Estratto ({power_key}): {power_val}")
+        print(f"      ⚡ Extracted ({power_key}): {power_val}")
 
     if url:
-        print(f"      ✅ URL Verificato: {url[:60]}...")
+        print(f"      ✅ Verified URL: {url[:60]}...")
         pdf_text = extract_text_from_pdf_stream(url) if stype == "PDF" else ""
         if pdf_text:
             # Advanced extraction for all fields by category
@@ -468,23 +468,23 @@ def process_product(client, product):
             extracted = extract_specs_from_text(pdf_text, category, model)
             if extracted:
                 clean_product["specs"].update(extracted)
-                print(f"      📊 Estratte {len(extracted)} specifiche: {list(extracted.keys())}")
+                print(f"      📊 Extracted {len(extracted)} specs: {list(extracted.keys())}")
 
             # Legacy extractors for dimensions/weight fallback
             if "dimensions" not in clean_product["specs"]:
                 dims = auto_extract_dimensions(pdf_text)
                 if dims:
                     clean_product["specs"]["dimensions"] = dims
-                    print(f"      📏 Dimensioni: {dims}")
+                    print(f"      📏 Dimensions: {dims}")
             if "weight_kg" not in clean_product["specs"]:
                 weight = auto_extract_weight(pdf_text)
                 if weight:
                     clean_product["specs"]["weight_kg"] = weight
-                    print(f"      ⚖️ Peso: {weight} kg")
+                    print(f"      ⚖️ Weight: {weight} kg")
         else:
-            print(f"      ⚠️  PDF non leggibile (immagine o protetto) — salvo URL per review")
+            print(f"      ⚠️  PDF not readable (image-based or protected) — saving URL for manual review")
     else:
-        print(f"      ❌ Nessun Datasheet trovato — review manuale necessaria")
+        print(f"      ❌ No datasheet found — manual review required")
 
     clean_product["_enriched_at"] = datetime.now().isoformat()
     clean_product["_needs_manual"] = [
@@ -495,29 +495,29 @@ def process_product(client, product):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--test",    action="store_true", help="Test su un solo elemento")
-    parser.add_argument("--all",     action="store_true", help="Re-check di tutti i prodotti")
-    parser.add_argument("--discover",action="store_true", help="Cerca nuovi modelli sul web")
+    parser.add_argument("--test",    action="store_true", help="Test on a single item")
+    parser.add_argument("--all",     action="store_true", help="Re-check all products")
+    parser.add_argument("--discover",action="store_true", help="Search for new models on the web")
     parser.add_argument("--rerun",   action="store_true",
-                        help="Re-esegue l'estrazione su tutti i prodotti verified=true per trovare specs aggiuntive")
+                        help="Re-run extraction on all verified=true products to find additional specs")
     args = parser.parse_args()
 
     client = TavilyClient(api_key=TAVILY_API_KEY)
 
     if args.test:
-        # LOGICA TEST
+        # TEST LOGIC
         file_to_test = "test_output.json" if os.path.exists("test_output.json") else CATALOGUE_FILE
         if not os.path.exists(file_to_test): return
         with open(file_to_test, "r") as f: data = json.load(f)
         product = data[0] if isinstance(data, list) else data.get("products", [data])[0] if "products" in data else data
         
-        print("=== MODALITÀ TEST ===")
+        print("=== TEST MODE ===")
         cleaned_product = process_product(client, product)
         with open("test_enriched.json", "w") as f: json.dump(cleaned_product, f, indent=2, ensure_ascii=False)
-        print("\nRisultato salvato in test_enriched.json!")
+        print("\nResult saved to test_enriched.json!")
         return
 
-    # LOGICA STANDARD
+    # STANDARD LOGIC
     if not os.path.exists(CATALOGUE_FILE):
         catalogue = {"products": []}
     else:
@@ -530,9 +530,9 @@ def main():
     if args.rerun:
         targets = [p for p in products if p.get("verified") is True or p.get("datasheet_url")]
         if not targets:
-            print("Nessun prodotto verificato trovato per il rerun.")
+            print("No verified products found for rerun.")
         else:
-            print(f"\n=== RERUN: {len(targets)} prodotti verificati ===\n")
+            print(f"\n=== RERUN: {len(targets)} verified products ===\n")
             for i, p in enumerate(targets):
                 print(f"[{i+1}/{len(targets)}] ", end="")
                 updated = process_product(client, p)
@@ -548,28 +548,28 @@ def main():
             with open(CATALOGUE_FILE, "w") as f:
                 json.dump({"products": products}, f, indent=2, ensure_ascii=False)
             added = sum(1 for p in products if len(p.get("specs", {})) > 2)
-            print(f"\nRerun completato. {added} prodotti con specs aggiornate.")
+            print(f"\nRerun complete. {added} products with updated specs.")
         return
 
-    # 1. Fase Opzionale: Discovery
+    # 1. Optional Phase: Discovery
     if args.discover:
         products = discover_latest_releases(client, products)
 
-    # 2. Fase di Arricchimento
+    # 2. Enrichment Phase
     targets = [p for p in products if "datasheet_url" not in p] if not args.all else products
     
     if not targets:
-        print("\nTutti i prodotti nel catalogo sono già stati arricchiti.")
-        # Salviamo comunque nel caso la discovery abbia aggiunto solo roba che è fallita prima
+        print("\nAll products in the catalogue have already been enriched.")
+        # Save anyway in case discovery added items that previously failed
         with open(CATALOGUE_FILE, "w") as f: json.dump({"products": products}, f, indent=2, ensure_ascii=False)
         return
 
-    print(f"\nInizio arricchimento di {len(targets)} componenti...\n")
+    print(f"\nStarting enrichment of {len(targets)} components...\n")
     for i, p in enumerate(targets):
         print(f"[{i+1}/{len(targets)}] ", end="")
         updated_clean_product = process_product(client, p)
         
-        # Se era un prodotto nuovo o esistente, aggiorna la lista
+        # Update the list whether this was a new or existing product
         found = False
         for j, orig in enumerate(products):
             if orig.get("id") == updated_clean_product.get("id"):
@@ -583,8 +583,8 @@ def main():
         json.dump({"products": products}, f, indent=2, ensure_ascii=False)
 
     ok = sum(1 for p in products if p.get("datasheet_url"))
-    print(f"\n--- REPORT FINALE ---")
-    print(f"Datasheet verificati e JSON puliti: {ok}/{len(products)}")
+    print(f"\n--- FINAL REPORT ---")
+    print(f"Verified datasheets and clean JSON: {ok}/{len(products)}")
 
 if __name__ == "__main__":
     main()
