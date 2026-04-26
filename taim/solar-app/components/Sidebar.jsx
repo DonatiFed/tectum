@@ -1,11 +1,13 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import { store, useStore } from '@/lib/store';
+import { deriveReportData } from '@/lib/reportData';
 import { specificYield } from '@/lib/solar';
 import { btnStyle } from './SolarPlanner';
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const mode       = useStore(s => s.mode);
   const roofs      = useStore(s => s.roofs);
   const activeId   = useStore(s => s.activeRoofId);
@@ -21,6 +23,32 @@ export default function Sidebar() {
   }));
 
   const totalArea = roofs.reduce((s, r) => s + r.plane.area, 0).toFixed(1);
+
+  const handleGenerateReport = async () => {
+    setGenerating(true);
+    try {
+      // Capture the current 3D view before any async work moves the frame.
+      // preserveDrawingBuffer: true (set in Scene.jsx) keeps the pixels alive.
+      const canvas = document.querySelector('canvas');
+      const screenshot = canvas ? canvas.toDataURL('image/jpeg', 0.88) : null;
+
+      const { generateReport } = await import('@/lib/generateReport');
+      const blob = await generateReport(store.get(), screenshot);
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `tectum-solar-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[report]', err);
+      alert('Could not generate report: ' + err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <>
@@ -176,6 +204,22 @@ export default function Sidebar() {
             style={{ ...btnStyle('danger'), flex: 1, minWidth: 100 }}
           >Clear All</button>
         </div>
+
+        <button
+          disabled={roofs.length === 0 || generating}
+          onClick={handleGenerateReport}
+          style={{
+            ...btnStyle('secondary'),
+            width: '100%',
+            opacity: roofs.length > 0 && !generating ? 1 : 0.4,
+            cursor: roofs.length > 0 && !generating ? 'pointer' : 'not-allowed',
+            background: '#1a3320',
+            border: '1px solid #2d5c3a',
+            color: generating ? '#888' : '#4caf82',
+            fontWeight: 700,
+          }}
+          title="Generate a PDF report with the technical and economic breakdown for this installation"
+        >{generating ? 'Calling pipeline...' : 'Generate Report'}</button>
       </aside>
     </>
   );
