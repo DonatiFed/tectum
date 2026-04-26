@@ -222,6 +222,7 @@ function DraftEditor() {
   const clipboard    = useStore(s => s.panelClipboard);
   const panelsVisible = useStore(s => s.panelsVisible);
   const panelOpacity  = useStore(s => s.panelOpacity);
+  const selectedPanelKeys = useStore(s => s.selectedPanelKeys);
   const [draftName, setDraftName] = useState('');
 
   const isCustom = panelIdx === -1;
@@ -276,6 +277,13 @@ function DraftEditor() {
           touching the locked template.
         </div>
       </Section>
+
+      {selectedPanelKeys.length === 1 && (
+        <>
+          <Divider />
+          <SelectedPanelControls />
+        </>
+      )}
 
       <Divider />
 
@@ -509,6 +517,51 @@ function DraftEditor() {
         >💾 Save as new draft</button>
       </Section>
     </>
+  );
+}
+
+// ── Single-panel controls (shown when exactly one panel is selected) ───
+function SelectedPanelControls() {
+  const dispatch = (n, detail) => window.dispatchEvent(new CustomEvent(n, detail !== undefined ? { detail } : undefined));
+  const rotateBtn = (delta, label) => (
+    <button
+      onClick={() => dispatch('panel:rotate', { delta })}
+      style={{
+        ...btnStyle('secondary'), flex: 1, minWidth: 0,
+        fontWeight: 700,
+      }}
+      title={`Rotate panel ${delta > 0 ? '+' : ''}${delta}° around the roof normal`}
+    >{label}</button>
+  );
+  return (
+    <Section title="Selected panel">
+      <div style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: 1.45 }}>
+        Drag the panel on the roof to reposition it · use the buttons below
+        to rotate it on the spot.
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {rotateBtn(-15, '↺ −15°')}
+        {rotateBtn(-5,  '↺ −5°')}
+        {rotateBtn(+5,  '↻ +5°')}
+        {rotateBtn(+15, '↻ +15°')}
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          onClick={() => dispatch('panel:deleteSelected')}
+          style={{
+            ...btnStyle('secondary'), flex: 1,
+            background: '#3b0d0d', border: '1px solid #ff7070', color: '#fecaca',
+            fontWeight: 700,
+          }}
+          title="Delete this panel"
+        >🗑 Delete</button>
+        <button
+          onClick={() => store.set({ selectedPanelKeys: [], hint: 'Panel deselected' })}
+          style={{ ...btnStyle('secondary'), flex: 1 }}
+          title="Deselect — return to the layout-wide settings"
+        >✕ Deselect</button>
+      </div>
+    </Section>
   );
 }
 
