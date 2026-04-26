@@ -6,7 +6,10 @@ import { specificYield } from '../lib/solar';
 import { btnStyle } from './SolarPlanner';
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(true);
+  const open = useStore(s => s.sidebarOpen);
+  const setOpen = (v) => store.set(typeof v === 'function'
+    ? (s) => ({ sidebarOpen: v(s.sidebarOpen) })
+    : { sidebarOpen: v });
   const [generating, setGenerating] = useState(false);
   const mode       = useStore(s => s.mode);
   const roofs      = useStore(s => s.roofs);

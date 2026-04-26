@@ -92,10 +92,13 @@ class OfferRequest(BaseModel):
     has_solar:                       bool   = False
     existing_solar_kwp:              Optional[float] = None
     has_storage:                     bool   = False
+    existing_battery_kwh:            Optional[float] = None
     has_wallbox:                     bool   = False
     heating_existing_type:           str    = "Gas"
     heating_existing_heating_demand_wh: Optional[float] = None
+    wants_heatpump:                  bool   = True
     roof_type:                       str    = "Concrete Tile Roof"
+    orientation:                     str    = "S"
     max_modules:                     int    = Field(..., gt=0)
     preferred_brand:                 str    = "auto"
     budget_cap_eur:                  Optional[float] = None
@@ -121,7 +124,7 @@ def config():
         "brand_cost_factor": DEFAULTS["brand_cost_factor"],
         "brand_prior": DEFAULTS["brand_prior"],
         "cost_levers": {
-            "base_pv_cost_per_kwp":      {"default": DEFAULTS["base_pv_cost_per_kwp"],      "unit": "€/kWp",  "min": 500,  "max": 3000},
+            "base_pv_cost_per_kwp":      {"default": DEFAULTS["base_pv_cost_per_kwp"],      "unit": "€/kWp",  "min": 300,  "max": 1500},
             "base_battery_cost_per_kwh": {"default": DEFAULTS["base_battery_cost_per_kwh"], "unit": "€/kWh",  "min": 200,  "max": 1200},
             "wallbox_cost":              {"default": DEFAULTS["wallbox_cost"],              "unit": "€",      "min": 500,  "max": 3000},
             "service_cost_with_pv":      {"default": DEFAULTS["service_cost_with_pv"],      "unit": "€",      "min": 500,  "max": 5000},

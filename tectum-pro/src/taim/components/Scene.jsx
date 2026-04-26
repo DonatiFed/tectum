@@ -886,21 +886,34 @@ function SceneContents() {
         panelsByRoof[r.id]    = (r.panels ?? []).map(clonePanel);
         panelSpecByRoof[r.id] = r.panelSpec ?? null;
       }
+      const settings = {
+        panelTypeIdx: s.panelTypeIdx, panelScale: s.panelScale,
+        panelGap: s.panelGap, panelAngleDeg: s.panelAngleDeg,
+        panelAutoAlign: s.panelAutoAlign,
+        panelSurfaceOffset: s.panelSurfaceOffset,
+        panelLandscape: s.panelLandscape,
+        panelTiltDeg:   s.panelTiltDeg,
+        customPanel: { ...s.customPanel },
+      };
+      // If there's already an active draft, treat this as an autosave/update
+      // instead of pushing a brand-new draft entry.
+      if (s.activeDraftId && s.drafts.some(d => d.id === s.activeDraftId)) {
+        store.set(st => ({
+          drafts: st.drafts.map(d => d.id === st.activeDraftId
+            ? { ...d, name: name || d.name, settings, panelsByRoof, panelSpecByRoof, updatedAt: Date.now() }
+            : d
+          ),
+          hint: `Saved draft updates`,
+        }));
+        return;
+      }
       const id = 'draft-' + Date.now().toString(36);
       const draft = {
         id,
         templateId: s.activeTemplateId,
         name: name || `Draft ${s.drafts.filter(d => d.templateId === s.activeTemplateId).length + 1}`,
         createdAt: Date.now(),
-        settings: {
-          panelTypeIdx: s.panelTypeIdx, panelScale: s.panelScale,
-          panelGap: s.panelGap, panelAngleDeg: s.panelAngleDeg,
-          panelAutoAlign: s.panelAutoAlign,
-          panelSurfaceOffset: s.panelSurfaceOffset,
-          panelLandscape: s.panelLandscape,
-          panelTiltDeg:   s.panelTiltDeg,
-          customPanel: { ...s.customPanel },
-        },
+        settings,
         panelsByRoof,
         panelSpecByRoof,
       };
@@ -1054,11 +1067,110 @@ function SceneContents() {
     const onPanelExitDropMode = () => {
       if (store.get().mode === 'panel-drop') store.set({ mode: 'orbit', hint: 'Drop mode off' });
     };
+    // Rotate the currently-selected single panel by `delta` degrees around
+    // its host roof's plane normal. Quaternion math: q_new = q_axis * q_current
+    // applies the rotation in world space, which visually spins the panel
+    // on the roof.
+    const onPanelRotate = (e) => {
+      const delta = +(e?.detail?.delta ?? 0);
+      if (!delta) return;
+      const s = store.get();
+      const k = s.selectedPanelKeys[0];
+      if (!k) return;
+      const [roofId, idxStr] = k.split('#');
+      const index = +idxStr;
+      const roof = s.roofs.find(r => r.id === roofId);
+      const panel = roof?.panels?.[index];
+      if (!panel) return;
+      const n = roof.plane.normal || {};
+      const axis = new THREE.Vector3(n.x ?? 0, n.y ?? 1, n.z ?? 0).normalize();
+      const dq = new THREE.Quaternion().setFromAxisAngle(axis, THREE.MathUtils.degToRad(delta));
+      const q  = panel.quat || {};
+      const cur = new THREE.Quaternion(q.x ?? 0, q.y ?? 0, q.z ?? 0, q.w ?? 1);
+      const next = dq.multiply(cur);
+      store.set(st => ({
+        roofs: st.roofs.map(r => r.id !== roofId ? r : ({
+          ...r,
+          panels: r.panels.map((p, i) => i !== index ? p : ({
+            ...p,
+            quat: { x: next.x, y: next.y, z: next.z, w: next.w },
+          })),
+        })),
+        hint: `Rotated panel ${delta > 0 ? '+' : ''}${delta.toFixed(0)}°`,
+      }));
+    };
+    // Drag-to-move a panel inside its host roof plane. The pointer is
+    // intersected with an infinite plane parallel to the roof, passing
+    // through the panel's current height — that keeps the panel coplanar
+    // with the rest of the layout while it slides under the cursor.
+    const dragState = { active: false, roofId: null, index: null, move: null, up: null };
+    const dragPlane = new THREE.Plane();
+    const dragNormal = new THREE.Vector3();
+    const dragNDC    = new THREE.Vector2();
+    const dragHit    = new THREE.Vector3();
+    const onPanelDragStart = (e) => {
+      const { roofId, index } = e.detail || {};
+      const s = store.get();
+      const roof = s.roofs.find(r => r.id === roofId);
+      const panel = roof?.panels?.[index];
+      if (!roof || !panel) return;
+      // Cancel any prior drag (defensive — pointerleave should have caught it).
+      if (dragState.active && dragState.move) {
+        gl.domElement.removeEventListener('pointermove', dragState.move);
+        gl.domElement.removeEventListener('pointerup',   dragState.up);
+        gl.domElement.removeEventListener('pointerleave', dragState.up);
+      }
+      const n = roof.plane.normal || {};
+      dragNormal.set(n.x ?? 0, n.y ?? 1, n.z ?? 0).normalize();
+      const p = panel.pos || {};
+      dragPlane.setFromNormalAndCoplanarPoint(
+        dragNormal,
+        new THREE.Vector3(p.x ?? 0, p.y ?? 0, p.z ?? 0),
+      );
+      dragState.active = true;
+      dragState.roofId = roofId;
+      dragState.index  = index;
+      if (controlsRef.current) controlsRef.current.enabled = false;
+      const dom = gl.domElement;
+      const move = (ev) => {
+        if (!dragState.active) return;
+        const rect = dom.getBoundingClientRect();
+        dragNDC.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+        dragNDC.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(dragNDC, camera);
+        const hit = raycaster.ray.intersectPlane(dragPlane, dragHit);
+        if (!hit) return;
+        const newPos = { x: hit.x, y: hit.y, z: hit.z };
+        store.set(st => ({
+          roofs: st.roofs.map(r => r.id !== dragState.roofId ? r : ({
+            ...r,
+            panels: r.panels.map((pp, i) => i !== dragState.index ? pp : ({ ...pp, pos: newPos })),
+          })),
+        }));
+      };
+      const up = () => {
+        if (!dragState.active) return;
+        dragState.active = false;
+        if (controlsRef.current) controlsRef.current.enabled = true;
+        dom.removeEventListener('pointermove', move);
+        dom.removeEventListener('pointerup',   up);
+        dom.removeEventListener('pointerleave', up);
+        dragState.move = null;
+        dragState.up   = null;
+      };
+      dragState.move = move;
+      dragState.up   = up;
+      dom.addEventListener('pointermove', move);
+      dom.addEventListener('pointerup',   up);
+      dom.addEventListener('pointerleave', up);
+    };
     window.addEventListener('panel:select',           onPanelSelect);
     window.addEventListener('panel:deleteSelected',   onPanelDeleteSelected);
     window.addEventListener('panel:copySelected',     onPanelCopySelected);
     window.addEventListener('panel:enterDropMode',    onPanelEnterDropMode);
     window.addEventListener('panel:exitDropMode',     onPanelExitDropMode);
+    window.addEventListener('panel:rotate',           onPanelRotate);
+    window.addEventListener('panel:dragStart',        onPanelDragStart);
     window.addEventListener('template:save', onTemplateSave);
     window.addEventListener('template:load', onTemplateLoad);
     window.addEventListener('draft:save',    onDraftSave);
@@ -1082,6 +1194,8 @@ function SceneContents() {
       window.removeEventListener('panel:copySelected',     onPanelCopySelected);
       window.removeEventListener('panel:enterDropMode',    onPanelEnterDropMode);
       window.removeEventListener('panel:exitDropMode',     onPanelExitDropMode);
+      window.removeEventListener('panel:rotate',           onPanelRotate);
+      window.removeEventListener('panel:dragStart',        onPanelDragStart);
       window.removeEventListener('template:save', onTemplateSave);
       window.removeEventListener('template:load', onTemplateLoad);
       window.removeEventListener('draft:save',    onDraftSave);
@@ -1532,7 +1646,7 @@ function Panel({ panel, roofId, index }) {
     }
   });
 
-  const onClick = (e) => {
+  const onPointerDown = (e) => {
     e.stopPropagation();
     const s = store.get();
     if (s.activeTab === 'solar') {
@@ -1540,7 +1654,13 @@ function Panel({ panel, roofId, index }) {
       return;
     }
     const shift = !!(e.nativeEvent && (e.nativeEvent.shiftKey || e.nativeEvent.metaKey || e.nativeEvent.ctrlKey));
-    window.dispatchEvent(new CustomEvent('panel:select', { detail: { roofId, index, shift } }));
+    // Select first so the side panel switches to the per-panel controls,
+    // then start the drag — releasing without moving still leaves the
+    // panel selected (a plain click).
+    window.dispatchEvent(new CustomEvent('panel:select',    { detail: { roofId, index, shift } }));
+    if (!shift) {
+      window.dispatchEvent(new CustomEvent('panel:dragStart', { detail: { roofId, index } }));
+    }
   };
 
   if (!visible) return null;
@@ -1557,7 +1677,7 @@ function Panel({ panel, roofId, index }) {
     <mesh
       position={posArr}
       quaternion={quatArr}
-      onClick={onClick}
+      onPointerDown={onPointerDown}
     >
       <boxGeometry args={[panel.w, 0.04, panel.h]} />
       <meshBasicMaterial
@@ -1602,25 +1722,6 @@ function CompassRose() {
       <lineSegments geometry={lineGeom}>
         <lineBasicMaterial color={0x334466} />
       </lineSegments>
-
-      {/* Direction labels via HTML */}
-      {COMPASS_DIRS.map(d => (
-        <group key={d.label} position={[d.x, 1.5, d.z]}>
-          <Html center distanceFactor={80}>
-            <div style={{
-              color: d.color,
-              fontWeight: 800,
-              fontSize: 22,
-              lineHeight: 1,
-              textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              fontFamily: 'system-ui, sans-serif',
-              letterSpacing: '-0.02em',
-            }}>{d.label}</div>
-          </Html>
-        </group>
-      ))}
     </group>
   );
 }

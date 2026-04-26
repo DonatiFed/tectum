@@ -14,8 +14,13 @@ import { btnStyle } from './SolarPlanner';
 //      overlays are also surfaced (PlannerView gates them on draftEditing)
 //      so panels and roof tweaks happen side-by-side.
 export default function TemplatesPanel() {
-  const [open, setOpen] = useState(true);
+  const open = useStore(s => s.sidebarOpen);
+  const setOpen = (v) => store.set(typeof v === 'function'
+    ? (s) => ({ sidebarOpen: v(s.sidebarOpen) })
+    : { sidebarOpen: v });
   const draftEditing    = useStore(s => s.draftEditing);
+  const selectedPanelKeys = useStore(s => s.selectedPanelKeys);
+  const showPanelPopup = draftEditing && selectedPanelKeys.length === 1;
 
   return (
     <>
@@ -27,6 +32,8 @@ export default function TemplatesPanel() {
       <aside style={panelStyle(open)}>
         {draftEditing ? <DraftEditor /> : <TemplatesOverview />}
       </aside>
+
+      {showPanelPopup && <SelectedPanelPopup />}
     </>
   );
 }
@@ -279,6 +286,58 @@ function DraftEditor() {
 
       <Divider />
 
+      <Section title="Summary">
+        <InfoBox rows={[
+          ['Roofs',         roofs.length],
+          ['Panels',        totalPanels],
+          ['Total kWp',     `${totalKwp} kWp`],
+          ['Annual yield',  `~${Math.round(totalAnnualKwh).toLocaleString()} kWh/a`],
+          ['New panels',    isCustom ? `Custom · ${panel.w}×${panel.h} m · ${panel.wp} Wp` : `${panel.brand} ${panel.model} (${panel.wp} Wp)`],
+          ['Rotation',      `${panelAngle.toFixed(0)}°`],
+        ]} />
+      </Section>
+
+      <Divider />
+
+      <Section title="Production by roof">
+        {roofs.length === 0
+          ? <div style={{ fontSize: '0.72rem', color: '#666' }}>No roofs yet.</div>
+          : roofs.map((r, i) => {
+            const spec = r.panelSpec;
+            const np   = r.panels?.length ?? 0;
+            const kWp  = spec ? (np * spec.wp / 1000) : (np * panel.wp / 1000);
+            const kwh  = kWp * specificYield(solarLat);
+            const specName = spec
+              ? (spec.brand ? `${spec.brand} ${spec.model}` : 'Custom')
+              : (isCustom ? 'Custom' : `${panel.brand} ${panel.model}`);
+            return (
+              <div key={r.id} style={{
+                background: '#0f172a', border: '1px solid #2a2a4a',
+                borderRadius: 6, padding: '8px 10px', fontSize: '0.75rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ color: '#f5a623', fontWeight: 700 }}>Roof {i + 1}</span>
+                  <span style={{ color: '#888' }}>{r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
+                </div>
+                {np === 0 ? (
+                  <span style={{ color: '#555', fontStyle: 'italic' }}>No panels placed</span>
+                ) : (
+                  <>
+                    <div style={{ color: '#60a5fa', fontSize: '0.7rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{specName}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>{np} panels &nbsp;·&nbsp; {kWp.toFixed(2)} kWp</span>
+                      <span style={{ color: '#4ade80', fontWeight: 700 }}>~{Math.round(kwh).toLocaleString()} kWh/a</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })
+        }
+      </Section>
+
+      <Divider />
+
       <Section title="Panel type">
         <PanelCatalogue selected={panelIdx} onChange={i => store.set({ panelTypeIdx: i })} />
         {isCustom && (
@@ -365,34 +424,6 @@ function DraftEditor() {
         </div>
       </Section>
 
-      <Section title={`Tilt off roof: ${tiltDeg > 0 ? '+' : ''}${tiltDeg.toFixed(0)}°`}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={() => store.set({ panelTiltDeg: Math.max(-45, +(tiltDeg - 1).toFixed(2)) })}
-            style={nudgeBtn} title="-1°">◀</button>
-          <input type="range" min="-45" max="45" step="1" value={tiltDeg}
-            onChange={e => store.set({ panelTiltDeg: +e.target.value })}
-            style={{ flex: 1, accentColor: '#f5a623' }} />
-          <button onClick={() => store.set({ panelTiltDeg: Math.min(45, +(tiltDeg + 1).toFixed(2)) })}
-            style={nudgeBtn} title="+1°">▶</button>
-        </div>
-        <div style={{ display: 'flex', gap: 4, fontSize: '0.7rem' }}>
-          {[-30, -15, 0, 15, 30].map(a => (
-            <button key={a}
-              onClick={() => store.set({ panelTiltDeg: a })}
-              style={{
-                flex: 1, padding: '4px 0', borderRadius: 4, cursor: 'pointer',
-                background: Math.round(tiltDeg) === a ? '#f5a623' : '#2a2a4a',
-                color:      Math.round(tiltDeg) === a ? '#1a1a2e' : '#e0e0e0',
-                border: 'none', fontWeight: 700,
-              }}
-            >{a > 0 ? `+${a}` : a}°</button>
-          ))}
-        </div>
-        <div style={{ fontSize: '0.7rem', color: '#888' }}>
-          Rotates the panel face away from the roof normal around the panel's in-plane width axis. 0° = flush to the roof plane.
-        </div>
-      </Section>
-
       <Section title={`Panel scale: ${panelScale.toFixed(2)}×`}>
         <input type="range" min="0.3" max="3" step="0.05" value={panelScale}
           onChange={e => store.set({ panelScale: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
@@ -472,62 +503,6 @@ function DraftEditor() {
 
       <Divider />
 
-      <PanelSandbox />
-
-      <Divider />
-
-      <Section title="Summary">
-        <InfoBox rows={[
-          ['Roofs',         roofs.length],
-          ['Panels',        totalPanels],
-          ['Total kWp',     `${totalKwp} kWp`],
-          ['Annual yield',  `~${Math.round(totalAnnualKwh).toLocaleString()} kWh/a`],
-          ['New panels',    isCustom ? `Custom · ${panel.w}×${panel.h} m · ${panel.wp} Wp` : `${panel.brand} ${panel.model} (${panel.wp} Wp)`],
-          ['Rotation',      `${panelAngle.toFixed(0)}°`],
-        ]} />
-      </Section>
-
-      <Divider />
-
-      <Section title="Production by roof">
-        {roofs.length === 0
-          ? <div style={{ fontSize: '0.72rem', color: '#666' }}>No roofs yet.</div>
-          : roofs.map((r, i) => {
-            const spec = r.panelSpec;
-            const np   = r.panels?.length ?? 0;
-            const kWp  = spec ? (np * spec.wp / 1000) : (np * panel.wp / 1000);
-            const kwh  = kWp * specificYield(solarLat);
-            const specName = spec
-              ? (spec.brand ? `${spec.brand} ${spec.model}` : 'Custom')
-              : (isCustom ? 'Custom' : `${panel.brand} ${panel.model}`);
-            return (
-              <div key={r.id} style={{
-                background: '#0f172a', border: '1px solid #2a2a4a',
-                borderRadius: 6, padding: '8px 10px', fontSize: '0.75rem',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ color: '#f5a623', fontWeight: 700 }}>Roof {i + 1}</span>
-                  <span style={{ color: '#888' }}>{r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
-                </div>
-                {np === 0 ? (
-                  <span style={{ color: '#555', fontStyle: 'italic' }}>No panels placed</span>
-                ) : (
-                  <>
-                    <div style={{ color: '#60a5fa', fontSize: '0.7rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{specName}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
-                      <span>{np} panels &nbsp;·&nbsp; {kWp.toFixed(2)} kWp</span>
-                      <span style={{ color: '#4ade80', fontWeight: 700 }}>~{Math.round(kwh).toLocaleString()} kWh/a</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })
-        }
-      </Section>
-
-      <Divider />
-
       <Section title="Save as draft">
         <input type="text" value={draftName}
           onChange={e => setDraftName(e.target.value)}
@@ -541,6 +516,91 @@ function DraftEditor() {
         >💾 Save as new draft</button>
       </Section>
     </>
+  );
+}
+
+// ── Single-panel popup (floats over the canvas when exactly one panel is selected) ──
+function SelectedPanelPopup() {
+  const dispatch = (n, detail) => window.dispatchEvent(new CustomEvent(n, detail !== undefined ? { detail } : undefined));
+  const rotateBtn = (delta, label) => (
+    <button
+      onClick={() => dispatch('panel:rotate', { delta })}
+      style={{
+        background: '#1a2a40',
+        border: '1px solid #2a4060',
+        color: '#f5a623',
+        padding: '8px 10px',
+        borderRadius: 8,
+        cursor: 'pointer',
+        fontWeight: 700,
+        fontSize: '0.78rem',
+        flex: 1,
+        minWidth: 0,
+      }}
+      title={`Rotate panel ${delta > 0 ? '+' : ''}${delta}° around the roof normal`}
+    >{label}</button>
+  );
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 70,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 40,
+        background: 'rgba(15,23,42,0.96)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid #f5a623',
+        borderRadius: 12,
+        padding: '12px 14px',
+        boxShadow: '0 18px 38px rgba(0,0,0,0.55)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        width: 360,
+        maxWidth: 'calc(100vw - 360px)',
+        pointerEvents: 'auto',
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 8,
+      }}>
+        <span style={{
+          fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em',
+          color: '#f5a623', fontWeight: 800,
+        }}>▣ Selected panel</span>
+        <button
+          onClick={() => store.set({ selectedPanelKeys: [], hint: 'Panel deselected' })}
+          title="Close — deselect this panel"
+          style={{
+            background: 'transparent', border: 'none',
+            color: '#9ca3af', cursor: 'pointer', fontSize: '1.05rem',
+            fontWeight: 800, lineHeight: 1, padding: 2,
+          }}
+        >✕</button>
+      </div>
+      <div style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: 1.4 }}>
+        Drag the panel on the roof to reposition it · use the buttons below
+        to rotate it on the spot.
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {rotateBtn(-15, '↺ −15°')}
+        {rotateBtn(-5,  '↺ −5°')}
+        {rotateBtn(+5,  '↻ +5°')}
+        {rotateBtn(+15, '↻ +15°')}
+      </div>
+      <button
+        onClick={() => dispatch('panel:deleteSelected')}
+        style={{
+          background: '#3b0d0d', border: '1px solid #ff7070',
+          color: '#fecaca', padding: '8px 10px', borderRadius: 8,
+          cursor: 'pointer', fontWeight: 700, fontSize: '0.78rem',
+        }}
+        title="Delete this panel"
+      >🗑 Delete panel</button>
+    </div>
   );
 }
 

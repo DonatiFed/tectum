@@ -91,7 +91,7 @@ export default function RotationPad() {
           <RoundBtn variant="compass" onClick={() => zoom('in')}  title="Zoom in">＋</RoundBtn>
           <RoundBtn variant="preset"  onClick={() => preset('cam:reset')} title="Reset framing">⟲</RoundBtn>
           <RoundBtn variant="compass" onClick={() => zoom('out')} title="Zoom out">－</RoundBtn>
-          <RoundBtn variant="preset"  onClick={() => preset('cam:top')}   title="Top-down view">⬒</RoundBtn>
+          <RoundBtn variant="preset"  onClick={() => preset('cam:top')}   title="Top-down view">TOP</RoundBtn>
           <span />
           <RoundBtn variant="preset"  onClick={() => preset('cam:persp')} title="45° vertical tilt" highlight>45°</RoundBtn>
         </div>

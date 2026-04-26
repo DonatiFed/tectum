@@ -886,21 +886,34 @@ function SceneContents() {
         panelsByRoof[r.id]    = (r.panels ?? []).map(clonePanel);
         panelSpecByRoof[r.id] = r.panelSpec ?? null;
       }
+      const settings = {
+        panelTypeIdx: s.panelTypeIdx, panelScale: s.panelScale,
+        panelGap: s.panelGap, panelAngleDeg: s.panelAngleDeg,
+        panelAutoAlign: s.panelAutoAlign,
+        panelSurfaceOffset: s.panelSurfaceOffset,
+        panelLandscape: s.panelLandscape,
+        panelTiltDeg:   s.panelTiltDeg,
+        customPanel: { ...s.customPanel },
+      };
+      // If there's already an active draft, treat this as an autosave/update
+      // instead of pushing a brand-new draft entry.
+      if (s.activeDraftId && s.drafts.some(d => d.id === s.activeDraftId)) {
+        store.set(st => ({
+          drafts: st.drafts.map(d => d.id === st.activeDraftId
+            ? { ...d, name: name || d.name, settings, panelsByRoof, panelSpecByRoof, updatedAt: Date.now() }
+            : d
+          ),
+          hint: `Saved draft updates`,
+        }));
+        return;
+      }
       const id = 'draft-' + Date.now().toString(36);
       const draft = {
         id,
         templateId: s.activeTemplateId,
         name: name || `Draft ${s.drafts.filter(d => d.templateId === s.activeTemplateId).length + 1}`,
         createdAt: Date.now(),
-        settings: {
-          panelTypeIdx: s.panelTypeIdx, panelScale: s.panelScale,
-          panelGap: s.panelGap, panelAngleDeg: s.panelAngleDeg,
-          panelAutoAlign: s.panelAutoAlign,
-          panelSurfaceOffset: s.panelSurfaceOffset,
-          panelLandscape: s.panelLandscape,
-          panelTiltDeg:   s.panelTiltDeg,
-          customPanel: { ...s.customPanel },
-        },
+        settings,
         panelsByRoof,
         panelSpecByRoof,
       };

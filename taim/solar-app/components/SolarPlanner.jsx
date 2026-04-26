@@ -917,7 +917,6 @@ function PlannerView() {
             collapsible so the installer can hide them when working in
             Templates or Solar Irradiance. */}
         <RotationPad />
-        <HintBar />
       </>}
     </div>
   );
@@ -942,8 +941,21 @@ function TopBar() {
   const draftEditing = useStore(s => s.draftEditing);
   const tab          = useStore(s => s.activeTab);
   const dispatch = (n) => window.dispatchEvent(new CustomEvent(n));
+  // Measure our own width so TabsBar can centre itself between us and the
+  // sidebar instead of overlapping. ResizeObserver fires whenever buttons
+  // appear/disappear (Clear Workspace, model name length, etc.).
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => store.set({ topBarWidth: el.getBoundingClientRect().width });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => { ro.disconnect(); store.set({ topBarWidth: 0 }); };
+  }, []);
   return (
-    <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8, zIndex: 30, alignItems: 'center' }}>
+    <div ref={ref} style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8, zIndex: 30, alignItems: 'center' }}>
       <button
         onClick={async () => {
           // Persist the latest workspace state (roofs / templates / drafts)
@@ -982,7 +994,8 @@ function TopBar() {
       <div style={{
         background: 'rgba(22,33,62,0.85)', border: '1px solid #2a2a4a',
         borderRadius: 8, padding: '8px 12px', fontSize: '0.8rem', color: '#aaa',
-      }}>{model?.name}</div>
+        maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+      }} title={model?.name}>{model?.name}</div>
       {/* 3D toggle stays universal — useful from every tab. The Tex toggle
           moved into the Roof Detection bottom dock since it's a detection-
           time visualisation aid. */}
@@ -996,8 +1009,8 @@ function TopBar() {
         }}
         title="Show or hide the 3D building model"
       >{modelVisible ? '3D On' : '3D Off'}</button>
-      {/* Clear-workspace lives in the Templates tab — that's where the
-          installer is reviewing saved drafts and may want a clean slate. */}
+      {/* Clear-workspace lives next to the 3D toggle so it's always reachable
+          without crowding the centred tab strip. */}
       {tab === 'templates' && (
         <button
           onClick={() => {
@@ -1009,9 +1022,9 @@ function TopBar() {
           disabled={!roofs && !draftEditing}
           style={{
             ...btnStyle('secondary'),
-            background: 'transparent',
-            border: '1px solid #4a2030',
-            color: '#ff8a8a', fontWeight: 700,
+            background: '#b91c1c',
+            color: '#fff',
+            border: 'none', fontWeight: 700,
             opacity: (roofs || draftEditing) ? 1 : 0.4,
             cursor:  (roofs || draftEditing) ? 'pointer' : 'not-allowed',
           }}
@@ -1029,17 +1042,60 @@ function TopBar() {
 function TabsBar() {
   const tab = useStore(s => s.activeTab);
   const sidebarOpen = useStore(s => s.sidebarOpen);
+  const topBarWidth = useStore(s => s.topBarWidth);
   const templates = useStore(s => s.templates.length);
   const drafts    = useStore(s => s.drafts.length);
   const TABS = [
-    { id: 'detect',    label: '🏠 Roof Detection', hint: 'Detect, clean and merge roof planes from the 3D model' },
-    { id: 'templates', label: `📁 Templates${templates ? ` (${templates}${drafts ? ` · ${drafts}d` : ''})` : ''}`, hint: 'Save client templates and fork them into panel-layout drafts' },
-    { id: 'solar',     label: '☀️ Solar Irradiance', hint: 'Simulate sun path and visualise per-panel irradiance throughout the day' },
+    { id: 'detect',    label: '🏠 Roof Detection' },
+    { id: 'templates', label: `📁 Templates${templates ? ` (${templates}${drafts ? ` · ${drafts}d` : ''})` : ''}` },
+    { id: 'solar',     label: '☀️ Solar Irradiance' },
   ];
+  const dispatch = (n, detail) => window.dispatchEvent(new CustomEvent(n, detail !== undefined ? { detail } : undefined));
+
+  const selectTab = (nextId) => {
+    const s = store.get();
+    if (s.activeTab === nextId) return;
+
+    // Special handling: leaving a draft to go to Roof Detection should
+    // (a) autosave the draft if it was already saved before, or prompt the
+    //     user to save it if it's a fresh unsaved draft, then
+    // (b) clear the workspace so the installer lands on a clean detect tab.
+    if (nextId === 'detect' && s.draftEditing) {
+      const totalPanels = s.roofs.reduce((sum, r) => sum + (r.panels?.length ?? 0), 0);
+      if (s.activeDraftId) {
+        // Re-save the existing draft under its current name (autosave).
+        const draft = s.drafts.find(d => d.id === s.activeDraftId);
+        if (draft) dispatch('draft:save', { name: draft.name });
+      } else if (totalPanels > 0) {
+        // Unsaved new draft with placed panels — ask the installer.
+        const choice = window.confirm(
+          'Save this draft before leaving?\n\nClick OK to save, or Cancel to discard the panel layout.'
+        );
+        if (choice) {
+          const name = window.prompt('Draft name:', '') || '';
+          if (!name.trim()) return; // empty name → abort the tab switch
+          dispatch('draft:save', { name: name.trim() });
+        }
+        // If the user clicked Cancel, fall through and discard.
+      }
+      // Clear the in-scene roofs + panels and exit the draft editor.
+      dispatch('workspace:clear');
+    }
+
+    store.set({ activeTab: nextId, activePanelDashboard: null });
+  };
+
+  // The TopBar sits at left:12 with its measured width; the sidebar (when
+  // open) takes 320px on the right. Centre the tabs in the middle of the
+  // remaining horizontal space so neither side ever overlaps it.
+  const leftEdge  = 12 + topBarWidth + 12; // small breathing gap
+  const rightEdge = sidebarOpen ? 320 : 0;
+  const centerLeft = `calc(${leftEdge}px + (100% - ${leftEdge}px - ${rightEdge}px) / 2)`;
+
   return (
     <div style={{
       position: 'absolute', top: 12,
-      left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
+      left: centerLeft,
       transform: 'translateX(-50%)',
       display: 'flex', gap: 4, zIndex: 30,
       background: 'rgba(10,18,34,0.92)', border: '1px solid #38506d',
@@ -1050,8 +1106,7 @@ function TabsBar() {
         const active = t.id === tab;
         return (
           <button key={t.id}
-            onClick={() => store.set({ activeTab: t.id, hint: t.hint, activePanelDashboard: null })}
-            title={t.hint}
+            onClick={() => selectTab(t.id)}
             style={{
               background: active ? '#f5a623' : 'transparent',
               color: active ? '#0d1b2a' : '#cbd5e1',
@@ -1278,19 +1333,9 @@ function SelectionActionBar() {
 }
 
 function HintBar() {
-  const hint = useStore(s => s.hint);
-  const sidebarOpen = useStore(s => s.sidebarOpen);
-  return (
-    <div style={{
-      position: 'absolute', top: 80,
-      left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
-      transform: 'translateX(-50%)',
-      background: 'rgba(22,33,62,0.92)', border: '1px solid #2a2a4a', borderRadius: 20,
-      padding: '8px 20px', fontSize: '0.78rem', color: '#cbd5e1', pointerEvents: 'none', zIndex: 50,
-      maxWidth: '70%', textAlign: 'center',
-      transition: 'left 0.25s ease',
-    }}>{hint}</div>
-  );
+  // Hint toast removed — the chrome above already explains every tab/mode,
+  // and the floating hint was overlapping the tab strip and bottom dock.
+  return null;
 }
 
 export function btnStyle(variant) {

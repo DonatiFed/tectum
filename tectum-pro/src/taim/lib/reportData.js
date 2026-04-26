@@ -1,6 +1,6 @@
 // Builds the props object passed to SolarReportPDF from store state + pipeline output.
 
-export function buildReportProps(storeState, pipelineData) {
+export function buildReportProps(storeState, pipelineData, selectedOfferName) {
   const { roofs, intake } = storeState;
 
   const totalArea = roofs.reduce((s, r) => s + (r.plane?.area ?? 0), 0);
@@ -16,7 +16,11 @@ export function buildReportProps(storeState, pipelineData) {
     monthlyBill: Number(intake?.bill ?? intake?.monthlyBill ?? 0),
   };
 
-  return { intake: intakeData, pipelineData };
+  const data = selectedOfferName
+    ? { ...pipelineData, selectedOfferName }
+    : pipelineData;
+
+  return { intake: intakeData, pipelineData: data };
 }
 
 export { buildReportProps as deriveReportData };

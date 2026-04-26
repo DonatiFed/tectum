@@ -85,6 +85,12 @@ export const store = createStore({
   // when it's open.
   sidebarOpen: true,
 
+  // Measured pixel width of the floating TopBar (Projects / 3D / model name
+  // / Clear Workspace). The centred top tab strip uses this so it can sit
+  // truly centred between the TopBar's right edge and the sidebar — without
+  // it the TabsBar slips behind the TopBar at narrow viewport widths.
+  topBarWidth: 0,
+
   // Saved roof groupings. A template is an immutable snapshot of one or more
   // detected roof planes belonging to a client. It is the BASE every draft
   // is forked from, and it cannot be deleted from the UI.
