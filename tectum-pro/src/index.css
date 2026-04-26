@@ -1,0 +1,90 @@
+@import '@fontsource/instrument-serif';
+@import '@fontsource/inter';
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-glow: hsl(var(--primary-glow));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-solar: hsl(var(--solar));
+  --color-solar-foreground: hsl(var(--solar-foreground));
+  --color-success: hsl(var(--success));
+  --color-destructive: hsl(var(--destructive));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  :root {
+    --background: 40 30% 97%;
+    --foreground: 220 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
+    --primary: 232 45% 32%;
+    --primary-foreground: 40 30% 97%;
+    --primary-glow: 232 60% 55%;
+    --secondary: 40 25% 92%;
+    --secondary-foreground: 220 25% 12%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 75 70% 55%;
+    --accent-foreground: 220 25% 12%;
+    --solar: 45 95% 55%;
+    --solar-foreground: 220 25% 12%;
+    --success: 145 55% 42%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 40 30% 97%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 232 45% 32%;
+    --radius: 0.75rem;
+
+    --gradient-sky: linear-gradient(180deg, #c3daee 0%, #e1edf8 100%);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .bg-gradient-sky { background: var(--gradient-sky); }
+}
