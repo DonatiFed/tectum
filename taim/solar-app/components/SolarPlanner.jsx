@@ -14,7 +14,6 @@ import PolygonOverlay from './PolygonOverlay';
 import PickOverlay from './PickOverlay';
 import RotationPad from './RotationPad';
 import SolarTool from './SolarTool';
-import SelectedPanelPopup from './SelectedPanelPopup';
 
 export default function SolarPlanner() {
   const selectedModel = useStore(s => s.selectedModel);
@@ -918,7 +917,6 @@ function PlannerView() {
             collapsible so the installer can hide them when working in
             Templates or Solar Irradiance. */}
         <RotationPad />
-        <SelectedPanelPopup />
         <HintBar />
       </>}
     </div>

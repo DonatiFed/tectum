@@ -16,6 +16,8 @@ import { btnStyle } from './SolarPlanner';
 export default function TemplatesPanel() {
   const [open, setOpen] = useState(true);
   const draftEditing    = useStore(s => s.draftEditing);
+  const selectedPanelKeys = useStore(s => s.selectedPanelKeys);
+  const showPanelPopup = draftEditing && selectedPanelKeys.length === 1;
 
   return (
     <>
@@ -27,6 +29,8 @@ export default function TemplatesPanel() {
       <aside style={panelStyle(open)}>
         {draftEditing ? <DraftEditor /> : <TemplatesOverview />}
       </aside>
+
+      {showPanelPopup && <SelectedPanelPopup />}
     </>
   );
 }
@@ -509,6 +513,91 @@ function DraftEditor() {
         >💾 Save as new draft</button>
       </Section>
     </>
+  );
+}
+
+// ── Single-panel popup (floats over the canvas when exactly one panel is selected) ──
+function SelectedPanelPopup() {
+  const dispatch = (n, detail) => window.dispatchEvent(new CustomEvent(n, detail !== undefined ? { detail } : undefined));
+  const rotateBtn = (delta, label) => (
+    <button
+      onClick={() => dispatch('panel:rotate', { delta })}
+      style={{
+        background: '#1a2a40',
+        border: '1px solid #2a4060',
+        color: '#f5a623',
+        padding: '8px 10px',
+        borderRadius: 8,
+        cursor: 'pointer',
+        fontWeight: 700,
+        fontSize: '0.78rem',
+        flex: 1,
+        minWidth: 0,
+      }}
+      title={`Rotate panel ${delta > 0 ? '+' : ''}${delta}° around the roof normal`}
+    >{label}</button>
+  );
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 70,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 40,
+        background: 'rgba(15,23,42,0.96)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid #f5a623',
+        borderRadius: 12,
+        padding: '12px 14px',
+        boxShadow: '0 18px 38px rgba(0,0,0,0.55)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        width: 360,
+        maxWidth: 'calc(100vw - 360px)',
+        pointerEvents: 'auto',
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 8,
+      }}>
+        <span style={{
+          fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em',
+          color: '#f5a623', fontWeight: 800,
+        }}>▣ Selected panel</span>
+        <button
+          onClick={() => store.set({ selectedPanelKeys: [], hint: 'Panel deselected' })}
+          title="Close — deselect this panel"
+          style={{
+            background: 'transparent', border: 'none',
+            color: '#9ca3af', cursor: 'pointer', fontSize: '1.05rem',
+            fontWeight: 800, lineHeight: 1, padding: 2,
+          }}
+        >✕</button>
+      </div>
+      <div style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: 1.4 }}>
+        Drag the panel on the roof to reposition it · use the buttons below
+        to rotate it on the spot.
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {rotateBtn(-15, '↺ −15°')}
+        {rotateBtn(-5,  '↺ −5°')}
+        {rotateBtn(+5,  '↻ +5°')}
+        {rotateBtn(+15, '↻ +15°')}
+      </div>
+      <button
+        onClick={() => dispatch('panel:deleteSelected')}
+        style={{
+          background: '#3b0d0d', border: '1px solid #ff7070',
+          color: '#fecaca', padding: '8px 10px', borderRadius: 8,
+          cursor: 'pointer', fontWeight: 700, fontSize: '0.78rem',
+        }}
+        title="Delete this panel"
+      >🗑 Delete panel</button>
+    </div>
   );
 }
 
