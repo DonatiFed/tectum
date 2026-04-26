@@ -882,6 +882,10 @@ function PlannerView() {
   const progress     = useStore(s => s.loadProgress);
   const tab          = useStore(s => s.activeTab);
   const draftEditing = useStore(s => s.draftEditing);
+  // When a multi-select is active the bottom controls dock is replaced by
+  // the SelectionActionBar so we never stack two floating panels on top of
+  // each other in the same screen region.
+  const selCount     = useStore(s => s.selectedRoofIds.length);
   // Roof-detection action surface (mode buttons, drag overlays, rotation pad,
   // multi-select bar) shows on the Roof Detection tab AND whenever a draft
   // is open inside the Templates tab — so panels and roof tweaks live
@@ -898,8 +902,7 @@ function PlannerView() {
         {tab === 'detect'    && <Sidebar />}
         {tab === 'templates' && <TemplatesPanel />}
         {tab === 'solar'     && <SolarTool />}
-        {detectUI && <BottomControls />}
-        {detectUI && <SelectionActionBar />}
+        {detectUI && (selCount > 0 ? <SelectionActionBar /> : <BottomControls />)}
         <DebugHUD />
         {detectUI && <CropOverlay />}
         {detectUI && <SelectOverlay />}
@@ -1184,31 +1187,44 @@ function modeHint(mode) {
 }
 
 function SelectionActionBar() {
-  const ids = useStore(s => s.selectedRoofIds);
-  const total = useStore(s => s.roofs.length);
+  const ids      = useStore(s => s.selectedRoofIds);
+  const activeId = useStore(s => s.activeRoofId);
+  const total    = useStore(s => s.roofs.length);
   if (!ids || ids.length === 0) return null;
-  const dispatch = (name) => window.dispatchEvent(new CustomEvent(name));
-  const others = total - ids.length;
+  // The currently highlighted (active) roof is implicitly part of any
+  // multi-selection — surface that in the count and apply it to actions so
+  // the user doesn't have to remember to shift-click their own active roof.
+  const effective = (activeId && !ids.includes(activeId)) ? [...ids, activeId] : ids;
+  const ensureEffective = () => {
+    if (effective.length !== ids.length) {
+      store.set({ selectedRoofIds: effective });
+    }
+  };
+  const dispatch = (name) => { ensureEffective(); window.dispatchEvent(new CustomEvent(name)); };
+  const others = total - effective.length;
+  const count  = effective.length;
   return (
     <div style={{
-      position: 'fixed', top: 14, left: 'calc((100% - 320px) / 2)', transform: 'translateX(-50%)',
-      zIndex: 46, display: 'flex', gap: 8, alignItems: 'center',
+      position: 'fixed', bottom: 18,
+      left: 'calc((100% - 320px) / 2)', transform: 'translateX(-50%)',
+      zIndex: 46, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
       background: 'rgba(10,18,34,0.96)', border: '1px solid #a855f7',
-      borderRadius: 999, padding: '6px 12px',
+      borderRadius: 16, padding: '10px 14px',
       boxShadow: '0 14px 40px rgba(0,0,0,0.45)',
+      maxWidth: 'min(720px, calc(100vw - 360px))',
     }}>
       <span style={{ color: '#d8b4fe', fontSize: '0.8rem', fontWeight: 700 }}>
-        {ids.length} selected
+        {count} selected
       </span>
       <button
         onClick={() => dispatch('roofs:merge')}
-        disabled={ids.length < 2}
+        disabled={count < 2}
         style={{
-          background: ids.length >= 2 ? '#a855f7' : '#2a2a4a',
-          color: ids.length >= 2 ? '#0d1b2a' : '#666',
+          background: count >= 2 ? '#a855f7' : '#2a2a4a',
+          color: count >= 2 ? '#0d1b2a' : '#666',
           border: 'none', borderRadius: 999, padding: '6px 14px',
           fontSize: '0.78rem', fontWeight: 700,
-          cursor: ids.length >= 2 ? 'pointer' : 'not-allowed',
+          cursor: count >= 2 ? 'pointer' : 'not-allowed',
         }}
         title="Merge selected roofs into one filled contour"
       >⊕ Merge</button>
@@ -1250,9 +1266,9 @@ function HintBar() {
   const hint = useStore(s => s.hint);
   return (
     <div style={{
-      position: 'absolute', top: 64, left: '50%', transform: 'translateX(-50%)',
+      position: 'absolute', top: 80, left: '50%', transform: 'translateX(-50%)',
       background: 'rgba(22,33,62,0.92)', border: '1px solid #2a2a4a', borderRadius: 20,
-      padding: '8px 20px', fontSize: '0.78rem', color: '#cbd5e1', pointerEvents: 'none', zIndex: 30,
+      padding: '8px 20px', fontSize: '0.78rem', color: '#cbd5e1', pointerEvents: 'none', zIndex: 50,
       maxWidth: '70%', textAlign: 'center',
     }}>{hint}</div>
   );
