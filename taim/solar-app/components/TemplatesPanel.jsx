@@ -424,6 +424,16 @@ function DraftEditor() {
         </div>
       </Section>
 
+      <Section title={`Panel scale: ${panelScale.toFixed(2)}×`}>
+        <input type="range" min="0.3" max="3" step="0.05" value={panelScale}
+          onChange={e => store.set({ panelScale: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
+      </Section>
+
+      <Section title={`Panel gap: ${panelGap.toFixed(2)} m`}>
+        <input type="range" min="0" max="0.5" step="0.01" value={panelGap}
+          onChange={e => store.set({ panelGap: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
+      </Section>
+
       <Section title={`Lift above roof: ${(surfaceLift * 100).toFixed(0)} cm`}>
         <input type="range" min="0.02" max="0.5" step="0.01" value={surfaceLift}
           onChange={e => store.set({ panelSurfaceOffset: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
