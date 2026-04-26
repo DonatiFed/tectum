@@ -891,6 +891,10 @@ function PlannerView() {
   // is open inside the Templates tab — so panels and roof tweaks live
   // side-by-side under one workspace.
   const detectUI = tab === 'detect' || draftEditing;
+  // The bottom controls dock (Mode + Smooth + slider) is roof-detection
+  // specific. Keep it ONLY on the Roof Detection tab so it doesn't clutter
+  // the Templates and Solar Irradiance views.
+  const bottomDockUI = tab === 'detect';
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
@@ -902,14 +906,17 @@ function PlannerView() {
         {tab === 'detect'    && <Sidebar />}
         {tab === 'templates' && <TemplatesPanel />}
         {tab === 'solar'     && <SolarTool />}
-        {detectUI && (selCount > 0 ? <SelectionActionBar /> : <BottomControls />)}
+        {bottomDockUI && (selCount > 0 ? <SelectionActionBar /> : <BottomControls />)}
         <DebugHUD />
         {detectUI && <CropOverlay />}
         {detectUI && <SelectOverlay />}
         {detectUI && <PolygonOverlay />}
         {detectUI && <PickOverlay />}
         {detectUI && <EraseOverlay />}
-        {detectUI && <RotationPad />}
+        {/* View controls (rotate/tilt/compass) are useful on every tab —
+            collapsible so the installer can hide them when working in
+            Templates or Solar Irradiance. */}
+        <RotationPad />
         <HintBar />
       </>}
     </div>
@@ -1122,15 +1129,6 @@ function BottomControls() {
           <ModeCtl id="polygon" current={mode}>Polygon</ModeCtl>
           <ModeCtl id="pick" current={mode}>Pick</ModeCtl>
           <ModeCtl id="erase" current={mode}>Erase</ModeCtl>
-        </ControlGroup>
-        <ControlGroup label="Zoom">
-          <button onClick={() => dispatch('cam:zoom', 'in')}  style={btnStyle('ctl')} title="Zoom in (or scroll)">＋</button>
-          <button onClick={() => dispatch('cam:zoom', 'out')} style={btnStyle('ctl')} title="Zoom out (or scroll)">－</button>
-        </ControlGroup>
-        <ControlGroup label="View">
-          <button onClick={() => dispatch('cam:reset')} style={btnStyle('ctl')}>Reset</button>
-          <button onClick={() => dispatch('cam:top')}   style={btnStyle('ctl')}>Top</button>
-          <button onClick={() => dispatch('cam:persp')} style={{ ...btnStyle('ctl'), background: '#f5a623', color: '#11203a', fontWeight: 800 }}>45°</button>
         </ControlGroup>
         <button
           onClick={() => dispatch('mask:smooth')}

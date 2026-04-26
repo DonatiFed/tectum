@@ -1288,23 +1288,39 @@ export function generatePanelLayout({ plane, panelType, scale, gap, raycaster, m
       // sits above it; using the raycast hit point and lifting along the
       // PLANE normal (not the triangle normal) keeps panels above the
       // surface AND keeps every panel parallel to the conceptual plane.
+      //
+      // We must walk ALL hits along the ray, not just the first, because
+      // overhanging geometry (trees, antennas, eaves) sits between the
+      // ray origin and the actual roof surface. A tree-leaf face often
+      // happens to face upward, so without filtering by distance from the
+      // fitted plane the panel ends up planted in the canopy.
       let anchor = planePoint;
       if (raycaster && meshes && meshes.length) {
         const start = planePoint.clone().addScaledVector(plane.normal, 30);
         raycaster.set(start, negN);
         raycaster.far = 80;
         const hits = raycaster.intersectObjects(meshes, false);
-        if (!hits.length) continue;
-        const hn = hits[0].face.normal.clone()
-          .transformDirection(hits[0].object.matrixWorld).normalize();
-        if (hn.dot(plane.normal) < cosTol) continue;
+        // Max signed distance from the fitted plane (along plane.normal)
+        // that we'll accept as "this is the roof". Roofs are flat-ish vs
+        // their fit; trees / chimneys / vents rise much higher than this.
+        const planeTol = 1.0; // metres
+        let chosen = null;
+        for (const hit of hits) {
+          const hn = hit.face.normal.clone()
+            .transformDirection(hit.object.matrixWorld).normalize();
+          if (hn.dot(plane.normal) < cosTol) continue;          // not roof-aligned
+          const sd = hit.point.clone().sub(plane.centre).dot(plane.normal);
+          if (Math.abs(sd) > planeTol) continue;                // too far from plane → tree / overhang
+          chosen = hit;
+          break;
+        }
+        if (!chosen) continue;
         // Take the HIGHER of the mesh hit and the fitted plane point along
-        // the plane normal. This guarantees the panel sits at or above the
-        // visualised plane (which is drawn at `centre + 0.05·normal`) AND
-        // above any dip in the actual mesh surface.
-        const hitProj   = hits[0].point.clone().sub(plane.centre).dot(plane.normal);
+        // the plane normal — guarantees the panel sits at or above the
+        // visualised plane and above any dip in the actual mesh surface.
+        const hitProj   = chosen.point.clone().sub(plane.centre).dot(plane.normal);
         const planeProj = planePoint.clone().sub(plane.centre).dot(plane.normal);
-        anchor = hitProj > planeProj ? hits[0].point.clone() : planePoint;
+        anchor = hitProj > planeProj ? chosen.point.clone() : planePoint;
       }
 
       // Box geometry is 4 cm thick and centred on `pos`, so 2 cm sits

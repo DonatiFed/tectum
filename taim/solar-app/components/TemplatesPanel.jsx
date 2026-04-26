@@ -103,24 +103,44 @@ function TemplatesOverview() {
                     borderRadius: 8, overflow: 'hidden',
                   }}>
                     {/* Header — clicking expands/collapses the dropdown */}
-                    <button
-                      onClick={() => toggleExp(t.id)}
-                      style={{
-                        background: 'transparent', border: 'none', width: '100%',
-                        padding: '10px 12px', cursor: 'pointer', textAlign: 'left',
-                        color: '#e0e0e0',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f5a623' }}>
-                          {isOpen ? '▾' : '▸'} {t.name}
-                        </span>
-                        <span style={{ fontSize: '0.7rem', color: '#888' }}>🔒 base</span>
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: 4 }}>
-                        {t.roofs.length} roof{t.roofs.length === 1 ? '' : 's'} · {tplDrafts.length} draft{tplDrafts.length === 1 ? '' : 's'} · {timeAgo(t.createdAt)}
-                      </div>
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                      <button
+                        onClick={() => toggleExp(t.id)}
+                        style={{
+                          background: 'transparent', border: 'none', flex: 1,
+                          padding: '10px 12px', cursor: 'pointer', textAlign: 'left',
+                          color: '#e0e0e0',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f5a623' }}>
+                            {isOpen ? '▾' : '▸'} {t.name}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: '#888' }}>🔒 base</span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: 4 }}>
+                          {t.roofs.length} roof{t.roofs.length === 1 ? '' : 's'} · {tplDrafts.length} draft{tplDrafts.length === 1 ? '' : 's'} · {timeAgo(t.createdAt)}
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const msg = tplDrafts.length
+                            ? `Delete template "${t.name}"? This will also delete its ${tplDrafts.length} draft${tplDrafts.length===1?'':'s'}. This cannot be undone.`
+                            : `Delete template "${t.name}"? This cannot be undone.`;
+                          if (window.confirm(msg)) dispatch('template:delete', { id: t.id });
+                        }}
+                        title={tplDrafts.length
+                          ? `Delete template (and ${tplDrafts.length} draft${tplDrafts.length===1?'':'s'})`
+                          : 'Delete template'}
+                        style={{
+                          background: 'transparent', border: 'none',
+                          color: '#ff7070', padding: '0 14px',
+                          fontSize: '0.95rem', cursor: 'pointer', fontWeight: 700,
+                          borderLeft: '1px solid #2a2a4a',
+                        }}
+                      >🗑</button>
+                    </div>
                     {isOpen && (
                       <div style={{ borderTop: '1px solid #2a2a4a', display: 'flex', flexDirection: 'column' }}>
                         {/* Top row — start a fresh draft from this template */}

@@ -965,6 +965,22 @@ function SceneContents() {
         hint: 'Draft deleted',
       }));
     };
+    // Delete a template and every draft forked from it. If the active draft
+    // belonged to that template, exit the editor too.
+    const onTemplateDelete = (e) => {
+      const id = e?.detail?.id;
+      store.set(st => {
+        const droppedDrafts = st.drafts.filter(d => d.templateId === id).map(d => d.id);
+        return {
+          templates: st.templates.filter(t => t.id !== id),
+          drafts:    st.drafts.filter(d => d.templateId !== id),
+          activeTemplateId: st.activeTemplateId === id ? null : st.activeTemplateId,
+          activeDraftId:    droppedDrafts.includes(st.activeDraftId) ? null : st.activeDraftId,
+          draftEditing:     droppedDrafts.includes(st.activeDraftId) ? false : st.draftEditing,
+          hint: `Template deleted${droppedDrafts.length ? ` (${droppedDrafts.length} draft${droppedDrafts.length===1?'':'s'} removed)` : ''}`,
+        };
+      });
+    };
     window.addEventListener('panels:copy',  onPanelsCopy);
     window.addEventListener('panels:paste', onPanelsPaste);
     // ── Single-panel sandbox ─────────────────────────────────────────
@@ -1050,6 +1066,7 @@ function SceneContents() {
     window.addEventListener('draft:new',     onDraftNew);
     window.addEventListener('draft:close',   onDraftClose);
     window.addEventListener('draft:delete',  onDraftDelete);
+    window.addEventListener('template:delete', onTemplateDelete);
     return () => {
       window.removeEventListener('panels:place', onPlace);
       window.removeEventListener('panels:clear', onClear);
@@ -1072,6 +1089,7 @@ function SceneContents() {
       window.removeEventListener('draft:new',     onDraftNew);
       window.removeEventListener('draft:close',   onDraftClose);
       window.removeEventListener('draft:delete',  onDraftDelete);
+      window.removeEventListener('template:delete', onTemplateDelete);
     };
   }, []);
 
