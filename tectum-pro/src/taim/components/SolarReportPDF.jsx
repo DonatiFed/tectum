@@ -116,7 +116,9 @@ function CoverMeta({ label, value }) {
 // ── Page 2: System & Energy ────────────────────────────────────────────
 function EnergyPage({ intake, pipelineData }) {
   const offers  = pipelineData?.offers ?? [];
-  const rec     = offers.find(o => o.option_name === 'Balanced') ?? offers[0];
+  const selName = pipelineData?.selectedOfferName;
+  const rec     = (selName ? offers.find(o => o.option_name === selName) : null)
+               ?? offers.find(o => o.option_name === 'Balanced') ?? offers[0];
   const ctx     = pipelineData?.project_context ?? {};
 
   const sizing  = rec?.sizing   ?? {};
@@ -191,7 +193,9 @@ function EnergyPage({ intake, pipelineData }) {
 // ── Page 3: Economic Analysis ──────────────────────────────────────────
 function EconomicPage({ pipelineData }) {
   const offers = pipelineData?.offers ?? [];
-  const rec    = offers.find(o => o.option_name === 'Balanced') ?? offers[0];
+  const selName = pipelineData?.selectedOfferName;
+  const rec    = (selName ? offers.find(o => o.option_name === selName) : null)
+              ?? offers.find(o => o.option_name === 'Balanced') ?? offers[0];
   const metrics = rec?.metrics ?? {};
   const bom     = rec?.bom     ?? [];
 

@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { FileBarChart } from 'lucide-react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Proposals from './pages/Proposals';
 import { IntakePro } from './components/IntakePro';
 import { signIn, signOut as authSignOut } from './taim/lib/auth';
 import { getProject, rehydrateProjectState, newProjectId } from './taim/lib/projects';
@@ -9,14 +11,14 @@ import { store, useStore } from './taim/lib/store';
 import SolarPlanner from './taim/components/SolarPlanner';
 import { type IntakeData } from './lib/solar';
 
-type Screen = 'login' | 'dashboard' | 'intake' | 'planner';
+type Screen = 'login' | 'dashboard' | 'intake' | 'planner' | 'proposal';
 
 function usePlannerBackDetect(screen: Screen, onBack: () => void) {
   const selectedModel = useStore((s: any) => s.selectedModel);
   const wasInPlanner = useRef(false);
 
   useEffect(() => {
-    if (screen === 'planner' && selectedModel) {
+    if ((screen === 'planner' || screen === 'proposal') && selectedModel) {
       wasInPlanner.current = true;
     }
     if (screen === 'planner' && !selectedModel && wasInPlanner.current) {
@@ -29,6 +31,8 @@ function usePlannerBackDetect(screen: Screen, onBack: () => void) {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('login');
   const [email, setEmail] = useState('');
+
+  const plannerActive = screen === 'planner' || screen === 'proposal';
 
   const handleLogin = useCallback((userEmail: string) => {
     signIn({ email: userEmail, password: '' });
@@ -106,35 +110,58 @@ export default function App() {
   usePlannerBackDetect(screen, backToDash);
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={screen}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.08 }}
-      >
-        {screen === 'login' && <Login onLogin={handleLogin} />}
-        {screen === 'dashboard' && (
-          <Dashboard
-            email={email}
-            onLogout={handleLogout}
-            onOpenProject={handleOpenProject}
-            onNewProject={handleNewProject}
-          />
+    <>
+      {/* Planner stays mounted while on planner or proposal screen */}
+      {plannerActive && (
+        <div style={{ position: 'fixed', inset: 0, visibility: screen === 'planner' ? 'visible' : 'hidden' }}>
+          <SolarPlanner />
+          {screen === 'planner' && (
+            <button
+              onClick={() => setScreen('proposal')}
+              style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 50 }}
+              className="h-12 px-6 rounded-2xl bg-primary text-primary-foreground font-semibold text-[14px] flex items-center gap-2 shadow-lg hover:opacity-90 transition-opacity"
+            >
+              <FileBarChart className="w-4 h-4" /> View Proposals
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Proposals overlays on top of the (hidden) planner */}
+      {screen === 'proposal' && (
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <Proposals onBack={() => setScreen('planner')} />
+        </div>
+      )}
+
+      {/* Other screens use AnimatePresence for transitions */}
+      <AnimatePresence mode="wait">
+        {(screen === 'login' || screen === 'dashboard' || screen === 'intake') && (
+          <motion.div
+            key={screen}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.08 }}
+          >
+            {screen === 'login' && <Login onLogin={handleLogin} />}
+            {screen === 'dashboard' && (
+              <Dashboard
+                email={email}
+                onLogout={handleLogout}
+                onOpenProject={handleOpenProject}
+                onNewProject={handleNewProject}
+              />
+            )}
+            {screen === 'intake' && (
+              <IntakePro
+                onComplete={handleIntakeComplete}
+                onBack={backToDash}
+              />
+            )}
+          </motion.div>
         )}
-        {screen === 'intake' && (
-          <IntakePro
-            onComplete={handleIntakeComplete}
-            onBack={backToDash}
-          />
-        )}
-        {screen === 'planner' && (
-          <div style={{ position: 'fixed', inset: 0 }}>
-            <SolarPlanner />
-          </div>
-        )}
-      </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }

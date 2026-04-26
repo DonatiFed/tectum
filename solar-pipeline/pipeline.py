@@ -20,7 +20,7 @@ DEFAULTS = {
     #             efficiency_pct, weight_kg, cost_eur (per panel)
     "panel_catalog": [
         {
-            "id": "aiko_2s54",
+            "id": "9015daaff68b",
             "brand": "AIKO",
             "model": "NEOSTAR 2S54 Mono-Glass",
             "wp": 440,
@@ -31,7 +31,7 @@ DEFAULTS = {
             "cost_eur": 195,
         },
         {
-            "id": "aiko_2p60",
+            "id": "c438b5a421e0",
             "brand": "AIKO",
             "model": "NEOSTAR 2P60 Mono-Glass",
             "wp": 505,
@@ -42,7 +42,7 @@ DEFAULTS = {
             "cost_eur": 230,
         },
         {
-            "id": "aiko_2s60",
+            "id": "3588481eb07d",
             "brand": "AIKO",
             "model": "NEOSTAR 2S60 Mono-Glass",
             "wp": 500,
@@ -53,7 +53,7 @@ DEFAULTS = {
             "cost_eur": 220,
         },
         {
-            "id": "trina_vertex_s_plus",
+            "id": "5c37eed932b8",
             "brand": "Trina",
             "model": "Vertex S+ NEG9R.25",
             "wp": 440,
@@ -64,7 +64,7 @@ DEFAULTS = {
             "cost_eur": 185,
         },
         {
-            "id": "trina_vertex_650",
+            "id": "7f0cf56ab1a3",
             "brand": "Trina",
             "model": "Vertex TSM-DEG21C.20",
             "wp": 650,
@@ -75,7 +75,7 @@ DEFAULTS = {
             "cost_eur": 310,
         },
         {
-            "id": "trina_vertex_s_625",
+            "id": "9d9f774ab2c1",
             "brand": "Trina",
             "model": "Vertex S TSM-NEG9.28",
             "wp": 625,
@@ -86,7 +86,7 @@ DEFAULTS = {
             "cost_eur": 290,
         },
         {
-            "id": "trina_vertex_s_plus_gg",
+            "id": "63e166ee1d4f",
             "brand": "Trina",
             "model": "Vertex S+ Glass-Glass",
             "wp": 440,
@@ -97,7 +97,7 @@ DEFAULTS = {
             "cost_eur": 200,
         },
         {
-            "id": "trina_vertex_s_plus_505",
+            "id": "e5f5a121c83d",
             "brand": "Trina",
             "model": "Vertex S+ Glass-Glass 505W",
             "wp": 505,
@@ -108,7 +108,7 @@ DEFAULTS = {
             "cost_eur": 235,
         },
         {
-            "id": "generic_bifacial_655",
+            "id": "0e93d5d4a7b2",
             "brand": "Generic",
             "model": "Glass-Glass Bifacial 655W",
             "wp": 655,
@@ -151,7 +151,7 @@ DEFAULTS = {
     },
 
     # ── Cost levers ──────────────────────────────────────────────────
-    "base_pv_cost_per_kwp": 1300,       # €/kWp (inverter + wiring, on top of panel cost)
+    "base_pv_cost_per_kwp": 750,        # €/kWp BOS only (inverter + wiring + mounting; panel hardware costed separately)
     "base_battery_cost_per_kwh": 600,   # €/kWh
     "wallbox_cost": 1200,               # € flat
     "service_cost_with_pv": 2500,       # € labor when PV included
@@ -346,6 +346,12 @@ def _select_mode(form):
     return "full_system"
 
 
+ORIENTATION_FACTOR = {
+    "S": 1.00, "SE": 0.95, "SW": 0.95,
+    "E": 0.85, "W": 0.85, "N": 0.60,
+}
+
+
 def build_context(form, cfg):
     panel = _resolve_panel(cfg)
     module_wp = panel["wp"]
@@ -360,10 +366,16 @@ def build_context(form, cfg):
     max_modules = form["max_modules"]
     max_kwp = max_modules * module_wp / 1000
 
+    orientation = form.get("orientation", "S")
+    adjusted_yield = cfg["specific_yield"] * ORIENTATION_FACTOR.get(orientation, 1.0)
+
     hp_candidate = (
         form.get("heating_existing_type") in ("Gas", "Oil")
         and not form.get("has_solar")
+        and form.get("wants_heatpump", True)
     )
+
+    existing_battery_kwh = form.get("existing_battery_kwh") or 0
 
     mode = _select_mode(form)
 
@@ -371,12 +383,13 @@ def build_context(form, cfg):
         **form,
         "panel": panel,
         "module_wp": module_wp,
-        "specific_yield": cfg["specific_yield"],
+        "specific_yield": adjusted_yield,
         "base_demand_kwh": base_demand,
         "ev_demand_kwh": ev_demand,
         "effective_demand_kwh": effective_demand,
         "max_kwp": max_kwp,
         "hp_candidate": hp_candidate,
+        "existing_battery_kwh": existing_battery_kwh,
         "mode": mode,
         "_cfg": cfg,
     }
@@ -394,8 +407,7 @@ def generate_candidates(ctx):
     if mode in ("battery_retrofit", "addon_only"):
         module_range = [0]
     else:
-        lo = min(8, ctx["max_modules"])
-        module_range = list(range(lo, ctx["max_modules"] + 1, 2))
+        module_range = [ctx["max_modules"]]
 
     if mode in ("pv_only", "addon_only"):
         battery_range = [0]
@@ -487,7 +499,8 @@ def simulate_energy(candidate, ctx):
         hp_demand = candidate["heatpump_kw"] * 2000 / 3.0
         demand += hp_demand
 
-    sc = self_consumption_rate(production, demand, candidate["battery_kwh"])
+    total_battery = candidate["battery_kwh"] + ctx.get("existing_battery_kwh", 0)
+    sc = self_consumption_rate(production, demand, total_battery)
 
     self_consumed = min(production * sc, demand)
     exported = max(production - self_consumed, 0)
@@ -664,9 +677,9 @@ def _normalize(values):
 
 def _too_similar(a, b):
     return (
-        abs(a["modules"] - b["modules"]) <= 2
-        and abs(a["battery_kwh"] - b["battery_kwh"]) <= 2
+        abs(a["battery_kwh"] - b["battery_kwh"]) <= 2
         and a["brand"] == b["brand"]
+        and a.get("heatpump_kw") == b.get("heatpump_kw")
     )
 
 
@@ -882,11 +895,27 @@ def generate_offer(form, overrides=None):
     ctx = build_context(form, cfg)
     candidates = generate_candidates(ctx)
 
-    simulated = []
+    # First pass: simulate WITHOUT budget cap to get full cost range
+    saved_budget = ctx.get("budget_cap_eur")
+    ctx["budget_cap_eur"] = None
+    all_simulated = []
     for c in candidates:
         result = simulate(c, ctx)
         if result is not None:
-            simulated.append(result)
+            all_simulated.append(result)
+
+    all_costs = [c["total_cost_eur"] for c in all_simulated if c.get("total_cost_eur", 0) > 0]
+    cost_range = {
+        "min": round(min(all_costs)) if all_costs else 0,
+        "max": round(max(all_costs)) if all_costs else 0,
+    }
+
+    # Second pass: apply budget filter if set
+    ctx["budget_cap_eur"] = saved_budget
+    if saved_budget:
+        simulated = [c for c in all_simulated if c["total_cost_eur"] <= saved_budget]
+    else:
+        simulated = all_simulated
 
     options = select_options(simulated, ctx)
 
@@ -947,5 +976,6 @@ def generate_offer(form, overrides=None):
             "efficiency_pct": panel["efficiency_pct"],
             "cost_eur": panel["cost_eur"],
         },
+        "cost_range": cost_range,
         "offers": offers,
     }
