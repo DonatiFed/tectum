@@ -4,6 +4,9 @@ import { store, useStore } from '../lib/store';
 import { PANEL_TYPES } from '../lib/catalog';
 import { sunDirection, panelIrradiance, dailyCurve, dailyEnergy, fmtHour } from '../lib/solar';
 
+const dispatch = (name, detail) =>
+  window.dispatchEvent(new CustomEvent(name, detail !== undefined ? { detail } : undefined));
+
 export default function PanelDashboard() {
   const db        = useStore(s => s.activePanelDashboard);
   const solarTime = useStore(s => s.solarTime);
@@ -12,6 +15,9 @@ export default function PanelDashboard() {
   const roofs     = useStore(s => s.roofs);
   const panelIdx  = useStore(s => s.panelTypeIdx);
   const custom    = useStore(s => s.customPanel);
+  const activeTab = useStore(s => s.activeTab);
+  const dropping  = useStore(s => s.mode) === 'panel-drop';
+  const clipboard = useStore(s => s.singlePanelClipboard);
 
   if (!db) return null;
   const roof  = roofs.find(r => r.id === db.roofId);
@@ -32,11 +38,13 @@ export default function PanelDashboard() {
       panel={panel} irr={irr} area={area} power={power} panelEff={panelEff}
       sun={sun} solarTime={solarTime} solarDay={solarDay} solarLat={solarLat}
       roofId={db.roofId} panelIndex={db.index}
+      showActions={activeTab !== 'solar'}
+      dropping={dropping} clipboard={clipboard}
     />
   );
 }
 
-function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, solarDay, solarLat, roofId, panelIndex }) {
+function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, solarDay, solarLat, roofId, panelIndex, showActions, dropping, clipboard }) {
   // Curve memoised on lat/day/quat — doesn't change with time
   const qx = panel.quat.x, qy = panel.quat.y, qz = panel.quat.z, qw = panel.quat.w;
   const curve = useMemo(
@@ -54,10 +62,6 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
   const nowX    = (solarTime / 24) * CW;
   const nowY    = CH - (irr / 1000) * CH;
 
-  const incidenceAngle = sun.belowHorizon
-    ? '—'
-    : `${(90 - Math.asin(Math.max(0, irr / 1000)) * 180 / Math.PI).toFixed(1)}°`;
-
   return (
     <div style={{
       position: 'fixed', bottom: 100, left: 'calc((100% - 320px) / 2)',
@@ -65,7 +69,7 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
       zIndex: 50,
       background: 'rgba(10,18,34,0.97)',
       border: '1px solid #f5a623', borderRadius: 14,
-      padding: '14px 16px', width: 300,
+      padding: '14px 16px', width: 320,
       boxShadow: '0 20px 60px rgba(0,0,0,0.65)',
       display: 'flex', flexDirection: 'column', gap: 10,
     }}>
@@ -76,10 +80,20 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
           <span style={{ color: '#888', fontWeight: 400 }}>{roofId.slice(-8)}</span>
         </span>
         <button
-          onClick={() => store.set({ activePanelDashboard: null })}
+          onClick={() => store.set({ activePanelDashboard: null, selectedPanelKeys: [] })}
           style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 }}
         >✕</button>
       </div>
+
+      {/* ── Per-panel actions: rotate, delete, copy, drop, place / clear
+            on host roof. Lives here (popup) so the right sidebar stays
+            focused on the global layout recipe. ── */}
+      {showActions && (
+        <ActionsBlock
+          roofId={roofId} panelIndex={panelIndex}
+          dropping={dropping} clipboard={clipboard}
+        />
+      )}
 
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -125,6 +139,95 @@ function DashboardCard({ panel, irr, area, power, panelEff, sun, solarTime, sola
         </svg>
       </div>
     </div>
+  );
+}
+
+function ActionsBlock({ roofId, panelIndex, dropping, clipboard }) {
+  const rotate = (deltaDeg) =>
+    dispatch('panel:rotateOne', { roofId, index: panelIndex, deltaDeg });
+  const onDelete = () => {
+    dispatch('panel:deleteSelected');
+    store.set({ activePanelDashboard: null });
+  };
+  return (
+    <div style={{
+      background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 8,
+      padding: 10, display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      <div style={{ fontSize: '0.66rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        Panel actions
+      </div>
+
+      {/* Rotation */}
+      <div>
+        <div style={{ fontSize: '0.7rem', color: '#888', marginBottom: 4 }}>Rotate this panel around its roof normal</div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <RotBtn onClick={() => rotate(-15)} title="-15°">↺ -15°</RotBtn>
+          <RotBtn onClick={() => rotate(-5)}  title="-5°">↺ -5°</RotBtn>
+          <RotBtn onClick={() => rotate(5)}   title="+5°">↻ +5°</RotBtn>
+          <RotBtn onClick={() => rotate(15)}  title="+15°">↻ +15°</RotBtn>
+        </div>
+      </div>
+
+      {/* Delete / Copy */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <ActBtn variant="danger" onClick={onDelete} title="Delete this panel">🗑 Delete</ActBtn>
+        <ActBtn onClick={() => dispatch('panel:copySelected')} title="Copy this panel as a drop recipe">⎘ Copy</ActBtn>
+      </div>
+
+      {/* Drop new panel toggle */}
+      <ActBtn
+        variant={dropping ? 'success' : 'primary'}
+        disabled={!clipboard && !dropping}
+        onClick={() => dispatch(dropping ? 'panel:exitDropMode' : 'panel:enterDropMode')}
+        title={clipboard ? 'Click on the building to drop more panels with the copied size' : 'Copy a panel first, then drop'}
+      >{dropping ? '⏹ Stop dropping' : '✥ Drop new panel'}</ActBtn>
+
+      {/* Place / Clear (whole host roof) */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <ActBtn variant="primary"   onClick={() => dispatch('panels:place')} title="Place panels on this roof using the current recipe">▦ Place roof</ActBtn>
+        <ActBtn                     onClick={() => dispatch('panels:clear')} title="Clear all panels on this roof">✕ Clear roof</ActBtn>
+      </div>
+      <div style={{ fontSize: '0.66rem', color: '#666', lineHeight: 1.4 }}>
+        Drag-drop with “Drop new panel”: copy a panel, then click anywhere on
+        the building to drop matching panels. Esc to stop.
+      </div>
+    </div>
+  );
+}
+
+function RotBtn({ onClick, title, children }) {
+  return (
+    <button
+      onClick={onClick} title={title}
+      style={{
+        flex: 1, padding: '6px 0', borderRadius: 6, cursor: 'pointer',
+        background: '#1a2540', color: '#f5a623', border: '1px solid #2a2a4a',
+        fontWeight: 700, fontSize: '0.72rem',
+      }}
+    >{children}</button>
+  );
+}
+
+function ActBtn({ variant, disabled, onClick, title, children }) {
+  const palette = {
+    primary: { bg: '#f5a623', fg: '#0d1b2a', border: '#f5a623' },
+    success: { bg: '#4ade80', fg: '#0d1b2a', border: '#4ade80' },
+    danger:  { bg: '#3b0d0d', fg: '#fecaca', border: '#ff7070' },
+    default: { bg: '#1a2540', fg: '#e0e0e0', border: '#2a2a4a' },
+  }[variant || 'default'];
+  return (
+    <button
+      onClick={onClick} title={title} disabled={disabled}
+      style={{
+        flex: 1, padding: '7px 10px', borderRadius: 6,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        background: palette.bg, color: palette.fg,
+        border: `1px solid ${palette.border}`, fontWeight: 700,
+        fontSize: '0.74rem',
+      }}
+    >{children}</button>
   );
 }
 
