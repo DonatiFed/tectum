@@ -41,18 +41,13 @@ export default function Sidebar() {
         <Section title="Workflow">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <ModeBtn id="orbit"  current={mode}>🖱 Navigate</ModeBtn>
-            <ModeBtn id="crop"   current={mode}>✂ Crop</ModeBtn>
             <ModeBtn id="select" current={mode}>🏠 Roof</ModeBtn>
             <ModeBtn id="erase"  current={mode}>✏ Erase</ModeBtn>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#888', marginTop: 4 }}>
-            Crop a building · Drag across roof areas to segment continuous planes · Merge selected planes into one mask · Erase occlusions. When the roofs look right, switch to the <b>Templates</b> tab to save them as a client template.
+            Drag across roof areas to segment continuous planes · Merge selected planes into one mask · Erase occlusions. When the roofs look right, switch to the <b>Templates</b> tab to save them as a client template.
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            {cropBounds && (
-              <button onClick={() => window.dispatchEvent(new CustomEvent('crop:clear'))}
-                style={{ ...btnStyle('secondary'), padding: '6px 8px', fontSize: '0.75rem' }}>⨉ Clear Crop</button>
-            )}
             <button onClick={() => store.set({ activeRoofId: null, hint: 'Started fresh · next click creates a new roof' })}
               style={{ ...btnStyle('secondary'), padding: '6px 8px', fontSize: '0.75rem' }}>➕ New Roof</button>
           </div>

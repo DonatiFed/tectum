@@ -938,9 +938,9 @@ function LoadingOverlay({ progress }) {
 function TopBar() {
   const model        = useStore(s => s.selectedModel);
   const modelVisible = useStore(s => s.modelVisible);
-  const texturesOn   = useStore(s => s.texturesOn);
   const roofs        = useStore(s => s.roofs.length);
   const draftEditing = useStore(s => s.draftEditing);
+  const tab          = useStore(s => s.activeTab);
   const dispatch = (n) => window.dispatchEvent(new CustomEvent(n));
   return (
     <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8, zIndex: 30, alignItems: 'center' }}>
@@ -983,8 +983,9 @@ function TopBar() {
         background: 'rgba(22,33,62,0.85)', border: '1px solid #2a2a4a',
         borderRadius: 8, padding: '8px 12px', fontSize: '0.8rem', color: '#aaa',
       }}>{model?.name}</div>
-      {/* 3D + Texture toggles live up here so they're reachable from every
-          tab (incl. Templates), not buried in the detection bottom dock. */}
+      {/* 3D toggle stays universal — useful from every tab. The Tex toggle
+          moved into the Roof Detection bottom dock since it's a detection-
+          time visualisation aid. */}
       <button
         onClick={() => store.set(s => ({ modelVisible: !s.modelVisible, hint: !s.modelVisible ? '3D model visible' : '3D model hidden · only roof masks & panels remain' }))}
         style={{
@@ -995,37 +996,28 @@ function TopBar() {
         }}
         title="Show or hide the 3D building model"
       >{modelVisible ? '3D On' : '3D Off'}</button>
-      <button
-        onClick={() => store.set(s => ({ texturesOn: !s.texturesOn, hint: !s.texturesOn ? 'Textures on' : 'Textures off · plain shading reveals roof faces clearly' }))}
-        style={{
-          ...btnStyle('secondary'),
-          background: texturesOn ? '#2a2a4a' : '#f5a623',
-          color: texturesOn ? '#e0e0e0' : '#1a1a2e',
-          border: 'none', fontWeight: 700,
-        }}
-        title="Show or hide building textures"
-      >{texturesOn ? 'Tex On' : 'Tex Off'}</button>
-      {/* Clear the live workspace (roofs, panels, selection, active draft).
-          Saved templates + drafts remain in the library. Disabled when the
-          scene already has nothing on it. */}
-      <button
-        onClick={() => {
-          if (!roofs && !draftEditing) return;
-          if (window.confirm('Clear the workspace? Saved templates and drafts will be kept; only the in-scene roofs and panels are removed.')) {
-            dispatch('workspace:clear');
-          }
-        }}
-        disabled={!roofs && !draftEditing}
-        style={{
-          ...btnStyle('secondary'),
-          background: 'transparent',
-          border: '1px solid #4a2030',
-          color: '#ff8a8a', fontWeight: 700,
-          opacity: (roofs || draftEditing) ? 1 : 0.4,
-          cursor:  (roofs || draftEditing) ? 'pointer' : 'not-allowed',
-        }}
-        title="Clear the live workspace · saved templates and drafts are kept"
-      >🧹 Clear Workspace</button>
+      {/* Clear-workspace lives in the Templates tab — that's where the
+          installer is reviewing saved drafts and may want a clean slate. */}
+      {tab === 'templates' && (
+        <button
+          onClick={() => {
+            if (!roofs && !draftEditing) return;
+            if (window.confirm('Clear the workspace? Saved templates and drafts will be kept; only the in-scene roofs and panels are removed.')) {
+              dispatch('workspace:clear');
+            }
+          }}
+          disabled={!roofs && !draftEditing}
+          style={{
+            ...btnStyle('secondary'),
+            background: 'transparent',
+            border: '1px solid #4a2030',
+            color: '#ff8a8a', fontWeight: 700,
+            opacity: (roofs || draftEditing) ? 1 : 0.4,
+            cursor:  (roofs || draftEditing) ? 'pointer' : 'not-allowed',
+          }}
+          title="Clear the live workspace · saved templates and drafts are kept"
+        >🧹 Clear Workspace</button>
+      )}
     </div>
   );
 }
@@ -1075,6 +1067,7 @@ function BottomControls() {
   const mode         = useStore(s => s.mode);
   const meshSmooth   = useStore(s => s.meshSmoothLevel);
   const activeRoofId = useStore(s => s.activeRoofId);
+  const texturesOn   = useStore(s => s.texturesOn);
   const [open, setOpen] = useState(true);
 
   // Centered along the bottom of the *visible canvas* (viewport minus the
@@ -1136,6 +1129,16 @@ function BottomControls() {
           style={{ ...btnStyle('ctl'), opacity: activeRoofId ? 1 : 0.4, cursor: activeRoofId ? 'pointer' : 'not-allowed' }}
           title="Sharpen and smooth ONLY the outline of the active roof's mask"
         >✨ Smooth Edges</button>
+        <button
+          onClick={() => store.set(s => ({ texturesOn: !s.texturesOn, hint: !s.texturesOn ? 'Textures on' : 'Textures off · plain shading reveals roof faces clearly' }))}
+          style={{
+            ...btnStyle('ctl'),
+            background: texturesOn ? '#2a2a4a' : '#f5a623',
+            color: texturesOn ? '#e0e0e0' : '#0d1b2a',
+            fontWeight: 700,
+          }}
+          title="Show or hide building textures · plain shading helps see roof faces"
+        >{texturesOn ? 'Tex On' : 'Tex Off'}</button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '0 6px', borderLeft: '1px solid #2a2a4a' }}>
           <input
             type="range" min="0" max="1" step="0.02" value={meshSmooth}

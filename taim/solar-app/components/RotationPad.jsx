@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 const dispatch  = (name, detail) => window.dispatchEvent(new CustomEvent(name, detail !== undefined ? { detail } : undefined));
 const rotate    = (dir)     => dispatch('cam:rotate',  dir);
-const compass   = (bearing) => dispatch('cam:compass', bearing);
 const zoom      = (dir)     => dispatch('cam:zoom',    dir);
 const preset    = (name)    => dispatch(name);
 
@@ -13,7 +12,7 @@ const preset    = (name)    => dispatch(name);
 // installer can hide it to free up space and bring it back at any time.
 // Always rendered (every tab) so view controls are universally reachable.
 const LEFT_EDGE = 18;
-const COL_GAP   = 10;
+const COL_GAP   = 8;
 
 export default function RotationPad() {
   const [open, setOpen] = useState(true);
@@ -54,36 +53,48 @@ export default function RotationPad() {
     return <div style={anchor}>{handle}</div>;
   }
 
+  // Panel wrapper for the zoom + view-preset cluster. The rotation arrows
+  // above sit "naked" against the canvas — purely floating buttons — while
+  // zoom/reset/top/45° share a subtle backdrop so they read as one group.
+  const presetPanel = {
+    background: 'rgba(10,18,34,0.92)',
+    border: '1px solid #38506d',
+    borderRadius: 14,
+    padding: '8px 10px',
+    boxShadow: '0 10px 24px rgba(0,0,0,0.45)',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, auto)',
+    gap: COL_GAP,
+    pointerEvents: 'auto',
+  };
+
   return (
     <div style={anchor}>
       {handle}
-      {/* Tilt + rotate arrows — vertical 3-row layout per column */}
-      <div style={col()}>
-        <RoundBtn variant="arrow" onClick={() => rotate('up')}    title="Tilt up 15°">⤒</RoundBtn>
-        <Spacer />
-        <RoundBtn variant="arrow" onClick={() => rotate('down')}  title="Tilt down 15°">⤓</RoundBtn>
-      </div>
-      <div style={col()}>
-        <RoundBtn variant="arrow" onClick={() => rotate('left')}  title="Rotate left 15°">↺</RoundBtn>
-        <Spacer />
-        <RoundBtn variant="arrow" onClick={() => rotate('right')} title="Rotate right 15°">↻</RoundBtn>
-      </div>
-      {/* Cardinal compass presets — 2×2 grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', gap: COL_GAP, pointerEvents: 'auto' }}>
-        <RoundBtn variant="compass" onClick={() => compass('N')} title="View from North">N</RoundBtn>
-        <RoundBtn variant="compass" onClick={() => compass('E')} title="View from East">E</RoundBtn>
-        <RoundBtn variant="compass" onClick={() => compass('W')} title="View from West">W</RoundBtn>
-        <RoundBtn variant="compass" onClick={() => compass('S')} title="View from South">S</RoundBtn>
-      </div>
-      {/* Zoom + view presets — 2×3 grid (zoom column + reset/top/45 column).
-          Lives on the side panel so it's reachable from every tab. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', gap: COL_GAP, pointerEvents: 'auto' }}>
-        <RoundBtn variant="compass" onClick={() => zoom('in')}  title="Zoom in">＋</RoundBtn>
-        <RoundBtn variant="preset"  onClick={() => preset('cam:reset')} title="Reset framing">⟲</RoundBtn>
-        <RoundBtn variant="compass" onClick={() => zoom('out')} title="Zoom out">－</RoundBtn>
-        <RoundBtn variant="preset"  onClick={() => preset('cam:top')}   title="Top-down view">⬒</RoundBtn>
-        <span />
-        <RoundBtn variant="preset"  onClick={() => preset('cam:persp')} title="45° vertical tilt" highlight>45°</RoundBtn>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, pointerEvents: 'none' }}>
+        {/* Floating rotation cluster — no background panel. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, pointerEvents: 'none' }}>
+          <div style={col()}>
+            <RoundBtn variant="arrow" onClick={() => rotate('up')}    title="Tilt up 15°">⤒</RoundBtn>
+            <Spacer />
+            <RoundBtn variant="arrow" onClick={() => rotate('down')}  title="Tilt down 15°">⤓</RoundBtn>
+          </div>
+          <div style={col()}>
+            <RoundBtn variant="arrow" onClick={() => rotate('left')}  title="Rotate left 15°">↺</RoundBtn>
+            <Spacer />
+            <RoundBtn variant="arrow" onClick={() => rotate('right')} title="Rotate right 15°">↻</RoundBtn>
+          </div>
+        </div>
+        {/* Zoom + view presets share a subtle backdrop so they read as
+            their own utility group, sitting just below the rotation pad. */}
+        <div style={presetPanel}>
+          <RoundBtn variant="compass" onClick={() => zoom('in')}  title="Zoom in">＋</RoundBtn>
+          <RoundBtn variant="preset"  onClick={() => preset('cam:reset')} title="Reset framing">⟲</RoundBtn>
+          <RoundBtn variant="compass" onClick={() => zoom('out')} title="Zoom out">－</RoundBtn>
+          <RoundBtn variant="preset"  onClick={() => preset('cam:top')}   title="Top-down view">⬒</RoundBtn>
+          <span />
+          <RoundBtn variant="preset"  onClick={() => preset('cam:persp')} title="45° vertical tilt" highlight>45°</RoundBtn>
+        </div>
       </div>
     </div>
   );
