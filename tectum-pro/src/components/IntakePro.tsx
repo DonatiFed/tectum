@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ArrowLeft, MapPin, Minus, Plus } from 'lucide-react';
+import { ArrowRight, ArrowLeft, MapPin, Minus, Plus, Upload, X } from 'lucide-react';
 import { type IntakeData, type EvStatus, type BatteryStatus, type HeatingType } from '../lib/solar';
 import { cn } from '../lib/utils';
 import { Slider } from './ui/slider';
 import { Switch } from './ui/switch';
 
 interface IntakeProProps {
-  onComplete: (data: IntakeData) => void;
+  onComplete: (data: IntakeData, modelFile?: File) => void;
   onBack: () => void;
   initial?: IntakeData | null;
 }
@@ -47,10 +47,22 @@ function ThreeWay({ value, onChange, labels }: { value: string; onChange: (v: st
 
 export function IntakePro({ onComplete, onBack, initial }: IntakeProProps) {
   const [data, setData] = useState<IntakeData>(initial || DEFAULT_DATA);
+  const [modelFile, setModelFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (initial) setData(initial); }, [initial]);
 
   const update = (u: Partial<IntakeData>) => setData(p => ({ ...p, ...u }));
+
+  const handleFilePick = (file: File | undefined) => {
+    if (!file) return;
+    if (!/\.glb$/i.test(file.name) && file.type !== 'model/gltf-binary') {
+      alert('Please select a .glb file (binary glTF).');
+      return;
+    }
+    setModelFile(file);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -229,12 +241,58 @@ export function IntakePro({ onComplete, onBack, initial }: IntakeProProps) {
               </div>
             </div>
           </section>
+
+          {/* 3D Model */}
+          <section className="bg-card rounded-2xl p-6 sm:p-8 border">
+            <div className="text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-5">3D Model</div>
+            {modelFile ? (
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-background border border-primary/20">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Upload className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-[14px] truncate">{modelFile.name}</div>
+                  <div className="text-[12px] text-muted-foreground">{(modelFile.size / 1024 / 1024).toFixed(1)} MB</div>
+                </div>
+                <button onClick={() => setModelFile(null)}
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFilePick(e.dataTransfer.files?.[0]); }}
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-3 py-12 rounded-xl border-2 border-dashed cursor-pointer transition-colors",
+                  dragOver ? "border-primary bg-primary/[0.03]" : "border-border hover:border-primary/30"
+                )}
+              >
+                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="text-center">
+                  <div className="font-medium text-[14px]">Drop a .glb file here, or click to browse</div>
+                  <div className="text-[12px] text-muted-foreground mt-1">Binary glTF format · 3D model of the building</div>
+                </div>
+                <input ref={fileInputRef} type="file" accept=".glb,model/gltf-binary" className="hidden"
+                  onChange={(e) => handleFilePick(e.target.files?.[0])} />
+              </div>
+            )}
+          </section>
         </div>
 
         <div className="flex justify-end mt-8 mb-16">
-          <button onClick={() => onComplete(data)}
-            className="h-11 px-8 rounded-xl bg-primary text-primary-foreground font-semibold text-[15px] flex items-center gap-2 hover:opacity-90 transition-opacity">
-            Generate design <ArrowRight className="w-5 h-5" />
+          <button
+            onClick={() => onComplete(data, modelFile || undefined)}
+            disabled={!modelFile}
+            className={cn(
+              "h-11 px-8 rounded-xl font-semibold text-[15px] flex items-center gap-2 transition-opacity",
+              modelFile ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}>
+            Open in planner <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>

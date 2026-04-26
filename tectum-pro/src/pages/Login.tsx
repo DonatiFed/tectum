@@ -75,17 +75,21 @@ export default function Login({ onLogin }: LoginProps) {
     };
   }, []);
 
+  useEffect(() => {
+    document.body.style.backgroundColor = '#0f172a';
+    return () => { document.body.style.backgroundColor = ''; };
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    document.body.style.backgroundColor = '';
     setTimeout(() => onLogin(email || 'installer@tectum.de'), 600);
   };
 
   return (
     <>
       <style>{`
-        body { background-color: #0f172a !important; }
-
         .animate-on-scroll {
           opacity: 0;
           transform: translateY(40px);
@@ -197,46 +201,7 @@ export default function Login({ onLogin }: LoginProps) {
           </div>
         </section>
 
-        {/* Section 2 — Hero sentence, left-aligned */}
-        <section
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-            padding: 'clamp(2rem, 5vw, 5rem)',
-          }}
-        >
-          <div className="animate-on-scroll" style={{ textAlign: 'left' }}>
-            <h2
-              style={{
-                fontSize: 'clamp(2.2rem, 5vw, 3.8rem)',
-                fontWeight: 400,
-                maxWidth: '600px',
-                lineHeight: 1.2,
-                color: '#f8fafc',
-                fontFamily: "'Instrument Serif', Georgia, serif",
-                letterSpacing: '-0.015em',
-              }}
-            >
-              Design solar systems<br />that sell themselves.
-            </h2>
-            <p
-              style={{
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontSize: '0.95rem',
-                fontWeight: 400,
-                color: 'rgba(255,255,255,0.35)',
-                marginTop: '1.25rem',
-                lineHeight: 1.6,
-              }}
-            >
-              3D roof layout. Real-time pricing. Instant quotes.
-            </p>
-          </div>
-        </section>
-
-        {/* Section 3 — Login */}
+        {/* Section 2 — Login */}
         <section
           style={{
             minHeight: '100vh',

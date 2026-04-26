@@ -1,43 +1,109 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import { IntakePro } from './components/IntakePro';
-import { PlannerPro } from './components/PlannerPro';
+import { signIn, signOut as authSignOut } from './taim/lib/auth';
+import { getProject, rehydrateProjectState, newProjectId } from './taim/lib/projects';
+import { store, useStore } from './taim/lib/store';
+import SolarPlanner from './taim/components/SolarPlanner';
 import { type IntakeData } from './lib/solar';
-import { type Project, addProject } from './lib/store';
 
 type Screen = 'login' | 'dashboard' | 'intake' | 'planner';
+
+function usePlannerBackDetect(screen: Screen, onBack: () => void) {
+  const selectedModel = useStore((s: any) => s.selectedModel);
+  const wasInPlanner = useRef(false);
+
+  useEffect(() => {
+    if (screen === 'planner' && selectedModel) {
+      wasInPlanner.current = true;
+    }
+    if (screen === 'planner' && !selectedModel && wasInPlanner.current) {
+      wasInPlanner.current = false;
+      onBack();
+    }
+  }, [screen, selectedModel, onBack]);
+}
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('login');
   const [email, setEmail] = useState('');
-  const [activeProject, setActiveProject] = useState<Project | null>(null);
-  const [intake, setIntake] = useState<IntakeData | null>(null);
 
-  const handleLogin = (userEmail: string) => {
+  const handleLogin = useCallback((userEmail: string) => {
+    signIn({ email: userEmail, password: '' });
     setEmail(userEmail);
     setScreen('dashboard');
-  };
+    window.scrollTo(0, 0);
+  }, []);
 
-  const handleSelectProject = (project: Project) => {
-    setActiveProject(project);
-    setIntake(project.intake);
+  const handleLogout = useCallback(() => {
+    authSignOut();
+    setEmail('');
+    setScreen('login');
+  }, []);
+
+  const handleOpenProject = useCallback(async (projectId: string) => {
+    const full = await getProject(projectId);
+    if (!full) return;
+    let url = null;
+    if (full.modelBlob) {
+      url = URL.createObjectURL(full.modelBlob);
+    }
+    if (!url) {
+      alert('Saved 3D model could not be restored. Please re-import the .glb file.');
+      return;
+    }
+    const resumed = rehydrateProjectState({
+      roofs: full.roofs,
+      templates: full.templates,
+      drafts: full.drafts,
+    });
+    store.set({
+      selectedModel: { name: full.name || 'Project', file: url, icon: '🏠', uploaded: true, fileName: full.modelFileName },
+      loaded: false,
+      loadProgress: 0,
+      currentProjectId: projectId,
+      intake: full.intake ?? null,
+      pendingProjectName: null,
+      _resume: resumed,
+    });
     setScreen('planner');
-  };
+  }, []);
 
-  const handleIntakeComplete = (data: IntakeData) => {
-    const project = addProject(data);
-    setActiveProject(project);
-    setIntake(data);
+  const handleNewProject = useCallback(() => {
+    setScreen('intake');
+  }, []);
+
+  const handleIntakeComplete = useCallback((data: IntakeData, modelFile?: File) => {
+    if (!modelFile) return;
+    const url = URL.createObjectURL(modelFile);
+    const projectName = `${data.name || 'Project'}${data.address ? ' – ' + data.address : ''}`;
+    store.set({
+      selectedModel: { name: modelFile.name.replace(/\.glb$/i, ''), file: url, icon: '🏠', uploaded: true, fileName: modelFile.name },
+      loaded: false,
+      loadProgress: 0,
+      pendingProjectName: projectName,
+      currentProjectId: newProjectId(),
+      intake: data,
+      roofs: [], templates: [], drafts: [],
+      activeRoofId: null, activeTemplateId: null, activeDraftId: null,
+      _resume: null,
+    });
     setScreen('planner');
-  };
+  }, []);
 
-  const backToDash = () => {
-    setActiveProject(null);
-    setIntake(null);
+  const backToDash = useCallback(() => {
+    store.set({
+      selectedModel: null, loaded: false, currentProjectId: null,
+      roofs: [], templates: [], drafts: [], intake: null,
+      activeRoofId: null, activeTemplateId: null, activeDraftId: null,
+      draftEditing: false,
+    });
     setScreen('dashboard');
-  };
+  }, []);
+
+  usePlannerBackDetect(screen, backToDash);
 
   return (
     <AnimatePresence mode="wait">
@@ -46,18 +112,27 @@ export default function App() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.08 }}
       >
         {screen === 'login' && <Login onLogin={handleLogin} />}
         {screen === 'dashboard' && (
-          <Dashboard email={email} onLogout={() => { setScreen('login'); setEmail(''); }}
-            onSelectProject={handleSelectProject} onNewProject={() => setScreen('intake')} />
+          <Dashboard
+            email={email}
+            onLogout={handleLogout}
+            onOpenProject={handleOpenProject}
+            onNewProject={handleNewProject}
+          />
         )}
         {screen === 'intake' && (
-          <IntakePro onComplete={handleIntakeComplete} onBack={backToDash} initial={activeProject?.intake} />
+          <IntakePro
+            onComplete={handleIntakeComplete}
+            onBack={backToDash}
+          />
         )}
-        {screen === 'planner' && intake && (
-          <PlannerPro intake={intake} onBack={backToDash} projectName={activeProject?.customerName} />
+        {screen === 'planner' && (
+          <div style={{ position: 'fixed', inset: 0 }}>
+            <SolarPlanner />
+          </div>
         )}
       </motion.div>
     </AnimatePresence>
