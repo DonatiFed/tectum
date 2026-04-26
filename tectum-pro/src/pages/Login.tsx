@@ -167,32 +167,6 @@ export default function Login({ onLogin }: LoginProps) {
           }}
         >
           <div className="animate-on-scroll" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div
-              style={{
-                width: 'clamp(5rem, 9vw, 7.5rem)',
-                height: 'clamp(5rem, 9vw, 7.5rem)',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '2rem',
-                boxShadow: '0 0 60px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.3)',
-              }}
-            >
-              <img
-                src="/logo.png"
-                alt="Tectum"
-                style={{
-                  width: '60%',
-                  height: '60%',
-                  objectFit: 'contain',
-                }}
-              />
-            </div>
             <h1
               style={{
                 fontSize: 'clamp(6rem, 16vw, 12rem)',
