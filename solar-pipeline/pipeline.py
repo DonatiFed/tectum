@@ -505,7 +505,13 @@ def simulate_energy(candidate, ctx):
     self_consumed = min(production * sc, demand)
     exported = max(production - self_consumed, 0)
     grid_import = max(demand - self_consumed, 0)
-    self_sufficiency = self_consumed / demand if demand > 0 else 0
+
+    raw_ss = self_consumed / demand if demand > 0 else 0
+    if total_battery > 0:
+        ss_ceiling = min(0.50 + 0.07 * math.sqrt(total_battery), 0.85)
+    else:
+        ss_ceiling = 0.40
+    self_sufficiency = min(raw_ss, ss_ceiling)
 
     return {
         "total_demand_kwh": demand,
@@ -514,7 +520,7 @@ def simulate_energy(candidate, ctx):
         "self_consumed_kwh": round(self_consumed),
         "exported_kwh": round(exported),
         "grid_import_kwh": round(grid_import),
-        "self_sufficiency": round(min(self_sufficiency, 1.0), 4),
+        "self_sufficiency": round(self_sufficiency, 4),
     }
 
 

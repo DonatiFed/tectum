@@ -515,6 +515,26 @@ function DraftEditor() {
           title="Snapshot the current panel layout + settings as a new draft under this template"
         >💾 Save as new draft</button>
       </Section>
+
+      <Divider />
+
+      <button
+        disabled={totalPanels === 0}
+        onClick={() => window.dispatchEvent(new CustomEvent('navigate:proposals'))}
+        style={{
+          ...btnStyle('primary'),
+          width: '100%',
+          opacity: totalPanels > 0 ? 1 : 0.4,
+          cursor: totalPanels > 0 ? 'pointer' : 'not-allowed',
+          background: '#ff8800',
+          border: 'none',
+          color: '#fff',
+          fontWeight: 700,
+          fontSize: '0.9rem',
+          padding: '12px 14px',
+        }}
+        title="Configure proposals and generate a PDF report"
+      >📊 View Proposals</button>
     </>
   );
 }

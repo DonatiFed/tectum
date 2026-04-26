@@ -136,37 +136,6 @@ export function IntakePro({ onComplete, onBack, initial }: IntakeProProps) {
             </div>
           </section>
 
-          {/* Property */}
-          <section className="bg-card rounded-2xl p-6 sm:p-8 border">
-            <div className="text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-5">Property</div>
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <div className="flex justify-between"><label className="text-[13px] font-medium">House size</label><span className="font-medium text-primary text-[14px]">{data.houseSize} m²</span></div>
-                <Slider min={30} max={500} step={10} value={[data.houseSize]} onValueChange={v => update({ houseSize: v[0] })} className="py-2" />
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between"><label className="text-[13px] font-medium">Roof area</label><span className="font-medium text-primary text-[14px]">{data.roofArea} m²</span></div>
-                <Slider min={20} max={200} step={5} value={[data.roofArea]} onValueChange={v => update({ roofArea: v[0] })} className="py-2" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[13px] font-medium">Roof type</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {([{ value: 'gable', label: 'Gable' }, { value: 'hip', label: 'Hip' }, { value: 'flat', label: 'Flat' }, { value: 'shed', label: 'Shed' }] as const).map(r => (
-                    <Pill key={r.value} selected={data.roofType === r.value} onClick={() => update({ roofType: r.value })}>{r.label}</Pill>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[13px] font-medium">Orientation</label>
-                <div className="grid grid-cols-6 gap-2">
-                  {(['S', 'SE', 'SW', 'E', 'W', 'N'] as const).map(o => (
-                    <Pill key={o} selected={data.orientation === o} onClick={() => update({ orientation: o })}>{o}</Pill>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* Energy */}
           <section className="bg-card rounded-2xl p-6 sm:p-8 border">
             <div className="text-[11px] font-semibold tracking-[0.1em] uppercase text-muted-foreground mb-5">Energy</div>

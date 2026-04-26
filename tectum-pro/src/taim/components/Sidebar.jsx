@@ -174,21 +174,6 @@ export default function Sidebar() {
           >Clear All</button>
         </div>
 
-        <button
-          disabled={roofs.length === 0}
-          onClick={() => window.dispatchEvent(new CustomEvent('navigate:proposals'))}
-          style={{
-            ...btnStyle('primary'),
-            width: '100%',
-            opacity: roofs.length > 0 ? 1 : 0.4,
-            cursor: roofs.length > 0 ? 'pointer' : 'not-allowed',
-            background: '#ff8800',
-            border: 'none',
-            color: '#fff',
-            fontWeight: 700,
-          }}
-          title="Configure proposals and generate a PDF report"
-        >📊 View Proposals</button>
       </aside>
     </>
   );
