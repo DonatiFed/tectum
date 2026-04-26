@@ -35,10 +35,10 @@ export default function RotationPad() {
       style={{
         pointerEvents: 'auto',
         width: 22, minHeight: 64,
-        background: '#0d1b2a',
-        border: '2px solid #f5a623',
+        background: '#1a1008',
+        border: '2px solid #ff9500',
         borderRadius: 12,
-        color: '#f5a623', fontWeight: 800, fontSize: '0.85rem',
+        color: '#ff9500', fontWeight: 800, fontSize: '0.85rem',
         cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '8px 0',
@@ -114,9 +114,9 @@ function RoundBtn({ variant, onClick, title, children, highlight }) {
   // Fully opaque palette — the pad is now docked at the canvas edge so it
   // can be solid without crowding the model. The "highlight" flag inverts
   // the palette so a single button (e.g. 45°) reads as the primary action.
-  const baseBg     = highlight ? '#f5a623' : '#0d1b2a';
-  const baseBorder = '#f5a623';
-  const baseColor  = highlight ? '#0d1b2a' : '#f5a623';
+  const baseBg     = highlight ? '#ff9500' : '#1a1008';
+  const baseBorder = '#ff9500';
+  const baseColor  = highlight ? '#1a1008' : '#ff9500';
   return (
     <button
       onClick={onClick}
@@ -134,8 +134,8 @@ function RoundBtn({ variant, onClick, title, children, highlight }) {
         letterSpacing: isCompass ? '0.04em' : 0,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#f5a623';
-        e.currentTarget.style.color      = '#0d1b2a';
+        e.currentTarget.style.background = '#ff9500';
+        e.currentTarget.style.color      = '#1a1008';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = baseBg;

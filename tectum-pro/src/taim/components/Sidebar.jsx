@@ -1,7 +1,5 @@
 ﻿'use client';
-import { useState } from 'react';
 import { store, useStore } from '../lib/store';
-import { deriveReportData } from '../lib/reportData';
 import { specificYield } from '../lib/solar';
 import { btnStyle } from './SolarPlanner';
 
@@ -10,7 +8,6 @@ export default function Sidebar() {
   const setOpen = (v) => store.set(typeof v === 'function'
     ? (s) => ({ sidebarOpen: v(s.sidebarOpen) })
     : { sidebarOpen: v });
-  const [generating, setGenerating] = useState(false);
   const mode       = useStore(s => s.mode);
   const roofs      = useStore(s => s.roofs);
   const activeId   = useStore(s => s.activeRoofId);
@@ -27,32 +24,6 @@ export default function Sidebar() {
 
   const totalArea = roofs.reduce((s, r) => s + r.plane.area, 0).toFixed(1);
 
-  const handleGenerateReport = async () => {
-    setGenerating(true);
-    try {
-      // Capture the current 3D view before any async work moves the frame.
-      // preserveDrawingBuffer: true (set in Scene.jsx) keeps the pixels alive.
-      const canvas = document.querySelector('canvas');
-      const screenshot = canvas ? canvas.toDataURL('image/jpeg', 0.88) : null;
-
-      const { generateReport } = await import('../lib/generateReport');
-      const blob = await generateReport(store.get(), screenshot);
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = `tectum-solar-report-${new Date().toISOString().slice(0, 10)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('[report]', err);
-      alert('Could not generate report: ' + err.message);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   return (
     <>
       <button
@@ -63,7 +34,7 @@ export default function Sidebar() {
       <aside style={{
         position: 'absolute', top: 0, right: 0, bottom: 0, width: 320,
         background: 'rgba(22,33,62,0.95)', backdropFilter: 'blur(8px)',
-        borderLeft: '1px solid #2a2a4a', overflowY: 'auto', zIndex: 25,
+        borderLeft: '1px solid #3d2e18', overflowY: 'auto', zIndex: 25,
         padding: '60px 16px 16px', display: 'flex', flexDirection: 'column', gap: 16,
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 0.25s ease',
@@ -98,12 +69,12 @@ export default function Sidebar() {
                   <div key={r.id}
                     onClick={() => store.set({ activeRoofId: r.id, hint: `Highlighted Roof ${i+1}` })}
                     style={{
-                      background: isActive ? '#1f2d4a' : (isSel ? '#231539' : '#0f172a'),
-                      border: `2px solid ${isActive ? '#f5a623' : (isSel ? '#a855f7' : '#2a2a4a')}`,
+                      background: isActive ? '#352818' : (isSel ? '#2e1d0a' : '#1c1209'),
+                      border: `2px solid ${isActive ? '#ff9500' : (isSel ? '#ff9500' : '#3d2e18')}`,
                       borderRadius: 6, padding: '8px 10px', fontSize: '0.78rem', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column', gap: 4,
-                      color: isActive ? '#f5a623' : (isSel ? '#d8b4fe' : '#e0e0e0'),
-                      boxShadow: isActive ? '0 0 0 1px #f5a623 inset' : (isSel ? '0 0 0 1px #a855f7 inset' : 'none'),
+                      color: isActive ? '#ff9500' : (isSel ? '#ffc300' : '#e0e0e0'),
+                      boxShadow: isActive ? '0 0 0 1px #ff9500 inset' : (isSel ? '0 0 0 1px #ff9500 inset' : 'none'),
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
@@ -112,7 +83,7 @@ export default function Sidebar() {
                         checked={isSel}
                         onClick={(e) => e.stopPropagation()}
                         onChange={() => toggleSel(r.id)}
-                        style={{ accentColor: '#a855f7', cursor: 'pointer' }}
+                        style={{ accentColor: '#ff9500', cursor: 'pointer' }}
                         title="Select for merge"
                       />
                       <span style={{ flex: 1 }}>Roof {i+1} · {r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
@@ -141,8 +112,8 @@ export default function Sidebar() {
                       const kwh  = kWp * specificYield(solarLat);
                       const name = spec ? (spec.brand ? `${spec.brand} ${spec.model}` : 'Custom') : null;
                       return (
-                        <div style={{ fontSize: '0.66rem', color: '#9ca3af', paddingLeft: 20, lineHeight: 1.5 }}>
-                          {name && <span style={{ color: '#60a5fa' }}>{name} &nbsp;·&nbsp; </span>}
+                        <div style={{ fontSize: '0.66rem', color: '#a89880', paddingLeft: 20, lineHeight: 1.5 }}>
+                          {name && <span style={{ color: '#ffaa00' }}>{name} &nbsp;·&nbsp; </span>}
                           {kWp > 0
                             ? <><span>{kWp.toFixed(2)} kWp</span> &nbsp;·&nbsp; <span style={{ color: '#4ade80', fontWeight: 700 }}>~{Math.round(kwh).toLocaleString()} kWh/a</span></>
                             : <span style={{ color: '#555' }}>spec not recorded</span>
@@ -162,8 +133,8 @@ export default function Sidebar() {
                 disabled={selectedIds.length < 2}
                 onClick={() => window.dispatchEvent(new CustomEvent('roofs:merge'))}
                 style={{ ...btnStyle('secondary'), padding: '6px 8px', fontSize: '0.75rem',
-                  background: selectedIds.length >= 2 ? '#a855f7' : undefined,
-                  color: selectedIds.length >= 2 ? '#0d1b2a' : undefined,
+                  background: selectedIds.length >= 2 ? '#ff9500' : undefined,
+                  color: selectedIds.length >= 2 ? '#1a1008' : undefined,
                   opacity: selectedIds.length >= 2 ? 1 : 0.4,
                   cursor: selectedIds.length >= 2 ? 'pointer' : 'not-allowed' }}
                 title="Tick ≥2 roofs above, then merge into one clean polygon"
@@ -204,20 +175,20 @@ export default function Sidebar() {
         </div>
 
         <button
-          disabled={roofs.length === 0 || generating}
-          onClick={handleGenerateReport}
+          disabled={roofs.length === 0}
+          onClick={() => window.dispatchEvent(new CustomEvent('navigate:proposals'))}
           style={{
-            ...btnStyle('secondary'),
+            ...btnStyle('primary'),
             width: '100%',
-            opacity: roofs.length > 0 && !generating ? 1 : 0.4,
-            cursor: roofs.length > 0 && !generating ? 'pointer' : 'not-allowed',
-            background: '#1a3320',
-            border: '1px solid #2d5c3a',
-            color: generating ? '#888' : '#4caf82',
+            opacity: roofs.length > 0 ? 1 : 0.4,
+            cursor: roofs.length > 0 ? 'pointer' : 'not-allowed',
+            background: '#ff8800',
+            border: 'none',
+            color: '#fff',
             fontWeight: 700,
           }}
-          title="Generate a PDF report with the technical and economic breakdown for this installation"
-        >{generating ? 'Calling pipeline...' : 'Generate Report'}</button>
+          title="Configure proposals and generate a PDF report"
+        >📊 View Proposals</button>
       </aside>
     </>
   );
@@ -232,15 +203,15 @@ function Section({ title, children }) {
   );
 }
 
-function Divider() { return <div style={{ height: 1, background: '#2a2a4a' }} />; }
+function Divider() { return <div style={{ height: 1, background: '#3d2e18' }} />; }
 
 function InfoBox({ rows }) {
   return (
-    <div style={{ background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 8, padding: 12, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ background: '#1c1209', border: '1px solid #3d2e18', borderRadius: 8, padding: 12, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
       {rows.map(([k, v]) => (
         <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ color: '#888' }}>{k}</span>
-          <span style={{ color: '#f5a623', fontWeight: 600 }}>{v}</span>
+          <span style={{ color: '#ff9500', fontWeight: 600 }}>{v}</span>
         </div>
       ))}
     </div>
@@ -254,7 +225,7 @@ function ModeBtn({ id, current, children }) {
       onClick={() => store.set({ mode: id, hint: hintForMode(id) })}
       style={{
         ...btnStyle('secondary'), flex: 1, minWidth: 80,
-        background: active ? '#f5a623' : '#2a2a4a',
+        background: active ? '#ff9500' : '#3d2e18',
         color: active ? '#1a1a2e' : '#e0e0e0',
         border: 'none',
       }}

@@ -18,7 +18,7 @@ export default function Scene() {
       gl={{ antialias: false, powerPreference: 'low-power', localClippingEnabled: true, preserveDrawingBuffer: true }}
       dpr={[1, 1.5]}
       camera={{ fov: 55, near: 0.1, far: 5000, position: [200, 200, 200] }}
-      style={{ position: 'absolute', inset: 0, background: '#0d1b2a' }}
+      style={{ position: 'absolute', inset: 0, background: '#1a1008' }}
     >
       <ambientLight intensity={1.4} />
       <directionalLight position={[100, 200, 80]} intensity={1.6} color={'#fff5e0'} />

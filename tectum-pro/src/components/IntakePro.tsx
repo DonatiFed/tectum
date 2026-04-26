@@ -73,8 +73,7 @@ export function IntakePro({ onComplete, onBack, initial }: IntakeProProps) {
             <ArrowLeft className="w-4 h-4" /> Projects
           </button>
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Tectum" className="w-8 h-8" />
-            <span className="font-display text-2xl">tectum</span>
+            <img src="/logo-liquid.svg" alt="Tectum" className="h-8" />
           </div>
         </div>
       </header>

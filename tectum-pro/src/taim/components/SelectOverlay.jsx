@@ -66,14 +66,6 @@ export default function SelectOverlay() {
           pointerEvents: 'none',
         }} />
       )}
-      <div style={{
-        position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
-        background: 'rgba(74, 222, 128, 0.95)', color: '#0d1b2a',
-        padding: '6px 14px', borderRadius: 20, fontWeight: 700, fontSize: '0.78rem',
-        pointerEvents: 'none',
-      }}>
-        🏠 Drag Select is active · drag across the roof area to detect continuous roof planes
-      </div>
     </div>
   );
 }

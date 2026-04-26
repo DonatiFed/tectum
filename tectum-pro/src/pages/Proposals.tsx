@@ -147,7 +147,7 @@ function ProposalCard({ offer, selected, onClick }: { offer: Offer; selected: bo
         </div>
         <div className="flex justify-between text-[13px]">
           <span className="text-muted-foreground">Annual savings</span>
-          <span className="font-semibold text-green-600">{fmtEUR(m.year1_savings_eur)}/yr</span>
+          <span className="font-semibold text-green-400">{fmtEUR(m.year1_savings_eur)}/yr</span>
         </div>
         <div className="flex justify-between text-[13px]">
           <span className="text-muted-foreground">Payback</span>
@@ -155,7 +155,7 @@ function ProposalCard({ offer, selected, onClick }: { offer: Offer; selected: bo
         </div>
         <div className="flex justify-between text-[13px]">
           <span className="text-muted-foreground">20-yr NPV</span>
-          <span className={cn("font-semibold", m.npv_20yr > 0 ? "text-green-600" : "text-red-500")}>{fmtEUR(m.npv_20yr)}</span>
+          <span className={cn("font-semibold", m.npv_20yr > 0 ? "text-green-400" : "text-red-400")}>{fmtEUR(m.npv_20yr)}</span>
         </div>
       </div>
 
@@ -434,7 +434,7 @@ export default function Proposals({ onBack }: ProposalsProps) {
           <button onClick={onBack} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[14px]">
             <ArrowLeft className="w-4 h-4" /> Back to planner
           </button>
-          <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>Tectum</span>
+          <img src="/logo-liquid.svg" alt="Tectum" className="h-8" />
           <button
             onClick={handleDownloadPDF}
             disabled={pdfLoading || !offers.length}
@@ -530,7 +530,7 @@ export default function Proposals({ onBack }: ProposalsProps) {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[14px] flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[14px] flex items-center justify-between">
             <span>{error}</span>
             <button onClick={fetchPipeline} className="flex items-center gap-1 font-semibold hover:underline">
               <RefreshCw className="w-3.5 h-3.5" /> Retry

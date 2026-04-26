@@ -80,15 +80,6 @@ export default function EraseOverlay() {
             fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
         </svg>
       )}
-      <div style={{
-        position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
-        background: 'rgba(255, 51, 68, 0.95)',
-        color: '#fff',
-        padding: '6px 14px', borderRadius: 20, fontWeight: 700, fontSize: '0.78rem',
-        pointerEvents: 'none', maxWidth: '80%', textAlign: 'center',
-      }}>
-        ✏ Click a segment to delete it · Or drag across edges — every roof your stroke crosses gets erased on release
-      </div>
     </div>
   );
 }

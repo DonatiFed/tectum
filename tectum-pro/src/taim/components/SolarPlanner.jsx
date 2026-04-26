@@ -37,9 +37,9 @@ export default function SolarPlanner() {
   if (installer === undefined) {
     return (
       <div style={{
-        position: 'fixed', inset: 0, background: '#0d1b2a',
+        position: 'fixed', inset: 0, background: '#1a1008',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#9ca3af',
+        color: '#a89880',
       }}>Starting Tectum…</div>
     );
   }
@@ -72,18 +72,18 @@ function LoginScreen({ onSignIn }) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'linear-gradient(140deg,#0d1b2a 0%,#11243d 100%)',
+      background: 'linear-gradient(140deg,#1a1008 0%,#261a0c 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
     }}>
       <form onSubmit={submit} style={{
-        width: 'min(420px, 100%)', background: '#16213e',
-        border: '1px solid #2a2a4a', borderRadius: 16, padding: 28,
+        width: 'min(420px, 100%)', background: '#2a1e10',
+        border: '1px solid #3d2e18', borderRadius: 16, padding: 28,
         display: 'flex', flexDirection: 'column', gap: 14,
         boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 4 }}>
-          <h1 style={{ fontSize: '1.8rem', color: '#f5a623', margin: 0 }}>☀️ Tectum</h1>
-          <p style={{ color: '#9ca3af', fontSize: '0.85rem', marginTop: 4 }}>
+          <h1 style={{ fontSize: '1.8rem', color: '#ff9500', margin: 0 }}>☀️ Tectum</h1>
+          <p style={{ color: '#a89880', fontSize: '0.85rem', marginTop: 4 }}>
             Installer portal · sign in to your client dashboard
           </p>
         </div>
@@ -105,12 +105,12 @@ function LoginScreen({ onSignIn }) {
         </label>
         {error && <div style={{ color: '#f87171', fontSize: '0.8rem' }}>{error}</div>}
         <button type="submit" style={{
-          background: '#f5a623', color: '#0d1b2a', border: 'none',
+          background: '#ff9500', color: '#1a1008', border: 'none',
           padding: '12px 18px', borderRadius: 10, fontWeight: 800,
           fontSize: '0.95rem', cursor: 'pointer',
         }}>Sign in</button>
-        <div style={{ borderTop: '1px solid #2a2a4a', paddingTop: 12, marginTop: 4 }}>
-          <div style={{ fontSize: '0.7rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+        <div style={{ borderTop: '1px solid #3d2e18', paddingTop: 12, marginTop: 4 }}>
+          <div style={{ fontSize: '0.7rem', color: '#a89880', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
             Demo accounts
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -119,13 +119,13 @@ function LoginScreen({ onSignIn }) {
                 key={d.email} type="button"
                 onClick={() => { setEmail(d.email); setPassword(d.email.split('@')[0].split('.')[0] === 'demo' ? 'tectum' : (d.email.startsWith('anna') ? 'solar' : 'dach')); }}
                 style={{
-                  background: '#0f172a', border: '1px solid #2a2a4a',
-                  color: '#cbd5e1', padding: '8px 10px', borderRadius: 8,
+                  background: '#1c1209', border: '1px solid #3d2e18',
+                  color: '#d4c4a8', padding: '8px 10px', borderRadius: 8,
                   textAlign: 'left', cursor: 'pointer', fontSize: '0.78rem',
                 }}
                 title="Click to fill the demo credentials"
               >
-                <b style={{ color: '#e0e0e0' }}>{d.name}</b> · <span style={{ color: '#9ca3af' }}>{d.email}</span>
+                <b style={{ color: '#e0e0e0' }}>{d.name}</b> · <span style={{ color: '#a89880' }}>{d.email}</span>
                 <div style={{ fontSize: '0.7rem', color: '#666' }}>{d.company}</div>
               </button>
             ))}
@@ -139,8 +139,8 @@ function LoginScreen({ onSignIn }) {
   );
 }
 
-const authLabel = { display: 'flex', flexDirection: 'column', gap: 4, color: '#9ca3af', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 1 };
-const authInput = { background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 8, padding: '10px 12px', color: '#e0e0e0', fontSize: '0.9rem' };
+const authLabel = { display: 'flex', flexDirection: 'column', gap: 4, color: '#a89880', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 1 };
+const authInput = { background: '#1c1209', border: '1px solid #3d2e18', borderRadius: 8, padding: '10px 12px', color: '#e0e0e0', fontSize: '0.9rem' };
 
 // Pull intake info passed in from the Tectum sales funnel (src/) via
 // URL params (?client=&address=&postal=&...) only. We deliberately do
@@ -344,8 +344,8 @@ function ImportFileStep({ intake, projectName, setProjectName, onBack, onCancel 
       <WizardHeader step={2} total={2} title={`New project · 3D model${intake?.name ? ' for ' + intake.name : ''}`} onCancel={onCancel} />
       <div style={{ ...wizardCard, gap: 18 }}>
         {intake && (
-          <div style={{ background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 10, padding: '10px 14px', fontSize: '0.78rem', color: '#cbd5e1' }}>
-            <b style={{ color: '#f5a623' }}>{intake.name}</b>
+          <div style={{ background: '#1c1209', border: '1px solid #3d2e18', borderRadius: 10, padding: '10px 14px', fontSize: '0.78rem', color: '#d4c4a8' }}>
+            <b style={{ color: '#ff9500' }}>{intake.name}</b>
             {intake.email   && <> · {intake.email}</>}
             {intake.address && <> · 📍 {intake.address}</>}
             {intake.monthlyBill && <> · €{intake.monthlyBill}/mo</>}
@@ -364,8 +364,8 @@ function ImportFileStep({ intake, projectName, setProjectName, onBack, onCancel 
           onDrop={onDrop}
           style={{
             minHeight: 200, borderRadius: 14,
-            border: `2px dashed ${drag ? '#f5a623' : '#2a2a4a'}`,
-            background: drag ? 'rgba(245,166,35,0.08)' : '#0f172a',
+            border: `2px dashed ${drag ? '#ff9500' : '#3d2e18'}`,
+            background: drag ? 'rgba(245,166,35,0.08)' : '#1c1209',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             gap: 8, cursor: 'pointer', color: '#e0e0e0', transition: 'all 0.15s ease',
           }}
@@ -401,21 +401,21 @@ const wizardWrap = {
   width: '100%', minHeight: 'calc(100vh - 70px)',
   display: 'flex', flexDirection: 'column', alignItems: 'center',
   padding: '32px 24px 64px', gap: 18,
-  background: 'linear-gradient(140deg,#0d1b2a 0%,#11243d 100%)',
+  background: 'linear-gradient(140deg,#1a1008 0%,#261a0c 100%)',
 };
 const wizardCard = {
-  width: 'min(620px, 100%)', background: '#16213e',
-  border: '1px solid #2a2a4a', borderRadius: 16, padding: 24,
+  width: 'min(620px, 100%)', background: '#2a1e10',
+  border: '1px solid #3d2e18', borderRadius: 16, padding: 24,
   display: 'flex', flexDirection: 'column', gap: 14,
   boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
 };
 const wizardBtnPrimary = {
-  background: '#f5a623', color: '#0d1b2a', border: 'none',
+  background: '#ff9500', color: '#1a1008', border: 'none',
   padding: '10px 18px', borderRadius: 10, fontWeight: 800,
   fontSize: '0.9rem', cursor: 'pointer',
 };
 const wizardBtnGhost = {
-  background: 'transparent', color: '#cbd5e1',
+  background: 'transparent', color: '#d4c4a8',
   border: '1px solid #38506d', padding: '8px 14px',
   borderRadius: 10, fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600,
 };
@@ -424,18 +424,18 @@ function WizardHeader({ step, total, title, onCancel }) {
   return (
     <div style={{ width: 'min(620px, 100%)', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ color: '#f5a623', fontSize: '1.4rem', margin: 0 }}>☀️ {title}</h1>
+        <h1 style={{ color: '#ff9500', fontSize: '1.4rem', margin: 0 }}>☀️ {title}</h1>
         {onCancel && <button onClick={onCancel} style={wizardBtnGhost}>Cancel</button>}
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
         {Array.from({ length: total }).map((_, i) => (
           <div key={i} style={{
             flex: 1, height: 4, borderRadius: 999,
-            background: i < step ? '#f5a623' : '#2a2a4a',
+            background: i < step ? '#ff9500' : '#3d2e18',
           }} />
         ))}
       </div>
-      <div style={{ color: '#9ca3af', fontSize: '0.78rem' }}>Step {step} of {total}</div>
+      <div style={{ color: '#a89880', fontSize: '0.78rem' }}>Step {step} of {total}</div>
     </div>
   );
 }
@@ -446,7 +446,7 @@ function Row({ children }) {
 function Field({ label, children }) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <span style={{ color: '#9ca3af', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</span>
+      <span style={{ color: '#a89880', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</span>
       {children}
     </label>
   );
@@ -490,7 +490,7 @@ function DashboardScreen({ installer, onSignOut }) {
     return (
       <div style={{
         position: 'fixed', inset: 0, overflow: 'auto',
-        background: 'linear-gradient(140deg,#0d1b2a 0%,#11243d 100%)',
+        background: 'linear-gradient(140deg,#1a1008 0%,#261a0c 100%)',
       }}>
         <InstallerHeader installer={installer} onSignOut={onSignOut} subtitle="Adding a new project" />
         <ImportScreen onCancel={cancelImport} />
@@ -501,9 +501,9 @@ function DashboardScreen({ installer, onSignOut }) {
   if (projects === null) {
     return (
       <div style={{
-        position: 'fixed', inset: 0, background: '#0d1b2a',
+        position: 'fixed', inset: 0, background: '#1a1008',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#9ca3af',
+        color: '#a89880',
       }}>Loading projects…</div>
     );
   }
@@ -513,7 +513,7 @@ function DashboardScreen({ installer, onSignOut }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, overflow: 'auto',
-      background: 'linear-gradient(140deg,#0d1b2a 0%,#11243d 100%)',
+      background: 'linear-gradient(140deg,#1a1008 0%,#261a0c 100%)',
       paddingBottom: 48,
     }}>
       <InstallerHeader
@@ -546,7 +546,7 @@ function DashboardScreen({ installer, onSignOut }) {
 // brand orange so it reads as the primary call-to-action.
 function AddProjectCard({ onClick }) {
   const [hover, setHover] = useState(false);
-  const accent = hover ? '#f5a623' : '#38506d';
+  const accent = hover ? '#ff9500' : '#38506d';
   return (
     <div
       onClick={onClick}
@@ -564,15 +564,15 @@ function AddProjectCard({ onClick }) {
     >
       <div style={{
         width: 56, height: 56, borderRadius: 999,
-        background: hover ? '#f5a623' : '#1e2a44',
-        color: hover ? '#0d1b2a' : '#9ca3af',
+        background: hover ? '#ff9500' : '#1e2a44',
+        color: hover ? '#1a1008' : '#a89880',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '1.8rem', fontWeight: 800, transition: 'all 0.15s ease',
       }}>＋</div>
-      <div style={{ color: hover ? '#f5a623' : '#cbd5e1', fontWeight: 700, fontSize: '0.95rem' }}>
+      <div style={{ color: hover ? '#ff9500' : '#d4c4a8', fontWeight: 700, fontSize: '0.95rem' }}>
         Add new project
       </div>
-      <div style={{ color: '#9ca3af', fontSize: '0.72rem', textAlign: 'center', maxWidth: 220 }}>
+      <div style={{ color: '#a89880', fontSize: '0.72rem', textAlign: 'center', maxWidth: 220 }}>
         Enter the client&apos;s details, then upload the building&apos;s 3D model.
       </div>
     </div>
@@ -588,13 +588,13 @@ function InstallerHeader({ installer, onSignOut, subtitle, right }) {
       position: 'sticky', top: 0, zIndex: 40,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       gap: 16, padding: '14px 24px', flexWrap: 'wrap',
-      background: 'rgba(10,18,34,0.92)', borderBottom: '1px solid #2a2a4a',
+      background: 'rgba(10,18,34,0.92)', borderBottom: '1px solid #3d2e18',
       backdropFilter: 'blur(8px)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{
           width: 38, height: 38, borderRadius: 999,
-          background: '#f5a623', color: '#0d1b2a',
+          background: '#ff9500', color: '#1a1008',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 800,
         }}>{(installer?.name || '?').slice(0, 1).toUpperCase()}</div>
@@ -602,13 +602,13 @@ function InstallerHeader({ installer, onSignOut, subtitle, right }) {
           <div style={{ color: '#e0e0e0', fontWeight: 700, fontSize: '0.95rem' }}>
             {installer?.name}{installer?.guest && <span style={{ color: '#888', fontWeight: 400 }}> · guest</span>}
           </div>
-          <div style={{ color: '#9ca3af', fontSize: '0.72rem' }}>
+          <div style={{ color: '#a89880', fontSize: '0.72rem' }}>
             {installer?.company} · {installer?.email}
           </div>
         </div>
       </div>
       {subtitle && (
-        <div style={{ color: '#cbd5e1', fontSize: '0.82rem', flex: 1, textAlign: 'center', minWidth: 200 }}>
+        <div style={{ color: '#d4c4a8', fontSize: '0.82rem', flex: 1, textAlign: 'center', minWidth: 200 }}>
           {subtitle}
         </div>
       )}
@@ -618,7 +618,7 @@ function InstallerHeader({ installer, onSignOut, subtitle, right }) {
           onClick={onSignOut}
           style={{
             background: 'transparent', border: '1px solid #38506d',
-            color: '#cbd5e1', padding: '8px 14px', borderRadius: 8,
+            color: '#d4c4a8', padding: '8px 14px', borderRadius: 8,
             fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600,
           }}
           title="Sign out of the installer portal"
@@ -673,16 +673,16 @@ function ProjectCard({ project, onChange }) {
     <div
       onClick={open}
       style={{
-        background: '#16213e', border: '1px solid #2a2a4a', borderRadius: 14,
+        background: '#2a1e10', border: '1px solid #3d2e18', borderRadius: 14,
         overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.15s, border-color 0.15s',
         display: 'flex', flexDirection: 'column',
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = '#f5a623'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a4a'; e.currentTarget.style.transform = 'translateY(0)'; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#ff9500'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#3d2e18'; e.currentTarget.style.transform = 'translateY(0)'; }}
     >
       <div style={{
         width: '100%', aspectRatio: '4 / 3',
-        background: project.thumbnail ? `#0d1b2a url(${project.thumbnail}) center/cover no-repeat` : '#0d1b2a',
+        background: project.thumbnail ? `#1a1008 url(${project.thumbnail}) center/cover no-repeat` : '#1a1008',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: '#3a4a66', fontSize: '2.4rem',
       }}>
@@ -734,12 +734,12 @@ function ProjectCard({ project, onChange }) {
           </button>
         </div>
         {intake?.email && (
-          <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>✉ {intake.email}</div>
+          <div style={{ color: '#a89880', fontSize: '0.75rem' }}>✉ {intake.email}</div>
         )}
         {intake?.address && (
-          <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>📍 {intake.address}</div>
+          <div style={{ color: '#a89880', fontSize: '0.75rem' }}>📍 {intake.address}</div>
         )}
-        <div style={{ display: 'flex', gap: 10, marginTop: 6, fontSize: '0.72rem', color: '#cbd5e1', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 6, fontSize: '0.72rem', color: '#d4c4a8', flexWrap: 'wrap' }}>
           <span style={{ background: '#1e2a44', padding: '3px 8px', borderRadius: 999 }}>📁 {tplCount} template{tplCount === 1 ? '' : 's'}</span>
           <span style={{ background: '#1e2a44', padding: '3px 8px', borderRadius: 999 }}>📄 {draftCount} draft{draftCount === 1 ? '' : 's'}</span>
         </div>
@@ -752,11 +752,11 @@ function ProjectCard({ project, onChange }) {
               return (
                 <div key={t.id} style={{
                   display: 'flex', justifyContent: 'space-between', gap: 6,
-                  fontSize: '0.7rem', color: '#cbd5e1',
+                  fontSize: '0.7rem', color: '#d4c4a8',
                   padding: '2px 0',
                 }}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📁 {t.name}</span>
-                  <span style={{ color: '#9ca3af' }}>{dn} draft{dn === 1 ? '' : 's'}</span>
+                  <span style={{ color: '#a89880' }}>{dn} draft{dn === 1 ? '' : 's'}</span>
                 </div>
               );
             })}
@@ -929,7 +929,7 @@ function LoadingOverlay({ progress }) {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, zIndex: 100,
     }}>
       <div className="spinner" />
-      <div style={{ color: '#f5a623', fontSize: '1.1rem' }}>Loading model… {Math.round(progress * 100)}%</div>
+      <div style={{ color: '#ff9500', fontSize: '1.1rem' }}>Loading model… {Math.round(progress * 100)}%</div>
     </div>
   );
 }
@@ -992,7 +992,7 @@ function TopBar() {
         style={btnStyle('secondary')}
       >← Projects</button>
       <div style={{
-        background: 'rgba(22,33,62,0.85)', border: '1px solid #2a2a4a',
+        background: 'rgba(22,33,62,0.85)', border: '1px solid #3d2e18',
         borderRadius: 8, padding: '8px 12px', fontSize: '0.8rem', color: '#aaa',
         maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
       }} title={model?.name}>{model?.name}</div>
@@ -1003,7 +1003,7 @@ function TopBar() {
         onClick={() => store.set(s => ({ modelVisible: !s.modelVisible, hint: !s.modelVisible ? '3D model visible' : '3D model hidden · only roof masks & panels remain' }))}
         style={{
           ...btnStyle('secondary'),
-          background: modelVisible ? '#2a2a4a' : '#f5a623',
+          background: modelVisible ? '#3d2e18' : '#ff9500',
           color: modelVisible ? '#e0e0e0' : '#1a1a2e',
           border: 'none', fontWeight: 700,
         }}
@@ -1108,8 +1108,8 @@ function TabsBar() {
           <button key={t.id}
             onClick={() => selectTab(t.id)}
             style={{
-              background: active ? '#f5a623' : 'transparent',
-              color: active ? '#0d1b2a' : '#cbd5e1',
+              background: active ? '#ff9500' : 'transparent',
+              color: active ? '#1a1008' : '#d4c4a8',
               border: 'none', borderRadius: 999,
               padding: '6px 14px', fontSize: '0.78rem', fontWeight: 700,
               cursor: 'pointer', whiteSpace: 'nowrap',
@@ -1151,7 +1151,7 @@ function BottomControls() {
           title="Show controls"
           style={{
             background: 'rgba(10,18,34,0.96)', border: '1px solid #38506d',
-            color: '#f5a623', borderRadius: 999, padding: '8px 18px',
+            color: '#ff9500', borderRadius: 999, padding: '8px 18px',
             fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
             boxShadow: '0 10px 24px rgba(0,0,0,0.45)',
           }}
@@ -1167,7 +1167,7 @@ function BottomControls() {
         title="Hide controls"
         style={{
           background: 'rgba(10,18,34,0.96)', border: '1px solid #38506d',
-          color: '#9ca3af', borderRadius: 999, padding: '2px 14px',
+          color: '#a89880', borderRadius: 999, padding: '2px 14px',
           fontSize: '0.7rem', cursor: 'pointer',
         }}
       >▼ Hide</button>
@@ -1195,17 +1195,17 @@ function BottomControls() {
           onClick={() => store.set(s => ({ texturesOn: !s.texturesOn, hint: !s.texturesOn ? 'Textures on' : 'Textures off · plain shading reveals roof faces clearly' }))}
           style={{
             ...btnStyle('ctl'),
-            background: texturesOn ? '#2a2a4a' : '#f5a623',
-            color: texturesOn ? '#e0e0e0' : '#0d1b2a',
+            background: texturesOn ? '#3d2e18' : '#ff9500',
+            color: texturesOn ? '#e0e0e0' : '#1a1008',
             fontWeight: 700,
           }}
           title="Show or hide building textures · plain shading helps see roof faces"
         >{texturesOn ? 'Tex On' : 'Tex Off'}</button>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '0 6px', borderLeft: '1px solid #2a2a4a' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '0 6px', borderLeft: '1px solid #3d2e18' }}>
           <input
             type="range" min="0" max="1" step="0.02" value={meshSmooth}
             onChange={(e) => store.set({ meshSmoothLevel: +e.target.value })}
-            style={{ width: 130, accentColor: '#f5a623' }}
+            style={{ width: 130, accentColor: '#ff9500' }}
             title="Surface Smoothness — 0 = original geometry, 1 = maximum flattening"
           />
           <div style={{ fontSize: '0.6rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -1233,8 +1233,8 @@ function ModeCtl({ id, current, icon, children }) {
       onClick={() => store.set({ mode: id, hint: modeHint(id) })}
       style={{
         ...btnStyle('ctl'),
-        background: active ? '#4ade80' : '#2a2a4a',
-        color: active ? '#0d1b2a' : '#e0e0e0',
+        background: active ? '#4ade80' : '#3d2e18',
+        color: active ? '#1a1008' : '#e0e0e0',
         display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
       }}
     >
@@ -1277,21 +1277,21 @@ function SelectionActionBar() {
       left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
       transform: 'translateX(-50%)',
       zIndex: 46, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'nowrap',
-      background: 'rgba(10,18,34,0.96)', border: '1px solid #a855f7',
+      background: 'rgba(10,18,34,0.96)', border: '1px solid #ff9500',
       borderRadius: 16, padding: '10px 14px',
       boxShadow: '0 14px 40px rgba(0,0,0,0.45)',
       maxWidth: sidebarOpen ? 'calc(100vw - 360px)' : 'calc(100vw - 40px)',
       transition: 'left 0.25s ease',
     }}>
-      <span style={{ color: '#d8b4fe', fontSize: '0.8rem', fontWeight: 700 }}>
+      <span style={{ color: '#ffc300', fontSize: '0.8rem', fontWeight: 700 }}>
         {count} selected
       </span>
       <button
         onClick={() => dispatch('roofs:merge')}
         disabled={count < 2}
         style={{
-          background: count >= 2 ? '#a855f7' : '#2a2a4a',
-          color: count >= 2 ? '#0d1b2a' : '#666',
+          background: count >= 2 ? '#ff9500' : '#3d2e18',
+          color: count >= 2 ? '#1a1008' : '#666',
           border: 'none', borderRadius: 999, padding: '6px 14px',
           fontSize: '0.78rem', fontWeight: 700,
           cursor: count >= 2 ? 'pointer' : 'not-allowed',
@@ -1311,9 +1311,9 @@ function SelectionActionBar() {
         onClick={() => dispatch('roofs:keepSelected')}
         disabled={others <= 0}
         style={{
-          background: others > 0 ? '#0d1b2a' : '#2a2a4a',
-          color: others > 0 ? '#d8b4fe' : '#666',
-          border: `1px solid ${others > 0 ? '#a855f7' : '#38506d'}`,
+          background: others > 0 ? '#1a1008' : '#3d2e18',
+          color: others > 0 ? '#ffc300' : '#666',
+          border: `1px solid ${others > 0 ? '#ff9500' : '#38506d'}`,
           borderRadius: 999, padding: '6px 14px',
           fontSize: '0.78rem', fontWeight: 700,
           cursor: others > 0 ? 'pointer' : 'not-allowed',
@@ -1323,7 +1323,7 @@ function SelectionActionBar() {
       <button
         onClick={() => store.set({ selectedRoofIds: [], hint: 'Selection cleared' })}
         style={{
-          background: 'transparent', color: '#9ca3af',
+          background: 'transparent', color: '#a89880',
           border: '1px solid #38506d', borderRadius: 999,
           padding: '4px 10px', fontSize: '0.74rem', cursor: 'pointer',
         }}
@@ -1344,9 +1344,9 @@ export function btnStyle(variant) {
     cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', color: '#e0e0e0',
     transition: 'opacity 0.15s',
   };
-  if (variant === 'primary')   return { ...base, background: '#f5a623', color: '#1a1a2e' };
+  if (variant === 'primary')   return { ...base, background: '#ff9500', color: '#1a1a2e' };
   if (variant === 'danger')    return { ...base, background: '#e74c3c', color: '#fff' };
-  if (variant === 'secondary') return { ...base, background: '#16213e', border: '1px solid #2a2a4a' };
-  if (variant === 'ctl')       return { ...base, background: '#2a2a4a', padding: '8px 12px', minHeight: 40, whiteSpace: 'nowrap' };
+  if (variant === 'secondary') return { ...base, background: '#2a1e10', border: '1px solid #3d2e18' };
+  if (variant === 'ctl')       return { ...base, background: '#3d2e18', padding: '8px 12px', minHeight: 40, whiteSpace: 'nowrap' };
   return base;
 }

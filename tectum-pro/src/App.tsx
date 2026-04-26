@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FileBarChart } from 'lucide-react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Proposals from './pages/Proposals';
@@ -109,21 +108,18 @@ export default function App() {
 
   usePlannerBackDetect(screen, backToDash);
 
+  useEffect(() => {
+    const goToProposals = () => setScreen('proposal');
+    window.addEventListener('navigate:proposals', goToProposals);
+    return () => window.removeEventListener('navigate:proposals', goToProposals);
+  }, []);
+
   return (
     <>
       {/* Planner stays mounted while on planner or proposal screen */}
       {plannerActive && (
         <div style={{ position: 'fixed', inset: 0, visibility: screen === 'planner' ? 'visible' : 'hidden' }}>
           <SolarPlanner />
-          {screen === 'planner' && (
-            <button
-              onClick={() => setScreen('proposal')}
-              style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 50 }}
-              className="h-12 px-6 rounded-2xl bg-primary text-primary-foreground font-semibold text-[14px] flex items-center gap-2 shadow-lg hover:opacity-90 transition-opacity"
-            >
-              <FileBarChart className="w-4 h-4" /> View Proposals
-            </button>
-          )}
         </div>
       )}
 

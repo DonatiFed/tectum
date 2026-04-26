@@ -66,7 +66,7 @@ function TemplatesOverview() {
   return (
     <>
       <Section title="Save current roofs as Template">
-        <div style={{ fontSize: '0.74rem', color: '#9ca3af', lineHeight: 1.4 }}>
+        <div style={{ fontSize: '0.74rem', color: '#a89880', lineHeight: 1.4 }}>
           Templates are the immutable BASE for a client. Detect & clean up
           roofs in the <b>Roof Detection</b> tab, then save the working set
           here as <i>“Template for Client X”</i>. Drafts forked from a
@@ -106,7 +106,7 @@ function TemplatesOverview() {
                 const tplDrafts = drafts.filter(d => d.templateId === t.id);
                 return (
                   <div key={t.id} style={{
-                    background: '#0f172a', border: '2px solid #2a2a4a',
+                    background: '#1c1209', border: '2px solid #3d2e18',
                     borderRadius: 8, overflow: 'hidden',
                   }}>
                     {/* Header — clicking expands/collapses the dropdown */}
@@ -120,12 +120,12 @@ function TemplatesOverview() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#f5a623' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#ff9500' }}>
                             {isOpen ? '▾' : '▸'} {t.name}
                           </span>
                           <span style={{ fontSize: '0.7rem', color: '#888' }}>🔒 base</span>
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: 4 }}>
+                        <div style={{ fontSize: '0.72rem', color: '#a89880', marginTop: 4 }}>
                           {t.roofs.length} roof{t.roofs.length === 1 ? '' : 's'} · {tplDrafts.length} draft{tplDrafts.length === 1 ? '' : 's'} · {timeAgo(t.createdAt)}
                         </div>
                       </button>
@@ -144,12 +144,12 @@ function TemplatesOverview() {
                           background: 'transparent', border: 'none',
                           color: '#ff7070', padding: '0 14px',
                           fontSize: '0.95rem', cursor: 'pointer', fontWeight: 700,
-                          borderLeft: '1px solid #2a2a4a',
+                          borderLeft: '1px solid #3d2e18',
                         }}
                       >🗑</button>
                     </div>
                     {isOpen && (
-                      <div style={{ borderTop: '1px solid #2a2a4a', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ borderTop: '1px solid #3d2e18', display: 'flex', flexDirection: 'column' }}>
                         {/* Top row — start a fresh draft from this template */}
                         <button
                           onClick={() => dispatch('draft:new', { templateId: t.id })}
@@ -174,11 +174,11 @@ function TemplatesOverview() {
                             }}>
                               <button
                                 onClick={() => dispatch('draft:load', { id: d.id })}
-                                style={{ ...dropdownRow({ accent: '#a855f7' }), flex: 1 }}
+                                style={{ ...dropdownRow({ accent: '#ff9500' }), flex: 1 }}
                                 title="Open this draft in the editor"
                               >
                                 <span>📄 {d.name}</span>
-                                <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>
+                                <span style={{ fontSize: '0.7rem', color: '#a89880' }}>
                                   {total}p · {kWp} kWp · {(d.settings?.panelAngleDeg ?? 0).toFixed(0)}°
                                 </span>
                               </button>
@@ -260,15 +260,15 @@ function DraftEditor() {
           title="Close the editor and return to the templates list"
         >← Back to templates</button>
         <div style={{
-          background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 8,
+          background: '#1c1209', border: '1px solid #3d2e18', borderRadius: 8,
           padding: 10, fontSize: '0.8rem', color: '#e0e0e0',
         }}>
-          <div><span style={{ color: '#888' }}>Template:</span> <b style={{ color: '#f5a623' }}>{tpl?.name ?? '—'}</b> 🔒</div>
+          <div><span style={{ color: '#888' }}>Template:</span> <b style={{ color: '#ff9500' }}>{tpl?.name ?? '—'}</b> 🔒</div>
           <div style={{ marginTop: 4 }}>
             <span style={{ color: '#888' }}>Draft:</span>{' '}
             {draft
-              ? <b style={{ color: '#a855f7' }}>{draft.name}</b>
-              : <span style={{ color: '#a855f7', fontStyle: 'italic' }}>New draft (unsaved)</span>}
+              ? <b style={{ color: '#ff9500' }}>{draft.name}</b>
+              : <span style={{ color: '#ff9500', fontStyle: 'italic' }}>New draft (unsaved)</span>}
           </div>
         </div>
         <button
@@ -276,7 +276,7 @@ function DraftEditor() {
           style={{ ...btnStyle('secondary'), fontSize: '0.75rem', padding: '6px 8px' }}
           title="Discard the in-scene panels and reload the locked template base"
         >↺ Reset to template base</button>
-        <div style={{ fontSize: '0.72rem', color: '#9ca3af', lineHeight: 1.4 }}>
+        <div style={{ fontSize: '0.72rem', color: '#a89880', lineHeight: 1.4 }}>
           The roof-detection action buttons (View / Crop / Select / Polygon /
           Pick / Erase) and the camera dock are visible at the bottom while
           this draft is open — tweak the roofs for this proposal without
@@ -312,19 +312,19 @@ function DraftEditor() {
               : (isCustom ? 'Custom' : `${panel.brand} ${panel.model}`);
             return (
               <div key={r.id} style={{
-                background: '#0f172a', border: '1px solid #2a2a4a',
+                background: '#1c1209', border: '1px solid #3d2e18',
                 borderRadius: 6, padding: '8px 10px', fontSize: '0.75rem',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ color: '#f5a623', fontWeight: 700 }}>Roof {i + 1}</span>
+                  <span style={{ color: '#ff9500', fontWeight: 700 }}>Roof {i + 1}</span>
                   <span style={{ color: '#888' }}>{r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
                 </div>
                 {np === 0 ? (
                   <span style={{ color: '#555', fontStyle: 'italic' }}>No panels placed</span>
                 ) : (
                   <>
-                    <div style={{ color: '#60a5fa', fontSize: '0.7rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{specName}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                    <div style={{ color: '#ffaa00', fontSize: '0.7rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{specName}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#d4c4a8' }}>
                       <span>{np} panels &nbsp;·&nbsp; {kWp.toFixed(2)} kWp</span>
                       <span style={{ color: '#4ade80', fontWeight: 700 }}>~{Math.round(kwh).toLocaleString()} kWh/a</span>
                     </div>
@@ -342,7 +342,7 @@ function DraftEditor() {
         <PanelCatalogue selected={panelIdx} onChange={i => store.set({ panelTypeIdx: i })} />
         {isCustom && (
           <div style={{
-            marginTop: 6, padding: 10, background: '#0f172a',
+            marginTop: 6, padding: 10, background: '#1c1209',
             border: '1px solid #4ade80', borderRadius: 8,
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
           }}>
@@ -365,8 +365,8 @@ function DraftEditor() {
           onClick={() => store.set({ panelAutoAlign: !autoAlign, hint: !autoAlign ? 'Auto-align ON · roof edges set the base direction, angle still offsets around the roof normal' : 'Auto-align OFF · using only the manual roof-normal angle' })}
           style={{
             ...btnStyle('secondary'),
-            background: autoAlign ? '#0d3b22' : '#2a2a4a',
-            border: autoAlign ? '1px solid #4ade80' : '1px solid #2a2a4a',
+            background: autoAlign ? '#0d3b22' : '#3d2e18',
+            border: autoAlign ? '1px solid #4ade80' : '1px solid #3d2e18',
             color: autoAlign ? '#bbf7d0' : '#e0e0e0',
             fontWeight: 700,
           }}
@@ -377,7 +377,7 @@ function DraftEditor() {
             style={nudgeBtn} title="-5°">◀</button>
           <input type="range" min="-90" max="90" step="1" value={panelAngle}
             onChange={e => store.set({ panelAngleDeg: +e.target.value })}
-            style={{ flex: 1, accentColor: '#f5a623' }} />
+            style={{ flex: 1, accentColor: '#ff9500' }} />
           <button onClick={() => store.set({ panelAngleDeg: Math.min(90, +(panelAngle + 5).toFixed(2)) })}
             style={nudgeBtn} title="+5°">▶</button>
         </div>
@@ -387,7 +387,7 @@ function DraftEditor() {
               onClick={() => store.set({ panelAngleDeg: a })}
               style={{
                 flex: 1, padding: '4px 0', borderRadius: 4, cursor: 'pointer',
-                background: Math.round(panelAngle) === a ? '#f5a623' : '#2a2a4a',
+                background: Math.round(panelAngle) === a ? '#ff9500' : '#3d2e18',
                 color:      Math.round(panelAngle) === a ? '#1a1a2e' : '#e0e0e0',
                 border: 'none', fontWeight: 700,
               }}
@@ -405,7 +405,7 @@ function DraftEditor() {
             onClick={() => store.set({ panelLandscape: false, hint: 'Panels: portrait in the roof-aligned frame' })}
             style={{
               ...btnStyle('secondary'), flex: 1,
-              background: !landscape ? '#f5a623' : '#2a2a4a',
+              background: !landscape ? '#ff9500' : '#3d2e18',
               color:      !landscape ? '#1a1a2e' : '#e0e0e0',
               border: 'none', fontWeight: 700,
             }}
@@ -415,7 +415,7 @@ function DraftEditor() {
             onClick={() => store.set({ panelLandscape: true, hint: 'Panels: landscape in the roof-aligned frame' })}
             style={{
               ...btnStyle('secondary'), flex: 1,
-              background: landscape ? '#f5a623' : '#2a2a4a',
+              background: landscape ? '#ff9500' : '#3d2e18',
               color:      landscape ? '#1a1a2e' : '#e0e0e0',
               border: 'none', fontWeight: 700,
             }}
@@ -426,17 +426,17 @@ function DraftEditor() {
 
       <Section title={`Panel scale: ${panelScale.toFixed(2)}×`}>
         <input type="range" min="0.3" max="3" step="0.05" value={panelScale}
-          onChange={e => store.set({ panelScale: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
+          onChange={e => store.set({ panelScale: +e.target.value })} style={{ width: '100%', accentColor: '#ff9500' }} />
       </Section>
 
       <Section title={`Panel gap: ${panelGap.toFixed(2)} m`}>
         <input type="range" min="0" max="0.5" step="0.01" value={panelGap}
-          onChange={e => store.set({ panelGap: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
+          onChange={e => store.set({ panelGap: +e.target.value })} style={{ width: '100%', accentColor: '#ff9500' }} />
       </Section>
 
       <Section title={`Lift above roof: ${(surfaceLift * 100).toFixed(0)} cm`}>
         <input type="range" min="0.02" max="0.5" step="0.01" value={surfaceLift}
-          onChange={e => store.set({ panelSurfaceOffset: +e.target.value })} style={{ width: '100%', accentColor: '#f5a623' }} />
+          onChange={e => store.set({ panelSurfaceOffset: +e.target.value })} style={{ width: '100%', accentColor: '#ff9500' }} />
         <div style={{ fontSize: '0.7rem', color: '#888' }}>
           Hover height of the panel mesh above the roof surface — keeps panels visually distinct from the roof and matches typical mounting clearance.
         </div>
@@ -453,7 +453,7 @@ function DraftEditor() {
         <input
           type="range" min="0.05" max="1" step="0.05" value={panelOpacity}
           onChange={e => store.set({ panelOpacity: +e.target.value })}
-          style={{ width: '100%', accentColor: '#f5a623' }}
+          style={{ width: '100%', accentColor: '#ff9500' }}
           disabled={!panelsVisible}
         />
         <div style={{ fontSize: '0.7rem', color: '#888' }}>
@@ -528,7 +528,7 @@ function SelectedPanelPopup() {
       style={{
         background: '#1a2a40',
         border: '1px solid #2a4060',
-        color: '#f5a623',
+        color: '#ff9500',
         padding: '8px 10px',
         borderRadius: 8,
         cursor: 'pointer',
@@ -550,7 +550,7 @@ function SelectedPanelPopup() {
         zIndex: 40,
         background: 'rgba(15,23,42,0.96)',
         backdropFilter: 'blur(8px)',
-        border: '1px solid #f5a623',
+        border: '1px solid #ff9500',
         borderRadius: 12,
         padding: '12px 14px',
         boxShadow: '0 18px 38px rgba(0,0,0,0.55)',
@@ -569,19 +569,19 @@ function SelectedPanelPopup() {
       }}>
         <span style={{
           fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-          color: '#f5a623', fontWeight: 800,
+          color: '#ff9500', fontWeight: 800,
         }}>▣ Selected panel</span>
         <button
           onClick={() => store.set({ selectedPanelKeys: [], hint: 'Panel deselected' })}
           title="Close — deselect this panel"
           style={{
             background: 'transparent', border: 'none',
-            color: '#9ca3af', cursor: 'pointer', fontSize: '1.05rem',
+            color: '#a89880', cursor: 'pointer', fontSize: '1.05rem',
             fontWeight: 800, lineHeight: 1, padding: 2,
           }}
         >✕</button>
       </div>
-      <div style={{ fontSize: '0.7rem', color: '#9ca3af', lineHeight: 1.4 }}>
+      <div style={{ fontSize: '0.7rem', color: '#a89880', lineHeight: 1.4 }}>
         Drag the panel on the roof to reposition it · use the buttons below
         to rotate it on the spot.
       </div>
@@ -609,7 +609,7 @@ function panelStyle(open) {
   return {
     position: 'absolute', top: 0, right: 0, bottom: 0, width: 320,
     background: 'rgba(22,33,62,0.95)', backdropFilter: 'blur(8px)',
-    borderLeft: '1px solid #2a2a4a', overflowY: 'auto', zIndex: 25,
+    borderLeft: '1px solid #3d2e18', overflowY: 'auto', zIndex: 25,
     padding: '60px 16px 16px', display: 'flex', flexDirection: 'column', gap: 16,
     transform: open ? 'translateX(0)' : 'translateX(100%)',
     transition: 'transform 0.25s ease',
@@ -635,7 +635,7 @@ function OriBtn({ id, current, children }) {
       onClick={() => store.set({ panelAngleDeg: id === 'landscape' ? 90 : 0 })}
       style={{
         ...btnStyle('secondary'), flex: 1,
-        background: active ? '#f5a623' : '#2a2a4a',
+        background: active ? '#ff9500' : '#3d2e18',
         color: active ? '#1a1a2e' : '#e0e0e0',
         border: 'none',
       }}
@@ -659,7 +659,7 @@ function NumField({ label, value, step, min, max, onChange }) {
 
 const nudgeBtn = {
   width: 28, height: 28, borderRadius: 6,
-  background: '#2a2a4a', color: '#f5a623', border: 'none',
+  background: '#3d2e18', color: '#ff9500', border: 'none',
   cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem',
 };
 
@@ -712,7 +712,7 @@ function PanelSandbox() {
           opacity: clipboard ? 1 : 0.4,
           cursor:  clipboard ? 'pointer' : 'not-allowed',
           background: dropping ? '#4ade80' : undefined,
-          color:      dropping ? '#0d1b2a' : undefined,
+          color:      dropping ? '#1a1008' : undefined,
         }}
         title={clipboard
           ? 'Click on the building to drop more panels with the copied dimensions'
@@ -720,8 +720,8 @@ function PanelSandbox() {
       >{dropping ? '⏹ Stop dropping' : '✥ Drop new panel'}</button>
       {clipboard && (
         <div style={{
-          fontSize: '0.7rem', color: '#9ca3af', padding: '6px 8px',
-          background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 6,
+          fontSize: '0.7rem', color: '#a89880', padding: '6px 8px',
+          background: '#1c1209', border: '1px solid #3d2e18', borderRadius: 6,
         }}>
           Clipboard: {clipboard.w}×{clipboard.h} m · {clipboard.wp} Wp · {(clipboard.angleDeg ?? 0).toFixed(0)}°
         </div>
@@ -749,8 +749,8 @@ function PanelCatalogue({ selected, onChange }) {
             key={p.id}
             onClick={() => onChange(i)}
             style={{
-              background: active ? '#1a2a40' : '#0f172a',
-              border: `1.5px solid ${active ? '#f5a623' : '#2a2a4a'}`,
+              background: active ? '#1a2a40' : '#1c1209',
+              border: `1.5px solid ${active ? '#ff9500' : '#3d2e18'}`,
               borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 8,
               transition: 'border-color 0.12s',
@@ -759,19 +759,19 @@ function PanelCatalogue({ selected, onChange }) {
             {/* Radio dot */}
             <div style={{
               width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
-              background: active ? '#f5a623' : 'transparent',
-              border: `2px solid ${active ? '#f5a623' : '#4a5568'}`,
+              background: active ? '#ff9500' : 'transparent',
+              border: `2px solid ${active ? '#ff9500' : '#4a5568'}`,
             }} />
 
             {/* Info */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 fontSize: '0.78rem', fontWeight: 700,
-                color: active ? '#f5a623' : '#e0e0e0',
+                color: active ? '#ff9500' : '#e0e0e0',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>{p.brand} {p.model}</div>
               <div style={{ fontSize: '0.68rem', color: '#888', marginTop: 2 }}>
-                <span style={{ fontFamily: 'monospace', color: '#4a6080', marginRight: 6 }}>{p.id.slice(0, 8)}</span>
+                <span style={{ fontFamily: 'monospace', color: '#6b5a40', marginRight: 6 }}>{p.id.slice(0, 8)}</span>
                 {p.wp} Wp &nbsp;·&nbsp; {p.w.toFixed(3)}×{p.h.toFixed(3)} m &nbsp;·&nbsp; {p.efficiency.toFixed(1)}%
               </div>
             </div>
@@ -783,8 +783,8 @@ function PanelCatalogue({ selected, onChange }) {
                 title="Open datasheet"
                 style={{
                   flexShrink: 0, width: 26, height: 26, borderRadius: 6,
-                  background: '#16213e', border: '1px solid #2a2a4a',
-                  color: '#60a5fa', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                  background: '#2a1e10', border: '1px solid #3d2e18',
+                  color: '#ffaa00', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >ℹ</button>
@@ -797,8 +797,8 @@ function PanelCatalogue({ selected, onChange }) {
       <div
         onClick={() => onChange(-1)}
         style={{
-          background: selected === -1 ? '#1a2a40' : '#0f172a',
-          border: `1.5px solid ${selected === -1 ? '#4ade80' : '#2a2a4a'}`,
+          background: selected === -1 ? '#1a2a40' : '#1c1209',
+          border: `1.5px solid ${selected === -1 ? '#4ade80' : '#3d2e18'}`,
           borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 8,
         }}
@@ -809,7 +809,7 @@ function PanelCatalogue({ selected, onChange }) {
           border: `2px solid ${selected === -1 ? '#4ade80' : '#4a5568'}`,
         }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: selected === -1 ? '#4ade80' : '#9ca3af' }}>
+          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: selected === -1 ? '#4ade80' : '#a89880' }}>
             🛠 Pannello personalizzato
           </div>
           <div style={{ fontSize: '0.68rem', color: '#666' }}>Inserisci le specifiche manualmente</div>
@@ -821,11 +821,11 @@ function PanelCatalogue({ selected, onChange }) {
 
 function InfoBox({ rows }) {
   return (
-    <div style={{ background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 8, padding: 12, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ background: '#1c1209', border: '1px solid #3d2e18', borderRadius: 8, padding: 12, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
       {rows.map(([k, v]) => (
         <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ color: '#888' }}>{k}</span>
-          <span style={{ color: '#f5a623', fontWeight: 600 }}>{v}</span>
+          <span style={{ color: '#ff9500', fontWeight: 600 }}>{v}</span>
         </div>
       ))}
     </div>
@@ -840,13 +840,13 @@ function Section({ title, children }) {
     </div>
   );
 }
-function Divider() { return <div style={{ height: 1, background: '#2a2a4a' }} />; }
+function Divider() { return <div style={{ height: 1, background: '#3d2e18' }} />; }
 function Empty({ msg }) {
   return <div style={{ fontSize: '0.78rem', color: '#666' }}>{msg}</div>;
 }
 const inputStyle = {
-  background: '#0f172a', color: '#e0e0e0',
-  border: '1px solid #2a2a4a', borderRadius: 6,
+  background: '#1c1209', color: '#e0e0e0',
+  border: '1px solid #3d2e18', borderRadius: 6,
   padding: '7px 10px', fontSize: '0.85rem',
 };
 function timeAgo(ts) {

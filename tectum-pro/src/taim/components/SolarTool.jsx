@@ -56,12 +56,12 @@ function SolarSidebarContent() {
 
       <Section title="Location">
         <label style={labelStyle}>
-          Latitude: <b style={{ color: '#f5a623' }}>{solarLat.toFixed(1)}°</b>
+          Latitude: <b style={{ color: '#ff9500' }}>{solarLat.toFixed(1)}°</b>
         </label>
         <input
           type="range" min="-70" max="70" step="0.5" value={solarLat}
           onChange={e => store.set({ solarLatitude: +e.target.value })}
-          style={{ width: '100%', accentColor: '#f5a623' }}
+          style={{ width: '100%', accentColor: '#ff9500' }}
         />
         <div style={{ display: 'flex', gap: 4 }}>
           {[
@@ -74,7 +74,7 @@ function SolarSidebarContent() {
               onClick={() => store.set({ solarLatitude: lat })}
               style={{
                 flex: 1, padding: '4px 0', borderRadius: 4, cursor: 'pointer', fontSize: '0.7rem',
-                background: Math.abs(solarLat - lat) < 0.3 ? '#f5a623' : '#2a2a4a',
+                background: Math.abs(solarLat - lat) < 0.3 ? '#ff9500' : '#2a2a4a',
                 color:      Math.abs(solarLat - lat) < 0.3 ? '#1a1a2e' : '#e0e0e0',
                 border: 'none', fontWeight: 700,
               }}
@@ -87,7 +87,7 @@ function SolarSidebarContent() {
         <input
           type="range" min="1" max="365" step="1" value={solarDay}
           onChange={e => store.set({ solarDayOfYear: +e.target.value })}
-          style={{ width: '100%', accentColor: '#f5a623' }}
+          style={{ width: '100%', accentColor: '#ff9500' }}
         />
         <div style={{ display: 'flex', gap: 4 }}>
           {[
@@ -100,7 +100,7 @@ function SolarSidebarContent() {
               onClick={() => store.set({ solarDayOfYear: doy })}
               style={{
                 flex: 1, padding: '4px 0', borderRadius: 4, cursor: 'pointer', fontSize: '0.7rem',
-                background: Math.abs(solarDay - doy) < 3 ? '#f5a623' : '#2a2a4a',
+                background: Math.abs(solarDay - doy) < 3 ? '#ff9500' : '#2a2a4a',
                 color:      Math.abs(solarDay - doy) < 3 ? '#1a1a2e' : '#e0e0e0',
                 border: 'none', fontWeight: 700,
               }}
@@ -178,8 +178,8 @@ export function SolarTimeBar() {
           onClick={() => store.set(s => ({ solarPlaying: !s.solarPlaying }))}
           style={{
             width: 36, height: 36, borderRadius: '50%',
-            background: playing ? '#f5a623' : '#2a2a4a',
-            color: playing ? '#1a1a2e' : '#f5a623',
+            background: playing ? '#ff9500' : '#2a2a4a',
+            color: playing ? '#1a1a2e' : '#ff9500',
             border: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: 800,
           }}
           title={playing ? 'Pause sun animation' : 'Play sun animation'}
@@ -190,9 +190,9 @@ export function SolarTimeBar() {
           <input
             type="range" min="0" max="24" step="0.1" value={solarTime}
             onChange={e => store.set({ solarTime: +e.target.value, solarPlaying: false })}
-            style={{ width: 200, accentColor: '#f5a623' }}
+            style={{ width: 200, accentColor: '#ff9500' }}
           />
-          <span style={{ fontSize: '0.75rem', color: '#f5a623', fontWeight: 700, letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '0.75rem', color: '#ff9500', fontWeight: 700, letterSpacing: '0.05em' }}>
             {fmtHour(solarTime)} — {doyToLabel(store.get().solarDayOfYear)}
           </span>
         </div>
@@ -205,7 +205,7 @@ export function SolarTimeBar() {
                 onClick={() => setSpeedAndBroadcast(v)}
                 style={{
                   padding: '3px 6px', borderRadius: 4, cursor: 'pointer', fontSize: '0.65rem',
-                  background: speed === v ? '#f5a623' : '#2a2a4a',
+                  background: speed === v ? '#ff9500' : '#2a2a4a',
                   color:      speed === v ? '#1a1a2e' : '#aaa',
                   border: 'none', fontWeight: 700,
                 }}
@@ -241,7 +241,7 @@ function ProductionEstimate({ lat }) {
     return (
       <Section title="Stima produzione">
         <div style={{ fontSize: '0.78rem', color: '#555' }}>
-          Nessun pannello nel workspace — vai nel tab <b style={{ color: '#f5a623' }}>Templates</b> e posiziona i pannelli.
+          Nessun pannello nel workspace — vai nel tab <b style={{ color: '#ff9500' }}>Templates</b> e posiziona i pannelli.
         </div>
       </Section>
     );
@@ -293,7 +293,7 @@ function ProductionEstimate({ lat }) {
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <div style={{
                 width: '100%', borderRadius: '2px 2px 0 0',
-                background: `linear-gradient(to top, #f5a623, #ffdd57)`,
+                background: `linear-gradient(to top, #ff9500, #ffdd57)`,
                 height: `${(v / maxMonth) * 48}px`,
                 minHeight: 2,
               }} />
@@ -317,7 +317,7 @@ function KPI({ label, value, hi }) {
       borderRadius: 6, padding: '6px 10px',
     }}>
       <div style={{ fontSize: '0.62rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-      <div style={{ fontSize: '0.88rem', color: hi ? '#f5a623' : '#cbd5e1', fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: '0.88rem', color: hi ? '#ff9500' : '#cbd5e1', fontWeight: 700 }}>{value}</div>
     </div>
   );
 }
@@ -343,7 +343,7 @@ function InfoBox({ rows }) {
       {rows.map(([k, v]) => (
         <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ color: '#888' }}>{k}</span>
-          <span style={{ color: '#f5a623', fontWeight: 600 }}>{v}</span>
+          <span style={{ color: '#ff9500', fontWeight: 600 }}>{v}</span>
         </div>
       ))}
     </div>

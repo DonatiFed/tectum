@@ -2,19 +2,19 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Svg, Circle, Rect, Image } from '@react-pdf/renderer';
 
 const C = {
-  green:       '#1a5c35',
-  greenMid:    '#2e7d52',
-  greenLight:  '#e6f4ec',
-  greenAccent: '#52b77a',
+  green:       '#7a3800',
+  greenMid:    '#cc6600',
+  greenLight:  '#fff4e6',
+  greenAccent: '#ff9500',
   white:       '#ffffff',
   grayDark:    '#2c2c2c',
-  gray:        '#6b7c73',
-  grayLight:   '#9aab9f',
-  border:      '#dce8e1',
-  bg:          '#f4f9f6',
-  blue:        '#1e3a5f',
-  blueMid:     '#2d5fa8',
-  blueLight:   '#e8f0fb',
+  gray:        '#7c7368',
+  grayLight:   '#ab9f8f',
+  border:      '#e8ddd1',
+  bg:          '#fdf9f4',
+  blue:        '#5a2d00',
+  blueMid:     '#d47a00',
+  blueLight:   '#fff8eb',
 };
 const B = 'Helvetica-Bold';
 const R = 'Helvetica';
