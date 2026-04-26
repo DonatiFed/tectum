@@ -111,7 +111,12 @@ export async function deleteProject(id) {
 
 // Convert an object URL (blob:…) back into a Blob so we can persist it.
 export async function blobFromObjectUrl(url) {
-  if (!url || typeof url !== 'string' || !url.startsWith('blob:')) return null;
+  if (!url || typeof url !== 'string') return null;
+  // Use URL constructor to strictly validate the protocol. A plain
+  // startsWith('blob:') check can be bypassed; the constructor parse cannot.
+  let parsed;
+  try { parsed = new URL(url); } catch { return null; }
+  if (parsed.protocol !== 'blob:') return null;
   try {
     const res = await fetch(url);
     return await res.blob();

@@ -1,9 +1,27 @@
 // Maps live store state → pipeline inputs, calls the FastAPI server,
 // returns the raw pipeline output ({ project_context, offers }).
 
-const PIPELINE_URL =
+// Validate the pipeline base URL to prevent SSRF: only http/https protocols
+// are allowed. The path is always hardcoded (/api/offer) so callers cannot
+// redirect requests to arbitrary endpoints.
+function _validatePipelineUrl(raw) {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+      throw new Error(`Disallowed protocol: ${u.protocol}`);
+    }
+    // Return only origin (scheme + host + port), never a user-supplied path.
+    return u.origin;
+  } catch {
+    console.error('[pipelineClient] Invalid NEXT_PUBLIC_PIPELINE_URL, falling back to localhost');
+    return 'http://localhost:8001';
+  }
+}
+
+const PIPELINE_URL = _validatePipelineUrl(
   (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_PIPELINE_URL) ||
-  'http://localhost:8001';
+  'http://localhost:8001'
+);
 
 // Intake form roofType → pipeline SUBSTRUCTURE_MAP key
 const ROOF_TYPE_MAP = {
