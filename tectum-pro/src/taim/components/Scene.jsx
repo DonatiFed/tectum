@@ -1054,37 +1054,11 @@ function SceneContents() {
     const onPanelExitDropMode = () => {
       if (store.get().mode === 'panel-drop') store.set({ mode: 'orbit', hint: 'Drop mode off' });
     };
-    // Per-panel rotation around the host roof's plane normal. Triggered
-    // from the per-panel popup (PanelDashboard) — keeps that single panel
-    // pinned to its position while spinning it on the roof.
-    const onPanelRotateOne = (e) => {
-      const { roofId, index, deltaDeg } = e.detail || {};
-      if (!roofId || index == null || !Number.isFinite(deltaDeg)) return;
-      const s = store.get();
-      const roof = s.roofs.find(r => r.id === roofId);
-      const p = roof?.panels?.[index];
-      if (!p) return;
-      // After IndexedDB roundtrip plane.normal / panel.quat may be plain
-      // {x,y,z[,w]} objects — coerce both back into THREE primitives.
-      const n = roof.plane.normal;
-      const axis = new THREE.Vector3(n.x ?? 0, n.y ?? 1, n.z ?? 0).normalize();
-      const q0 = new THREE.Quaternion(p.quat.x ?? 0, p.quat.y ?? 0, p.quat.z ?? 0, p.quat.w ?? 1);
-      const dq = new THREE.Quaternion().setFromAxisAngle(axis, THREE.MathUtils.degToRad(deltaDeg));
-      const q1 = dq.multiply(q0);
-      const next = { ...p, quat: q1 };
-      store.set(st => ({
-        roofs: st.roofs.map(r => r.id === roofId
-          ? { ...r, panels: r.panels.map((pp, i) => i === index ? next : pp) }
-          : r),
-        hint: `Rotated panel ${index + 1} by ${deltaDeg > 0 ? '+' : ''}${deltaDeg}°`,
-      }));
-    };
     window.addEventListener('panel:select',           onPanelSelect);
     window.addEventListener('panel:deleteSelected',   onPanelDeleteSelected);
     window.addEventListener('panel:copySelected',     onPanelCopySelected);
     window.addEventListener('panel:enterDropMode',    onPanelEnterDropMode);
     window.addEventListener('panel:exitDropMode',     onPanelExitDropMode);
-    window.addEventListener('panel:rotateOne',        onPanelRotateOne);
     window.addEventListener('template:save', onTemplateSave);
     window.addEventListener('template:load', onTemplateLoad);
     window.addEventListener('draft:save',    onDraftSave);
@@ -1108,7 +1082,6 @@ function SceneContents() {
       window.removeEventListener('panel:copySelected',     onPanelCopySelected);
       window.removeEventListener('panel:enterDropMode',    onPanelEnterDropMode);
       window.removeEventListener('panel:exitDropMode',     onPanelExitDropMode);
-      window.removeEventListener('panel:rotateOne',        onPanelRotateOne);
       window.removeEventListener('template:save', onTemplateSave);
       window.removeEventListener('template:load', onTemplateLoad);
       window.removeEventListener('draft:save',    onDraftSave);
@@ -1567,17 +1540,7 @@ function Panel({ panel, roofId, index }) {
       return;
     }
     const shift = !!(e.nativeEvent && (e.nativeEvent.shiftKey || e.nativeEvent.metaKey || e.nativeEvent.ctrlKey));
-    if (shift) {
-      // Shift-click → multi-select (no popup)
-      window.dispatchEvent(new CustomEvent('panel:select', { detail: { roofId, index, shift: true } }));
-      return;
-    }
-    // Plain click → open the per-panel popup AND mark this single panel as
-    // selected so the popup's Delete / Copy buttons (which dispatch the
-    // existing `panel:deleteSelected` / `panel:copySelected` events) act
-    // on this exact panel.
-    window.dispatchEvent(new CustomEvent('panel:select', { detail: { roofId, index, shift: false } }));
-    store.set({ activePanelDashboard: { roofId, index } });
+    window.dispatchEvent(new CustomEvent('panel:select', { detail: { roofId, index, shift } }));
   };
 
   if (!visible) return null;

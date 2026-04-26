@@ -14,7 +14,6 @@ import PolygonOverlay from './PolygonOverlay';
 import PickOverlay from './PickOverlay';
 import RotationPad from './RotationPad';
 import SolarTool from './SolarTool';
-import PanelDashboard from './PanelDashboard';
 
 export default function SolarPlanner() {
   const selectedModel = useStore(s => s.selectedModel);
@@ -907,10 +906,6 @@ function PlannerView() {
         {tab === 'detect'    && <Sidebar />}
         {tab === 'templates' && <TemplatesPanel />}
         {tab === 'solar'     && <SolarTool />}
-        {/* Per-panel popup is universal — clicking a panel in any tab
-            opens it. SolarTool also embeds it; the singleton store key
-            (activePanelDashboard) keeps both renders in sync. */}
-        {tab !== 'solar' && <PanelDashboard />}
         {bottomDockUI && (selCount > 0 ? <SelectionActionBar /> : <BottomControls />)}
         <DebugHUD />
         {detectUI && <CropOverlay />}
