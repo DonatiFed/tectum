@@ -50,7 +50,7 @@ export const store = createStore({
   // User-defined panel spec (used when panelTypeIdx === -1). Different
   // manufacturers have different physical sizes / wattages, so the editor
   // exposes width / height / Wp inputs for a single ad-hoc panel.
-  customPanel: { name: 'Custom', w: 1.05, h: 1.75, wp: 410 },
+  customPanel: { name: 'Custom', w: 1.05, h: 1.75, wp: 410, efficiency: 20.0, weight_kg: 22 },
 
   // ── Tabs ───────────────────────────────────────────────────────────────
   // 'detect'    = roof detection workspace (segmentation, masks, merge…)
@@ -99,6 +99,15 @@ export const store = createStore({
   // automatically conforming to whatever roof surface they clicked.
   // Shape: { w, h, wp, angleDeg }
   singlePanelClipboard: null,
+
+  // ── Solar irradiance tool ──────────────────────────────────────────────
+  solarTime: 12.0,          // hour of day 0..24
+  solarDayOfYear: 172,      // 172 = 21 June (summer solstice)
+  solarLatitude: 53.5,      // default: Hamburg
+  solarPlaying: false,
+  activePanelDashboard: null, // { roofId, index } | null
+  sunOrbitCenter: [0, 0, 0],  // [x, y, z] — world-space pivot of the sun arc
+  sunOrbitRadius: 200,        // half-width of the current region (crop or full model)
 
   debugOn: false,
   texturesOn: true,

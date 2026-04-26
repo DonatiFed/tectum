@@ -1,6 +1,6 @@
 'use client';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Html } from '@react-three/drei';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -10,6 +10,7 @@ import { detectUpQuaternion, buildUpwardTriangles } from '@/lib/autoOrient';
 import { detectRoofPlane, detectRoofsInArea, generatePanelLayout, eraseStroke, eraseReset, eraseLasso, smoothMaskGrid, mergeRoofPlanes, roofFromPolygon } from '@/lib/roof';
 import { smoothMeshes, resetMeshSmoothing } from '@/lib/meshSmooth';
 import { PANEL_TYPES } from '@/lib/catalog';
+import { sunDirection, panelIrradiance, irradianceToHex } from '@/lib/solar';
 
 export default function Scene() {
   return (
@@ -116,6 +117,8 @@ function SceneContents() {
         // ── 4. Pre-index upward-facing triangles
         upTrisRef.current = buildUpwardTriangles(model);
 
+        const orbitCt = modelBoxRef.current.getCenter(new THREE.Vector3());
+        const orbitSz = modelBoxRef.current.getSize(new THREE.Vector3());
         store.set({
           loaded: true,
           loadProgress: 1,
@@ -124,6 +127,8 @@ function SceneContents() {
           roofs: [],
           activeRoofId: null,
           hint: `Loaded · ${upTrisRef.current.length.toLocaleString()} roof faces · auto-up=${orient.dominant}`,
+          sunOrbitCenter: [orbitCt.x, 0, orbitCt.z],
+          sunOrbitRadius: Math.max(orbitSz.x, orbitSz.z),
         });
 
         // Frame the model
@@ -142,6 +147,11 @@ function SceneContents() {
       gl.clippingPlanes = [];
       removeCropHelper(scene);
       store.set(s => ({ hud: { ...s.hud, clipPlanes: 0 } }));
+      if (modelBoxRef.current) {
+        const ct = modelBoxRef.current.getCenter(new THREE.Vector3());
+        const sz = modelBoxRef.current.getSize(new THREE.Vector3());
+        store.set({ sunOrbitCenter: [ct.x, 0, ct.z], sunOrbitRadius: Math.max(sz.x, sz.z) });
+      }
       return;
     }
     const { minX, maxX, minZ, maxZ } = cropBounds;
@@ -153,6 +163,15 @@ function SceneContents() {
     ];
     drawCropHelper(scene, modelBoxRef.current, cropBounds);
     store.set(s => ({ hud: { ...s.hud, clipPlanes: 4, cropRegion: `[${minX.toFixed(0)},${minZ.toFixed(0)}]→[${maxX.toFixed(0)},${maxZ.toFixed(0)}]` } }));
+    if (modelBoxRef.current) {
+      const rbox = new THREE.Box3(
+        new THREE.Vector3(minX, modelBoxRef.current.min.y, minZ),
+        new THREE.Vector3(maxX, modelBoxRef.current.max.y, maxZ),
+      );
+      const ct = rbox.getCenter(new THREE.Vector3());
+      const sz = rbox.getSize(new THREE.Vector3());
+      store.set({ sunOrbitCenter: [ct.x, 0, ct.z], sunOrbitRadius: Math.max(sz.x, sz.z) });
+    }
   }, [cropBounds, gl, scene]);
 
   // ── Camera control event handlers
@@ -597,6 +616,16 @@ function SceneContents() {
       const panelType = s.panelTypeIdx === -1
         ? { ...s.customPanel }
         : PANEL_TYPES[s.panelTypeIdx];
+      // Build a serialisable spec so each roof remembers which panel type was used.
+      const panelSpec = {
+        typeIdx:    s.panelTypeIdx,
+        brand:      panelType.brand  ?? (s.panelTypeIdx === -1 ? 'Custom' : '—'),
+        model:      panelType.model  ?? '',
+        id:         panelType.id     ?? 'custom',
+        w: panelType.w, h: panelType.h, wp: panelType.wp,
+        efficiency: panelType.efficiency ?? (panelType.wp / (1000 * panelType.w * panelType.h) * 100),
+        datasheetUrl: panelType.datasheetUrl ?? null,
+      };
       const rc = new THREE.Raycaster();
       let totalPanels = 0;
       const updated = new Map();
@@ -620,7 +649,9 @@ function SceneContents() {
         ? `slope-aligned + ${s.panelAngleDeg >= 0 ? '+' : ''}${s.panelAngleDeg.toFixed(0)}° on roof normal`
         : `${s.panelAngleDeg >= 0 ? '+' : ''}${s.panelAngleDeg.toFixed(0)}° on roof normal`;
       store.set(st => ({
-        roofs: st.roofs.map(r => updated.has(r.id) ? { ...r, panels: updated.get(r.id) } : r),
+        roofs: st.roofs.map(r => updated.has(r.id)
+          ? { ...r, panels: updated.get(r.id), panelSpec }
+          : r),
         hint: `Placed ${totalPanels} panels on ${targets.length} roof${targets.length===1?'':'s'} · ${angleNote}`,
       }));
     };
@@ -775,9 +806,13 @@ function SceneContents() {
       const name = (e?.detail?.name || '').trim();
       const s = store.get();
       if (!s.activeTemplateId) { store.set({ hint: 'Pick a template first, then save a draft' }); return; }
-      // Snapshot panels per roof + the current settings.
-      const panelsByRoof = {};
-      for (const r of s.roofs) panelsByRoof[r.id] = (r.panels ?? []).map(clonePanel);
+      // Snapshot panels + per-roof panel spec + global settings.
+      const panelsByRoof    = {};
+      const panelSpecByRoof = {};
+      for (const r of s.roofs) {
+        panelsByRoof[r.id]    = (r.panels ?? []).map(clonePanel);
+        panelSpecByRoof[r.id] = r.panelSpec ?? null;
+      }
       const id = 'draft-' + Date.now().toString(36);
       const draft = {
         id,
@@ -794,6 +829,7 @@ function SceneContents() {
           customPanel: { ...s.customPanel },
         },
         panelsByRoof,
+        panelSpecByRoof,
       };
       store.set(st => ({
         drafts: [...st.drafts, draft],
@@ -808,10 +844,11 @@ function SceneContents() {
       if (!draft) return;
       const tpl = s.templates.find(t => t.id === draft.templateId);
       if (!tpl) { store.set({ hint: 'Template behind this draft is missing' }); return; }
-      // Rebuild live roofs from the template, then re-attach the draft's panels.
+      // Rebuild live roofs from the template, then re-attach the draft's panels + spec.
       const fresh = tpl.roofs.map(r => {
         const cloned = cloneRoofForTemplate(r);
-        cloned.panels = (draft.panelsByRoof?.[r.id] ?? []).map(clonePanel);
+        cloned.panels    = (draft.panelsByRoof?.[r.id]    ?? []).map(clonePanel);
+        cloned.panelSpec = draft.panelSpecByRoof?.[r.id]  ?? cloned.panelSpec ?? null;
         return cloned;
       });
       store.set({
@@ -1185,6 +1222,10 @@ function SceneContents() {
       <axesHelper args={[40]} position={[0, 0.02, 0]} />
       <RoofVisuals roofs={roofs} />
       <PolygonDraftViz />
+      <SunVisual />
+      <SunAnimator />
+      <CompassRose />
+      <RoofIrradiancePlanes />
     </>
   );
 }
@@ -1381,16 +1422,36 @@ function RoofPlaneViz({ roof, active, selected }) {
 }
 
 function Panel({ panel, roofId, index }) {
-  const selectedKeys = useStore(s => s.selectedPanelKeys);
+  const matRef  = useRef();
   const visible = useStore(s => s.panelsVisible);
   const opacity = useStore(s => s.panelOpacity);
   const key = `${roofId}#${index}`;
-  const selected = selectedKeys.includes(key);
+
+  // Imperatively update material colour each frame without re-rendering React
+  useFrame(() => {
+    if (!matRef.current) return;
+    const s = store.get();
+    if (s.activeTab === 'solar') {
+      const dir = sunDirection(s.solarLatitude, s.solarDayOfYear, s.solarTime);
+      const irr = dir.belowHorizon ? 0 : panelIrradiance(panel.quat, dir);
+      matRef.current.color.setHex(irradianceToHex(irr));
+    } else {
+      const selected = s.selectedPanelKeys.includes(key);
+      matRef.current.color.setHex(selected ? 0x4ade80 : 0x1a237e);
+    }
+  });
+
   const onClick = (e) => {
     e.stopPropagation();
+    const s = store.get();
+    if (s.activeTab === 'solar') {
+      store.set({ activePanelDashboard: { roofId, index } });
+      return;
+    }
     const shift = !!(e.nativeEvent && (e.nativeEvent.shiftKey || e.nativeEvent.metaKey || e.nativeEvent.ctrlKey));
     window.dispatchEvent(new CustomEvent('panel:select', { detail: { roofId, index, shift } }));
   };
+
   if (!visible) return null;
   const transparent = opacity < 1;
   return (
@@ -1401,13 +1462,210 @@ function Panel({ panel, roofId, index }) {
     >
       <boxGeometry args={[panel.w, 0.04, panel.h]} />
       <meshBasicMaterial
-        color={selected ? 0x4ade80 : 0x1a237e}
+        ref={matRef}
+        color={0x1a237e}
         transparent={transparent}
         opacity={opacity}
         depthWrite={!transparent}
       />
     </mesh>
   );
+}
+
+// ── Compass rose ─────────────────────────────────────────────────────────
+
+const COMPASS_DIRS = [
+  { label: 'N', x:   0, z: -130, color: '#ef4444', desc: 'Nord'  },
+  { label: 'S', x:   0, z:  130, color: '#94a3b8', desc: 'Sud'   },
+  { label: 'E', x:  130, z:   0, color: '#94a3b8', desc: 'Est'   },
+  { label: 'W', x: -130, z:   0, color: '#94a3b8', desc: 'Ovest' },
+];
+
+function CompassRose() {
+  const loaded = useStore(s => s.loaded);
+
+  // useMemo must be called unconditionally (Rules of Hooks) — before any early return
+  const lineGeom = useMemo(() => {
+    const pts = [
+      new THREE.Vector3(-130, 0.3, 0), new THREE.Vector3(130, 0.3, 0),
+      new THREE.Vector3(0, 0.3, -130), new THREE.Vector3(0, 0.3, 130),
+    ];
+    const geom = new THREE.BufferGeometry();
+    geom.setFromPoints(pts);
+    return geom;
+  }, []);
+
+  if (!loaded) return null;
+
+  return (
+    <group>
+      {/* Cross axes */}
+      <lineSegments geometry={lineGeom}>
+        <lineBasicMaterial color={0x334466} />
+      </lineSegments>
+
+      {/* Direction labels via HTML */}
+      {COMPASS_DIRS.map(d => (
+        <group key={d.label} position={[d.x, 1.5, d.z]}>
+          <Html center distanceFactor={80}>
+            <div style={{
+              color: d.color,
+              fontWeight: 800,
+              fontSize: 22,
+              lineHeight: 1,
+              textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              fontFamily: 'system-ui, sans-serif',
+              letterSpacing: '-0.02em',
+            }}>{d.label}</div>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+// ── Solar components ─────────────────────────────────────────────────────
+
+// Returns [x, y, z] position on the E→W semicircular orbit arc, or null when
+// the sun is below the horizon. θ goes 0 (East, +X) → π (West, -X) so the
+// arc is tangent-vertical at both endpoints (perpendicular to the horizon).
+function computeSunOrbitPos(latDeg, doy, hour, center, radius) {
+  const D    = Math.PI / 180;
+  const decl = -23.45 * Math.cos((360 / 365) * (doy + 10) * D) * D;
+  const lat  = latDeg * D;
+  const cosHA = -Math.tan(lat) * Math.tan(decl);
+  if (cosHA > 1) return null; // polar night
+  const haSS  = cosHA < -1 ? Math.PI : Math.acos(cosHA);
+  const tRise = 12 - (haSS / D) / 15;
+  const tSet  = 12 + (haSS / D) / 15;
+  if (hour <= tRise || hour >= tSet) return null;
+  const t     = (hour - tRise) / (tSet - tRise); // 0..1
+  const theta = t * Math.PI; // 0 = East, π = West
+  return [
+    center[0] + radius * Math.cos(theta), // +radius at East, -radius at West
+    center[1] + radius * Math.sin(theta), // 0 at E/W, radius at solar noon
+    center[2],                             // stays in the E-W vertical plane
+  ];
+}
+
+// Sun sphere + directional light. Orbit is a perfect E→W semicircle whose
+// pivot and radius track the current visible region (crop or full model).
+function SunVisual() {
+  const sunRef   = useRef();
+  const lightRef = useRef();
+
+  useFrame(() => {
+    const s = store.get();
+    if (!s.loaded || s.activeTab !== 'solar') {
+      if (sunRef.current)   sunRef.current.visible   = false;
+      if (lightRef.current) lightRef.current.visible = false;
+      return;
+    }
+    const pos = computeSunOrbitPos(s.solarLatitude, s.solarDayOfYear, s.solarTime, s.sunOrbitCenter, s.sunOrbitRadius);
+    const visible = pos !== null;
+    if (sunRef.current) {
+      sunRef.current.visible = visible;
+      if (visible) sunRef.current.position.set(pos[0], pos[1], pos[2]);
+    }
+    if (lightRef.current) {
+      lightRef.current.visible = visible;
+      if (visible) lightRef.current.position.set(pos[0], pos[1], pos[2]);
+    }
+  });
+
+  return (
+    <>
+      <mesh ref={sunRef}>
+        <sphereGeometry args={[14, 20, 16]} />
+        <meshBasicMaterial color={0xffcc00} />
+      </mesh>
+      <directionalLight ref={lightRef} color={0xfff5cc} intensity={1.8} castShadow={false} />
+    </>
+  );
+}
+
+// Transparent plane per roof showing the sun-ray incidence geometry.
+// Each plane passes through the sun sphere centre and the roof centroid,
+// lying in the vertical plane that contains the sun→roof vector.
+function RoofIrradiancePlane({ roof }) {
+  const meshRef = useRef();
+  const geo = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(18), 3));
+    return g;
+  }, []);
+
+  useFrame(() => {
+    if (!meshRef.current) return;
+    const s = store.get();
+    if (!s.loaded || s.activeTab !== 'solar' || !roof?.plane?.centre) { meshRef.current.visible = false; return; }
+
+    const pos = computeSunOrbitPos(s.solarLatitude, s.solarDayOfYear, s.solarTime, s.sunOrbitCenter, s.sunOrbitRadius);
+    if (!pos) { meshRef.current.visible = false; return; }
+
+    const sv = new THREE.Vector3(pos[0], pos[1], pos[2]);
+    const rc = roof.plane.centre; // THREE.Vector3
+    const toRoof = rc.clone().sub(sv);
+    if (toRoof.lengthSq() < 1) { meshRef.current.visible = false; return; }
+
+    // Horizontal half-width vector — perpendicular to sun→roof in the XZ plane
+    let xDir = new THREE.Vector3().crossVectors(toRoof, new THREE.Vector3(0, 1, 0));
+    if (xDir.lengthSq() < 0.001) xDir.set(1, 0, 0);
+    else xDir.normalize();
+    xDir.multiplyScalar(Math.max(10, s.sunOrbitRadius * 0.07));
+
+    const SL = sv.clone().sub(xDir);
+    const SR = sv.clone().add(xDir);
+    const RL = rc.clone().sub(xDir);
+    const RR = rc.clone().add(xDir);
+
+    const arr = geo.attributes.position.array;
+    // Triangle 1: SL, SR, RL
+    arr[0]  = SL.x; arr[1]  = SL.y; arr[2]  = SL.z;
+    arr[3]  = SR.x; arr[4]  = SR.y; arr[5]  = SR.z;
+    arr[6]  = RL.x; arr[7]  = RL.y; arr[8]  = RL.z;
+    // Triangle 2: SR, RR, RL
+    arr[9]  = SR.x; arr[10] = SR.y; arr[11] = SR.z;
+    arr[12] = RR.x; arr[13] = RR.y; arr[14] = RR.z;
+    arr[15] = RL.x; arr[16] = RL.y; arr[17] = RL.z;
+    geo.attributes.position.needsUpdate = true;
+    geo.computeBoundingSphere();
+    meshRef.current.visible = true;
+  });
+
+  return (
+    <mesh ref={meshRef} geometry={geo} visible={false}>
+      <meshBasicMaterial color={0xffdd44} transparent opacity={0.13} side={THREE.DoubleSide} depthWrite={false} />
+    </mesh>
+  );
+}
+
+function RoofIrradiancePlanes() {
+  const roofs  = useStore(s => s.roofs);
+  const loaded = useStore(s => s.loaded);
+  const tab    = useStore(s => s.activeTab);
+  if (!loaded || tab !== 'solar') return null;
+  return <>{roofs.map(r => <RoofIrradiancePlane key={r.id} roof={r} />)}</>;
+}
+
+// Increments solarTime each frame when playing; reads speed from a module-level ref
+// updated by the 'solar:speed' custom event emitted by SolarTool.
+let _solarSpeed = 1;
+if (typeof window !== 'undefined') {
+  window.addEventListener('solar:speed', (e) => { _solarSpeed = e.detail; });
+}
+
+function SunAnimator() {
+  useFrame((_, delta) => {
+    const s = store.get();
+    if (!s.solarPlaying) return;
+    // 1× speed = 1 day in ~30 s → 24/30 ≈ 0.8 h/s
+    const next = (s.solarTime + delta * 0.8 * _solarSpeed) % 24;
+    store.set({ solarTime: next });
+  });
+  return null;
 }
 
 // ── Helpers
@@ -1580,6 +1838,7 @@ function cloneRoofForTemplate(roof) {
     id: roof.id,
     panels: [],
     erased: (roof.erased ?? []).map(e => ({ ...e })),
+    panelSpec: roof.panelSpec ?? null,
     plane: {
       ...p,
       centre: p.centre?.clone?.() ?? p.centre,

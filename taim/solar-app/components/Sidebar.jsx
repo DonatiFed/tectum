@@ -1,15 +1,17 @@
 'use client';
 import { useState } from 'react';
 import { store, useStore } from '@/lib/store';
+import { specificYield } from '@/lib/solar';
 import { btnStyle } from './SolarPlanner';
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
-  const mode      = useStore(s => s.mode);
+  const mode       = useStore(s => s.mode);
   const roofs      = useStore(s => s.roofs);
   const activeId   = useStore(s => s.activeRoofId);
   const cropBounds = useStore(s => s.cropBounds);
   const selectedIds = useStore(s => s.selectedRoofIds);
+  const solarLat   = useStore(s => s.solarLatitude);
   const activeRoof = roofs.find(r => r.id === activeId);
   const cutCount = activeRoof?.plane?.cutOps ?? 0;
   const toggleSel = (id) => store.set(s => ({
@@ -73,38 +75,55 @@ export default function Sidebar() {
                       background: isActive ? '#1f2d4a' : (isSel ? '#231539' : '#0f172a'),
                       border: `2px solid ${isActive ? '#f5a623' : (isSel ? '#a855f7' : '#2a2a4a')}`,
                       borderRadius: 6, padding: '8px 10px', fontSize: '0.78rem', cursor: 'pointer',
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6,
+                      display: 'flex', flexDirection: 'column', gap: 4,
                       color: isActive ? '#f5a623' : (isSel ? '#d8b4fe' : '#e0e0e0'),
                       boxShadow: isActive ? '0 0 0 1px #f5a623 inset' : (isSel ? '0 0 0 1px #a855f7 inset' : 'none'),
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isSel}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={() => toggleSel(r.id)}
-                      style={{ accentColor: '#a855f7', cursor: 'pointer' }}
-                      title="Select for merge"
-                    />
-                    <span style={{ flex: 1 }}>Roof {i+1} · {r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
-                    <span style={{ color: '#aaa' }}>{r.panels.length}p</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        store.set(s => ({
-                          roofs: s.roofs.filter(x => x.id !== r.id),
-                          activeRoofId: s.activeRoofId === r.id ? null : s.activeRoofId,
-                          selectedRoofIds: (s.selectedRoofIds ?? []).filter(id => id !== r.id),
-                          hint: `Deleted Roof ${i+1}`,
-                        }));
-                      }}
-                      title="Delete this roof"
-                      style={{
-                        background: 'transparent', border: '1px solid #4a2030',
-                        color: '#ff7070', borderRadius: 6, padding: '2px 8px',
-                        fontSize: '0.78rem', cursor: 'pointer', fontWeight: 700,
-                      }}
-                    >✕</button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="checkbox"
+                        checked={isSel}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => toggleSel(r.id)}
+                        style={{ accentColor: '#a855f7', cursor: 'pointer' }}
+                        title="Select for merge"
+                      />
+                      <span style={{ flex: 1 }}>Roof {i+1} · {r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
+                      <span style={{ color: '#aaa' }}>{r.panels.length}p</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          store.set(s => ({
+                            roofs: s.roofs.filter(x => x.id !== r.id),
+                            activeRoofId: s.activeRoofId === r.id ? null : s.activeRoofId,
+                            selectedRoofIds: (s.selectedRoofIds ?? []).filter(id => id !== r.id),
+                            hint: `Deleted Roof ${i+1}`,
+                          }));
+                        }}
+                        title="Delete this roof"
+                        style={{
+                          background: 'transparent', border: '1px solid #4a2030',
+                          color: '#ff7070', borderRadius: 6, padding: '2px 8px',
+                          fontSize: '0.78rem', cursor: 'pointer', fontWeight: 700,
+                        }}
+                      >✕</button>
+                    </div>
+                    {r.panels.length > 0 && (() => {
+                      const spec = r.panelSpec;
+                      const kWp  = spec ? (r.panels.length * spec.wp / 1000) : 0;
+                      const kwh  = kWp * specificYield(solarLat);
+                      const name = spec ? (spec.brand ? `${spec.brand} ${spec.model}` : 'Custom') : null;
+                      return (
+                        <div style={{ fontSize: '0.66rem', color: '#9ca3af', paddingLeft: 20, lineHeight: 1.5 }}>
+                          {name && <span style={{ color: '#60a5fa' }}>{name} &nbsp;·&nbsp; </span>}
+                          {kWp > 0
+                            ? <><span>{kWp.toFixed(2)} kWp</span> &nbsp;·&nbsp; <span style={{ color: '#4ade80', fontWeight: 700 }}>~{Math.round(kwh).toLocaleString()} kWh/a</span></>
+                            : <span style={{ color: '#555' }}>spec not recorded</span>
+                          }
+                        </div>
+                      );
+                    })()}
                   </div>
                   );
                 })}

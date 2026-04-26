@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { store, useStore } from '@/lib/store';
 import { PANEL_TYPES } from '@/lib/catalog';
+import { specificYield } from '@/lib/solar';
 import { btnStyle } from './SolarPlanner';
 
 // Single Templates tab. Two display modes:
@@ -184,7 +185,9 @@ function DraftEditor() {
   const panelGap     = useStore(s => s.panelGap);
   const panelAngle   = useStore(s => s.panelAngleDeg);
   const autoAlign    = useStore(s => s.panelAutoAlign);
-  const surfaceLift  = useStore(s => s.panelSurfaceOffset);  const landscape    = useStore(s => s.panelLandscape);
+  const surfaceLift  = useStore(s => s.panelSurfaceOffset);
+  const landscape    = useStore(s => s.panelLandscape);
+  const solarLat     = useStore(s => s.solarLatitude);
   const tiltDeg      = useStore(s => s.panelTiltDeg);
   const customPanel  = useStore(s => s.customPanel);
   const clipboard    = useStore(s => s.panelClipboard);
@@ -197,7 +200,14 @@ function DraftEditor() {
   const tpl   = templates.find(t => t.id === activeTplId);
   const draft = drafts.find(d => d.id === activeDfId);
   const totalPanels = roofs.reduce((s, r) => s + (r.panels?.length ?? 0), 0);
-  const totalKwp = (totalPanels * panel.wp / 1000).toFixed(2);
+  const totalKwp = roofs.reduce((sum, r) => {
+    const wp = r.panelSpec?.wp ?? panel.wp;
+    return sum + (r.panels?.length ?? 0) * wp / 1000;
+  }, 0).toFixed(2);
+  const totalAnnualKwh = roofs.reduce((sum, r) => {
+    const wp = r.panelSpec?.wp ?? panel.wp;
+    return sum + (r.panels?.length ?? 0) * wp / 1000 * specificYield(solarLat);
+  }, 0);
   const dispatch = (n, detail) => window.dispatchEvent(new CustomEvent(n, detail !== undefined ? { detail } : undefined));
 
   const targets = selectedIds.length || (activeId ? 1 : 0);
@@ -241,22 +251,23 @@ function DraftEditor() {
       <Divider />
 
       <Section title="Panel type">
-        <select value={panelIdx} onChange={e => store.set({ panelTypeIdx: +e.target.value })} style={{ ...inputStyle, width: '100%' }}>
-          {PANEL_TYPES.map((p, i) => <option key={i} value={i}>{p.name}</option>)}
-          <option value={-1}>🛠 Custom…</option>
-        </select>
+        <PanelCatalogue selected={panelIdx} onChange={i => store.set({ panelTypeIdx: i })} />
         {isCustom && (
           <div style={{
             marginTop: 6, padding: 10, background: '#0f172a',
-            border: '1px solid #2a2a4a', borderRadius: 8,
+            border: '1px solid #4ade80', borderRadius: 8,
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
           }}>
-            <NumField label="Width m" value={customPanel.w} step={0.01} min={0.3} max={3}
+            <NumField label="Width m"  value={customPanel.w}  step={0.01} min={0.3}  max={3}
               onChange={v => store.set({ customPanel: { ...customPanel, w: v } })} />
-            <NumField label="Height m" value={customPanel.h} step={0.01} min={0.3} max={3}
+            <NumField label="Height m" value={customPanel.h}  step={0.01} min={0.3}  max={3}
               onChange={v => store.set({ customPanel: { ...customPanel, h: v } })} />
-            <NumField label="Power Wp" value={customPanel.wp} step={5} min={50} max={1500}
+            <NumField label="Power Wp" value={customPanel.wp} step={5}    min={50}   max={1500}
               onChange={v => store.set({ customPanel: { ...customPanel, wp: v } })} />
+            <NumField label="Effic. %" value={customPanel.efficiency ?? 20} step={0.1} min={5} max={30}
+              onChange={v => store.set({ customPanel: { ...customPanel, efficiency: v } })} />
+            <NumField label="Weight kg" value={customPanel.weight_kg ?? 22} step={0.5} min={5} max={80}
+              onChange={v => store.set({ customPanel: { ...customPanel, weight_kg: v } })} />
           </div>
         )}
       </Section>
@@ -440,10 +451,50 @@ function DraftEditor() {
         <InfoBox rows={[
           ['Roofs',         roofs.length],
           ['Panels',        totalPanels],
-          ['Total kWp',     totalKwp],
-          ['Panel',         `${panel.w}×${panel.h} m · ${panel.wp} Wp`],
+          ['Total kWp',     `${totalKwp} kWp`],
+          ['Annual yield',  `~${Math.round(totalAnnualKwh).toLocaleString()} kWh/a`],
+          ['New panels',    isCustom ? `Custom · ${panel.w}×${panel.h} m · ${panel.wp} Wp` : `${panel.brand} ${panel.model} (${panel.wp} Wp)`],
           ['Rotation',      `${panelAngle.toFixed(0)}°`],
         ]} />
+      </Section>
+
+      <Divider />
+
+      <Section title="Production by roof">
+        {roofs.length === 0
+          ? <div style={{ fontSize: '0.72rem', color: '#666' }}>No roofs yet.</div>
+          : roofs.map((r, i) => {
+            const spec = r.panelSpec;
+            const np   = r.panels?.length ?? 0;
+            const kWp  = spec ? (np * spec.wp / 1000) : (np * panel.wp / 1000);
+            const kwh  = kWp * specificYield(solarLat);
+            const specName = spec
+              ? (spec.brand ? `${spec.brand} ${spec.model}` : 'Custom')
+              : (isCustom ? 'Custom' : `${panel.brand} ${panel.model}`);
+            return (
+              <div key={r.id} style={{
+                background: '#0f172a', border: '1px solid #2a2a4a',
+                borderRadius: 6, padding: '8px 10px', fontSize: '0.75rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ color: '#f5a623', fontWeight: 700 }}>Roof {i + 1}</span>
+                  <span style={{ color: '#888' }}>{r.plane.area.toFixed(1)} m² · {r.plane.tilt.toFixed(0)}°</span>
+                </div>
+                {np === 0 ? (
+                  <span style={{ color: '#555', fontStyle: 'italic' }}>No panels placed</span>
+                ) : (
+                  <>
+                    <div style={{ color: '#60a5fa', fontSize: '0.7rem', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{specName}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
+                      <span>{np} panels &nbsp;·&nbsp; {kWp.toFixed(2)} kWp</span>
+                      <span style={{ color: '#4ade80', fontWeight: 700 }}>~{Math.round(kwh).toLocaleString()} kWh/a</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })
+        }
       </Section>
 
       <Divider />
@@ -595,6 +646,87 @@ function PanelSandbox() {
         </div>
       )}
     </Section>
+  );
+}
+
+// ── Catalogue panel picker ───────────────────────────────────────────────
+function PanelCatalogue({ selected, onChange }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 260, overflowY: 'auto' }}>
+      {PANEL_TYPES.map((p, i) => {
+        const active = selected === i;
+        return (
+          <div
+            key={p.id}
+            onClick={() => onChange(i)}
+            style={{
+              background: active ? '#1a2a40' : '#0f172a',
+              border: `1.5px solid ${active ? '#f5a623' : '#2a2a4a'}`,
+              borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'border-color 0.12s',
+            }}
+          >
+            {/* Radio dot */}
+            <div style={{
+              width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+              background: active ? '#f5a623' : 'transparent',
+              border: `2px solid ${active ? '#f5a623' : '#4a5568'}`,
+            }} />
+
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: '0.78rem', fontWeight: 700,
+                color: active ? '#f5a623' : '#e0e0e0',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{p.brand} {p.model}</div>
+              <div style={{ fontSize: '0.68rem', color: '#888', marginTop: 2 }}>
+                <span style={{ fontFamily: 'monospace', color: '#4a6080', marginRight: 6 }}>{p.id.slice(0, 8)}</span>
+                {p.wp} Wp &nbsp;·&nbsp; {p.w.toFixed(3)}×{p.h.toFixed(3)} m &nbsp;·&nbsp; {p.efficiency.toFixed(1)}%
+              </div>
+            </div>
+
+            {/* Datasheet button */}
+            {p.datasheetUrl && (
+              <button
+                onClick={e => { e.stopPropagation(); window.open(p.datasheetUrl, '_blank', 'noopener'); }}
+                title="Open datasheet"
+                style={{
+                  flexShrink: 0, width: 26, height: 26, borderRadius: 6,
+                  background: '#16213e', border: '1px solid #2a2a4a',
+                  color: '#60a5fa', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >ℹ</button>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Custom panel row */}
+      <div
+        onClick={() => onChange(-1)}
+        style={{
+          background: selected === -1 ? '#1a2a40' : '#0f172a',
+          border: `1.5px solid ${selected === -1 ? '#4ade80' : '#2a2a4a'}`,
+          borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}
+      >
+        <div style={{
+          width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+          background: selected === -1 ? '#4ade80' : 'transparent',
+          border: `2px solid ${selected === -1 ? '#4ade80' : '#4a5568'}`,
+        }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: selected === -1 ? '#4ade80' : '#9ca3af' }}>
+            🛠 Pannello personalizzato
+          </div>
+          <div style={{ fontSize: '0.68rem', color: '#666' }}>Inserisci le specifiche manualmente</div>
+        </div>
+      </div>
+    </div>
   );
 }
 

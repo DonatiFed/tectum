@@ -12,6 +12,7 @@ import SelectOverlay from './SelectOverlay';
 import PolygonOverlay from './PolygonOverlay';
 import PickOverlay from './PickOverlay';
 import RotationPad from './RotationPad';
+import SolarTool from './SolarTool';
 
 export default function SolarPlanner() {
   const selectedModel = useStore(s => s.selectedModel);
@@ -76,6 +77,7 @@ function PlannerView() {
         <TabsBar />
         {tab === 'detect'    && <Sidebar />}
         {tab === 'templates' && <TemplatesPanel />}
+        {tab === 'solar'     && <SolarTool />}
         {detectUI && <BottomControls />}
         {detectUI && <SelectionActionBar />}
         <DebugHUD />
@@ -181,6 +183,7 @@ function TabsBar() {
   const TABS = [
     { id: 'detect',    label: '🏠 Roof Detection', hint: 'Detect, clean and merge roof planes from the 3D model' },
     { id: 'templates', label: `📁 Templates${templates ? ` (${templates}${drafts ? ` · ${drafts}d` : ''})` : ''}`, hint: 'Save client templates and fork them into panel-layout drafts' },
+    { id: 'solar',     label: '☀️ Solar Irradiance', hint: 'Simulate sun path and visualise per-panel irradiance throughout the day' },
   ];
   return (
     <div style={{
@@ -193,7 +196,7 @@ function TabsBar() {
         const active = t.id === tab;
         return (
           <button key={t.id}
-            onClick={() => store.set({ activeTab: t.id, hint: t.hint })}
+            onClick={() => store.set({ activeTab: t.id, hint: t.hint, activePanelDashboard: null })}
             title={t.hint}
             style={{
               background: active ? '#f5a623' : 'transparent',
