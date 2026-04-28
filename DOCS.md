@@ -10,10 +10,10 @@
 1. [Project Overview](#1-project-overview)
 2. [Repository Structure](#2-repository-structure)
 3. [Architecture Diagram](#3-architecture-diagram)
-4. [Module: `tectum-pro` — Installer Web App](#4-module-tectum-pro--installer-web-app)
-5. [Module: `taim/solar-app` — 3D Roof Planner](#5-module-taimsolar-app--3d-roof-planner)
+4. [Module: `web-app` — Installer Web App](#4-module-tectum-pro--installer-web-app)
+5. [Module: `3d-roof-planner` — 3D Roof Planner](#5-module-taimsolar-app--3d-roof-planner)
 6. [Module: `solar-pipeline` — AI Offer Engine](#6-module-solar-pipeline--ai-offer-engine)
-7. [Module: `extractor` — Product Catalogue Enricher](#7-module-extractor--product-catalogue-enricher)
+7. [Module: `catalogue-enricher` — Product Catalogue Enricher](#7-module-extractor--product-catalogue-enricher)
 8. [APIs & Integrations](#8-apis--integrations)
 9. [Setup & Installation](#9-setup--installation)
 10. [Environment Variables](#10-environment-variables)
@@ -49,12 +49,12 @@ The platform allows solar installers to:
 
 ```
 tectum/
-├── tectum-pro/          # Production installer web app (React + Vite + TS)
-├── taim/
+├── web-app/          # Production installer web app (React + Vite + TS)
+
 │   └── solar-app/       # 3D roof planner prototype (Next.js + Three.js)
 ├── solar-pipeline/      # Offer-generation engine (Python, FastAPI)
-├── extractor/           # Product datasheet enricher (Python, Tavily, PDF)
-├── aikido-screenshots/  # Aikido Security scan results
+├── catalogue-enricher/           # Product datasheet enricher (Python, Tavily, PDF)
+├── docs/security/  # Aikido Security scan results
 ├── DOCS.md              # ← this file
 └── README.md            # Quick-start (AI Studio bootstrap)
 ```
@@ -88,9 +88,9 @@ tectum/
 
                   (catalogue data)
 ┌──────────────────────────────────────────────────────────┐
-│         extractor/  (offline enrichment script)          │
+│         catalogue-enricher/  (offline enrichment script)          │
 │  Tavily Search API → PDF download → pdfplumber parse     │
-│  Outputs: extractor/catalogue.json                       │
+│  Outputs: catalogue-enricher/catalogue.json                       │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -98,9 +98,9 @@ The `taim/solar-app` (Next.js) is an earlier prototype that shares component and
 
 ---
 
-## 4. Module: `tectum-pro` — Installer Web App
+## 4. Module: `web-app` — Installer Web App
 
-**Path:** `tectum-pro/`  
+**Path:** `web-app/`  
 **Tech:** React 19, TypeScript, Vite 6, Tailwind CSS v4, Three.js, Framer Motion  
 **Port:** `3001`
 
@@ -167,13 +167,13 @@ Projects are stored in the browser's `localStorage` (metadata) and `IndexedDB` (
 
 ---
 
-## 5. Module: `taim/solar-app` — 3D Roof Planner
+## 5. Module: `3d-roof-planner` — 3D Roof Planner
 
-**Path:** `taim/solar-app/`  
+**Path:** `3d-roof-planner/`  
 **Tech:** Next.js 15, React 18, Three.js 0.164, `@react-three/fiber` 8.16  
 **Port:** `3000` (Next.js default)
 
-This is the core interactive module. Its components are also vendored into `tectum-pro/src/taim/` for the production build.
+This is the core interactive module. Its components are also vendored into `web-app/src/taim/` for the production build.
 
 ### 5.1 Component Map
 
@@ -253,7 +253,7 @@ The pipeline base URL (`NEXT_PUBLIC_PIPELINE_URL`) is validated before any reque
 
 ### 5.8 Product Catalogue (`lib/catalog.js`, `lib/catalogue-panels.js`)
 
-Panel objects expose: `id`, `brand`, `model`, `wp` (watt-peak), `w` (width m), `h` (height m), `efficiency`, `datasheetUrl`. The catalogue is populated by the `extractor/` module and committed as `catalogue.json`.
+Panel objects expose: `id`, `brand`, `model`, `wp` (watt-peak), `w` (width m), `h` (height m), `efficiency`, `datasheetUrl`. The catalogue is populated by the `catalogue-enricher/` module and committed as `catalogue.json`.
 
 ### 5.9 Demo 3D Models
 
@@ -435,9 +435,9 @@ uvicorn server:app --port 8001 --reload
 
 ---
 
-## 7. Module: `extractor` — Product Catalogue Enricher
+## 7. Module: `catalogue-enricher` — Product Catalogue Enricher
 
-**Path:** `extractor/`  
+**Path:** `catalogue-enricher/`  
 **Tech:** Python 3.11+, Tavily Search API, `pdfplumber`, `requests`
 
 ### 7.1 Purpose
@@ -577,13 +577,13 @@ python datasheet_enricher.py
 
 ## 10. Environment Variables
 
-### `tectum-pro/.env.local`
+### `web-app/.env.local`
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### `taim/solar-app/.env.local`
+### `3d-roof-planner/.env.local`
 
 ```env
 NEXT_PUBLIC_PIPELINE_URL=http://localhost:8001
@@ -694,7 +694,7 @@ The codebase was scanned with **[Aikido Security](https://aikido.dev)** on **26 
 
 > **Top 5%** of all Aikido customer accounts for code repository security posture.
 
-![Aikido Benchmark](aikido-screenshots/aikido-benchmark.png)
+![Aikido Benchmark](docs/security/aikido-benchmark.png)
 
 ---
 
@@ -702,7 +702,7 @@ The codebase was scanned with **[Aikido Security](https://aikido.dev)** on **26 
 
 All critical, high, medium, and low issue counts are **zero** across every category.
 
-![Open Issues — all zero](aikido-screenshots/open-issues-aikido.png)
+![Open Issues — all zero](docs/security/open-issues-aikido.png)
 
 | Issue type | Critical | High | Medium | Low |
 |---|---|---|---|---|
@@ -725,7 +725,7 @@ All critical, high, medium, and low issue counts are **zero** across every categ
 
 ### OWASP Top 10 Coverage
 
-![OWASP Top 10](aikido-screenshots/owasp-top10-aikido.png)
+![OWASP Top 10](docs/security/owasp-top10-aikido.png)
 
 | Code | Category | Status | Measures in this codebase |
 |---|---|---|---|

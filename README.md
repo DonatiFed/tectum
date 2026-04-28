@@ -1,11 +1,32 @@
-# Tectum — AI Solar Planning Platform
+<p align="center">
+  <img src="https://img.icons8.com/fluency/96/solar-panel.png" alt="Tectum logo" width="96" />
+</p>
 
-> **Big Berlin Hack 2026 · Reonic Challenge**  
-> End-to-end AI-powered solar design and offer generation for German solar installers.
+<h1 align="center">Tectum</h1>
+
+<p align="center">
+  <strong>AI-powered solar planning & offer generation for German installers</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Big%20Berlin%20Hack%202026-Aikido%20Challenge%20Winner-F59E0B?style=flat-square" />
+  <img src="https://img.shields.io/badge/Track-Reonic-3B82F6?style=flat-square" />
+</p>
+
+<p align="center">
+  <a href="https://drive.google.com/file/d/1xPI4pHy9N9mXlTn9EcUOaoO6y3OIatFe/view?usp=drive_link">Demo Video</a> ·
+  <a href="#how-it-works">How It Works</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="DOCS.md">Full Documentation</a>
+</p>
+
+<p align="center">
+  <img src="docs/hero.png" alt="Tectum 3D Solar Irradiance Planner" width="700" />
+</p>
 
 ---
 
-## What is Tectum?
+## How It Works
 
 Tectum lets a solar installer walk through a complete sales workflow in minutes:
 
@@ -14,20 +35,17 @@ Tectum lets a solar installer walk through a complete sales workflow in minutes:
 3. **AI Offer Generation** — a sub-4 ms Python pipeline produces three fully-costed options (Budget / Balanced / Max Independence) with a complete Bill of Materials and 20-year financial projection.
 4. **PDF Report** — one click generates a branded, print-ready offer with a 3D screenshot and an AI-written personalised explanation.
 
-📄 **[Full technical documentation →](DOCS.md)**
-
 ---
 
 ## Repository Structure
 
 ```
 tectum/
-├── tectum-pro/       # Production installer web app (React 19 + Vite + TypeScript)
-├── taim/
-│   └── solar-app/   # 3D roof planner (Next.js 15 + Three.js)
-├── solar-pipeline/  # Offer-generation engine (Python / FastAPI)
-├── extractor/       # Product catalogue enricher (Tavily + pdfplumber)
-└── aikido-screenshots/  # Security scan results
+├── web-app/               # Installer web app (React 19 + Vite + TypeScript)
+├── 3d-roof-planner/       # 3D roof planner (Next.js 15 + Three.js)
+├── solar-pipeline/        # Offer-generation engine (Python / FastAPI)
+├── catalogue-enricher/    # Standalone product catalogue enricher (Tavily + pdfplumber)
+└── docs/                  # Hero image & Aikido security scan results
 ```
 
 ---
@@ -36,14 +54,29 @@ tectum/
 
 ### Prerequisites
 
-| Tool | Version |
+- **Node.js** >= 20 LTS
+- **Python** >= 3.11
+
+### One command
+
+```bash
+./start.sh
+```
+
+This installs dependencies and boots all three services:
+
+| Service | URL |
 |---|---|
-| Node.js | ≥ 20 LTS |
-| Python | ≥ 3.11 |
-| npm | ≥ 10 |
+| Web App | http://localhost:3001 |
+| 3D Roof Planner | http://localhost:3000 |
+| Solar Pipeline API | http://localhost:8001 |
 
-### 1 — Solar Pipeline API (Python)
+### Manual setup
 
+<details>
+<summary>Run each service individually</summary>
+
+**Solar Pipeline API**
 ```bash
 cd solar-pipeline
 python -m venv .venv && source .venv/bin/activate
@@ -51,73 +84,50 @@ pip install fastapi uvicorn pydantic anthropic
 uvicorn server:app --port 8001 --reload
 ```
 
-### 2 — Production Web App
-
+**Web App**
 ```bash
-cd tectum-pro
-npm install
-# Create tectum-pro/.env.local and add: GEMINI_API_KEY=your_key
-npm run dev
+cd web-app
+npm install && npm run dev
 # → http://localhost:3001
 ```
 
-### 3 — 3D Roof Planner (prototype)
-
+**3D Roof Planner**
 ```bash
-cd taim/solar-app
-npm install
-# Create taim/solar-app/.env.local and add: NEXT_PUBLIC_PIPELINE_URL=http://localhost:8001
-npm run dev
+cd 3d-roof-planner
+npm install && npm run dev
 # → http://localhost:3000
 ```
 
----
+</details>
 
-## Demo Credentials
-
-| Email | Password |
-|---|---|
-| `demo@tectum.io` | `tectum` |
-| `anna@solarberlin.de` | `solar` |
-| `paul@dachwerk.de` | `dach` |
-
-Any unknown email is accepted as a guest installer.
+> **Note:** `catalogue-enricher/` is a standalone Python script for enriching product datasheets — it is not required to run the main app.
 
 ---
 
-## Key Technologies
+## Tech Stack
 
 | Layer | Stack |
 |---|---|
 | Frontend | React 19, TypeScript, Vite 6, Tailwind CSS v4, Framer Motion |
-| 3D | Three.js 0.164, `@react-three/fiber`, `@react-three/drei` |
-| PDF | `@react-pdf/renderer` |
+| 3D | Three.js, @react-three/fiber, @react-three/drei |
+| PDF | @react-pdf/renderer |
 | Backend | Python 3.11, FastAPI, Pydantic |
-| AI | Anthropic Claude (primary), Ollama Llama 3.2 (fallback), Google Gemini |
-| Catalogue | Tavily Search API, pdfplumber |
+| AI | Anthropic Claude, Ollama Llama 3.2, Google Gemini |
 
 ---
 
 ## Security
 
-Scanned with **Aikido Security** on 26 April 2026:
+Awarded **Most Secure Project** (Aikido Challenge) at Big Berlin Hack 2026.
 
-- **Top 5%** of all Aikido accounts for code repository security posture.
-- **Zero** open issues across all 14 categories (Critical / High / Medium / Low).
-- **7/10 OWASP Top 10** categories fully compliant; 3 under monitoring (auth is localStorage-based for hackathon scope).
+- **Top 5%** of all Aikido accounts for code repository security posture
+- **Zero** open issues across all 14 categories (Critical / High / Medium / Low)
+- **7/10 OWASP Top 10** categories fully compliant
 
-See [DOCS.md → §13](DOCS.md#13-security--aikido-report) for the full report with screenshots.
+See [DOCS.md](DOCS.md) for the full report with screenshots.
 
 ---
 
-## Documentation
+## License
 
-See **[DOCS.md](DOCS.md)** for:
-
-- Full architecture diagram
-- Per-module API reference
-- Pipeline step-by-step walkthrough
-- All data models
-- Environment variable reference
-- Installer-configurable parameters
-- Complete Aikido / OWASP security report
+MIT

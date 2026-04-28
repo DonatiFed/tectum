@@ -1,0 +1,566 @@
+{
+  "products": [
+    {
+      "id": "73816c1805c8",
+      "category": "battery",
+      "brand": "Huawei",
+      "model": "Huawei battery product",
+      "datasheet_url": "https://solar.huawei.com/download?p=%2F-%2Fmedia%2FSolar%2Fattachment%2Fpdf%2Feu%2Fdatasheet%2FLUNA2000-5_10_15-S0.pdf",
+      "specs": {
+        "max_discharge_power_kw": 2.5,
+        "max_charge_power_kw": 2.5,
+        "chemistry": "LFP",
+        "weight_kg": 710.0,
+        "dimensions": "6,058 x 2,896 x 2,438 mm"
+      },
+      "_enriched_at": "2026-04-25T22:20:50.158876",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "2810cd73bfc7",
+      "category": "battery",
+      "brand": "Unknown",
+      "model": "home battery system starts at 5kWh",
+      "datasheet_url": null,
+      "specs": {
+        "capacity_kwh": 5.0,
+        "dimensions": "700*540*90 mm",
+        "weight_kg": 18.0
+      },
+      "_enriched_at": "2026-04-25T22:20:52.259161",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "c9812a1c515d",
+      "category": "inverter",
+      "brand": "Unknown",
+      "model": "hybrid inverters range from 3 kW",
+      "datasheet_url": null,
+      "specs": {
+        "power_kw": 3.0,
+        "dimensions": "911.1 x 862.5 x 447 mm"
+      },
+      "_enriched_at": "2026-04-25T22:20:54.291352",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "2fbe64f781b5",
+      "category": "wallbox",
+      "brand": "EcoFlow",
+      "model": "EcoFlow wallbox product",
+      "datasheet_url": "https://enterprise-service-eu-cdn.ecoflow.com/enterprise/documentation/1741850858775/EcoFlow%20PowerPulse%20EV%20Charger%202_Datasheet_EN_20250313.pdf",
+      "specs": {
+        "dimensions": "26.9×16.9×1.0 mm",
+        "weight_kg": 3.5
+      },
+      "_enriched_at": "2026-04-25T22:20:57.911413",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "8762b2d46308",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 3.5kW",
+      "datasheet_url": "https://www.arimec.eu/wp-content/uploads/2022/03/Vaillant-arotherm-plus-spec-.pdf",
+      "specs": {
+        "power_kw": 3.5,
+        "refrigerant": "R290",
+        "dimensions": "1880 x 599 x 693 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:03.094612",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "0bcd040cd09e",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 5kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 5.0,
+        "refrigerant": "R290",
+        "dimensions": "765 x 1100 x 450 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:05.645202",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "3208230b51cc",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 7kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 7.0,
+        "refrigerant": "R290",
+        "dimensions": "765 x 1100 x 450 mm",
+        "weight_kg": 0.9
+      },
+      "_enriched_at": "2026-04-25T22:21:07.337387",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "18d390ea4d66",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 10 - 15kW",
+      "datasheet_url": "https://www.arimec.eu/wp-content/uploads/2022/03/Vaillant-arotherm-plus-spec-.pdf",
+      "specs": {
+        "power_kw": 15.0,
+        "refrigerant": "R290",
+        "dimensions": "1880 x 599 x 693 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:12.843773",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "6e0509ecd1d1",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 10kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 10.0,
+        "refrigerant": "R290",
+        "dimensions": "1880 x 599 x 693 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:14.432123",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "462486735498",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 12kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 12.0,
+        "refrigerant": "R290",
+        "dimensions": "1,5 x 5,5\nX200 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:15.899164",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "7a7f147629b7",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM monobloc 5 - 15kW",
+      "datasheet_url": "https://www.specifiedby.com/vaillant/arotherm-air-source-heat-pump/vaillant-ltd_arotherm-air-source-heat-pump_techspec_9_val0040-arotherm-air-to-water-heat-pump-aw-1103347.pdf",
+      "specs": {
+        "power_kw": 15.0
+      },
+      "_enriched_at": "2026-04-25T22:21:20.239144",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "2b159a0a5f0d",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM 11kW",
+      "datasheet_url": "https://www.specifiedby.com/vaillant/arotherm-air-source-heat-pump/vaillant-ltd_arotherm-air-source-heat-pump_techspec_9_val0040-arotherm-air-to-water-heat-pump-aw-1103347.pdf",
+      "specs": {
+        "power_kw": 11.0
+      },
+      "_enriched_at": "2026-04-25T22:21:25.764682",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "1907f28c60e6",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM 15kW",
+      "datasheet_url": "https://www.specifiedby.com/vaillant/arotherm-air-source-heat-pump/vaillant-ltd_arotherm-air-source-heat-pump_techspec_9_val0040-arotherm-air-to-water-heat-pump-aw-1103347.pdf",
+      "specs": {
+        "power_kw": 15.0,
+        "dimensions": "3 X201 X200 mm",
+        "weight_kg": 132.0
+      },
+      "_enriched_at": "2026-04-25T22:21:28.968429",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "ced8af83e965",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "Arotherm is producing 4 kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 4.0,
+        "refrigerant": "R290",
+        "dimensions": "765 x 1100 x 450 mm",
+        "weight_kg": 90.0
+      },
+      "_enriched_at": "2026-04-25T22:21:31.733685",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "ea969e46da38",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "aroTHERM plus 3.5 kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 3.5,
+        "refrigerant": "R290",
+        "dimensions": "765 x 1100 x 450 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:34.224843",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "a7290b9c2dea",
+      "category": "heatpump",
+      "brand": "Vaillant",
+      "model": "Arotherm Plus 3,5 kW",
+      "datasheet_url": "https://professional.vaillant.co.uk/downloads/aproducts/renewables-1/arotherm-plus/arotherm-plus-spec-sheet-1892564.pdf",
+      "specs": {
+        "power_kw": 3.5,
+        "refrigerant": "R290",
+        "dimensions": "765 x 1100 x 450 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:36.566779",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "9015daaff68b",
+      "category": "panel",
+      "brand": "AIKO",
+      "model": "NEOSTAR 2S54 Mono-Glass 440W",
+      "datasheet_url": "https://www.energymatters.com.au/wp-content/uploads/2025/08/AIKO-Neostar-2S54-Mono-Glass-440-470W.pdf",
+      "specs": {
+        "weight_kg": 21.5,
+        "dimensions": "1757*1134*30mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:40.812377",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "c438b5a421e0",
+      "category": "panel",
+      "brand": "AIKO",
+      "model": "NEOSTAR 2P60 Mono-Glass 505W",
+      "datasheet_url": "https://aikosolar.com/wp-content/uploads/2024/10/Neostar-2S_188-AIKO-A-MAH60Mb-500-520W_1954x1134x30mm_AUS-Fullblack.pdf",
+      "specs": {
+        "efficiency_pct": 22.6,
+        "weight_kg": 24.2,
+        "dimensions": "1954*1134*30mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:45.966537",
+      "_needs_manual": [
+        "warranty_years"
+      ]
+    },
+    {
+      "id": "3588481eb07d",
+      "category": "panel",
+      "brand": "AIKO",
+      "model": "NEOSTAR 2S60 Mono-Glass 500W",
+      "datasheet_url": "https://www.energymatters.com.au/wp-content/uploads/2025/08/AIKO-Neostar-2S60-Mono-Glass-500-515W.pdf",
+      "specs": {
+        "efficiency_pct": 22.6,
+        "weight_kg": 23.1,
+        "dimensions": "1954*1134*30mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:49.705625",
+      "_needs_manual": [
+        "warranty_years"
+      ]
+    },
+    {
+      "id": "5c37eed932b8",
+      "category": "panel",
+      "brand": "Trina",
+      "model": "between 440 W",
+      "datasheet_url": "https://static.trinasolar.com/sites/default/files/Datasheet_Vertex%20S+_NEG9R.25_EN_2024_A_web.pdf",
+      "specs": {
+        "weight_kg": 21.0,
+        "dimensions": "1762×1134×30 mm"
+      },
+      "_enriched_at": "2026-04-25T22:21:55.500089",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "6af399e7a5b8",
+      "category": "panel",
+      "brand": "Unknown",
+      "model": "and 465 W",
+      "datasheet_url": "https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/22096b.pdf",
+      "specs": {
+        "dimensions": "1762x1134x30 mm"
+      },
+      "_enriched_at": "2026-04-25T22:22:22.775788",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "7f0cf56ab55c",
+      "category": "panel",
+      "brand": "Trina",
+      "model": "Warranty 650W",
+      "datasheet_url": "https://cdn2.hubspot.net/hubfs/1828458/Datasheets/Trina-275w-datasheet.pdf",
+      "specs": {
+        "warranty_years_performance": 10,
+        "weight_kg": 34.9,
+        "dimensions": "2172×1303×33 mm"
+      },
+      "_enriched_at": "2026-04-25T22:22:26.648419",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "9d9f774ac438",
+      "category": "panel",
+      "brand": "Trina",
+      "model": "Type 625W",
+      "datasheet_url": "https://natec.com/wp-content/uploads/2023/07/Datasheet-Trina-N-Type-TSM-NEG9R.28-425-445.pdf",
+      "specs": {
+        "weight_kg": 33.0,
+        "dimensions": "2382×1134×30 mm"
+      },
+      "_enriched_at": "2026-04-25T22:22:31.769943",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "7d192e2e6d05",
+      "category": "panel",
+      "brand": "Unknown",
+      "model": "Warranty 485W",
+      "datasheet_url": null,
+      "specs": {}
+    },
+    {
+      "id": "63e166ee9477",
+      "category": "panel",
+      "brand": "Trina",
+      "model": "Glass 440W",
+      "datasheet_url": "https://natec.com/wp-content/uploads/2023/07/Datasheet-Trina-N-Type-TSM-NEG9R.28-425-445.pdf",
+      "specs": {
+        "weight_kg": 21.0,
+        "dimensions": "1762×1134×30 mm"
+      },
+      "_enriched_at": "2026-04-25T22:22:37.335075",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "0e93d5d499d0",
+      "category": "panel",
+      "brand": "Unknown",
+      "model": "Glass 655W",
+      "datasheet_url": "https://marshield.com/wp-content/uploads/2020/06/LX57B-Lead-Glass-2.pdf",
+      "specs": {
+        "dimensions": "2465*1134*30mm",
+        "weight_kg": 34.7
+      },
+      "_enriched_at": "2026-04-25T22:22:42.636577",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "e5f5a121bf53",
+      "category": "panel",
+      "brand": "Trina",
+      "model": "Glass 505W",
+      "datasheet_url": "https://natec.com/wp-content/uploads/2023/07/Datasheet-Trina-N-Type-TSM-NEG9R.28-425-445.pdf",
+      "specs": {
+        "weight_kg": 23.5,
+        "dimensions": "1961×1134×30mm"
+      },
+      "_enriched_at": "2026-04-25T22:22:46.204816",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "72068c71f757",
+      "category": "panel",
+      "brand": "Unknown",
+      "model": "Glass 455W",
+      "datasheet_url": "https://marshield.com/wp-content/uploads/2020/06/LX57B-Lead-Glass-2.pdf",
+      "specs": {
+        "weight_kg": 29.0
+      },
+      "_enriched_at": "2026-04-25T22:22:50.414981",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "2b5c0c9d",
+      "category": "unknown",
+      "brand": "Huawei",
+      "model": "SUN2000",
+      "datasheet_url": "https://atlanticces.com/wp-content/uploads/2017/01/01-Huawei-SUN2000-45KTL-US-HV-D0-Datasheet-20170616.pdf",
+      "specs": {},
+      "_enriched_at": "2026-04-25T22:22:53.840834",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "97d4925e",
+      "category": "unknown",
+      "brand": "Huawei",
+      "model": "SUN2000-150K-MG0",
+      "datasheet_url": "https://e.huawei.com/marketingcloud/pep/asset/20000001/Material/3f44fe1d936a4a18b5cb06eb53ad0582/M3T1A669N1115074372528451590/FusionSolar%20C_I%20_%20Smart%20PV%20Solusion%20Brochure.pdf",
+      "specs": {
+        "dimensions": "546 x 460 x 228mm",
+        "weight_kg": 1070.0
+      },
+      "_enriched_at": "2026-04-25T22:23:00.551101",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "adffb513",
+      "category": "unknown",
+      "brand": "Fronius",
+      "model": "GEN24",
+      "datasheet_url": "https://www.solkraft.info/wp-content/uploads/2023/08/3600400059_Fronius-Symo-GEN24-10.0-Plus_Datasheet_EN.pdf",
+      "specs": {
+        "dimensions": "530 x 474 x 165 mm"
+      },
+      "_enriched_at": "2026-04-25T22:23:03.069764",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "f8067954",
+      "category": "unknown",
+      "brand": "Trina",
+      "model": "NEG19",
+      "datasheet_url": "https://static.trinasolar.com/sites/default/files/DT-M-0071%20C%20Datasheet_Vertex_NEG19RC.20_NA_EN_2025_A.pdf",
+      "specs": {
+        "weight_kg": 33.0,
+        "dimensions": "2382×1134×30 mm"
+      },
+      "_enriched_at": "2026-04-25T22:23:12.738446",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "abcb2185",
+      "category": "unknown",
+      "brand": "Trina",
+      "model": "NEG21",
+      "datasheet_url": "https://static.trinasolar.com/sites/default/files/Datasheet%20-%20Vertex_NEG21C.20_EN_2024_Aus_A(705-725)_web.pdf",
+      "specs": {
+        "weight_kg": 38.3,
+        "dimensions": "2384×1303×33 mm"
+      },
+      "_enriched_at": "2026-04-25T22:23:16.122843",
+      "_needs_manual": [
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    },
+    {
+      "id": "8f6d2abe",
+      "category": "unknown",
+      "brand": "SMA",
+      "model": "PEAK3",
+      "datasheet_url": "https://sunwatts.com/content/specs/SMA%20Sunny%20Highpower%20Datasheet.pdf?srsltid=AfmBOooODyPlKLt9S9_iJXKdBNRFz3_K19Pcnd0G4rOW6J5ECSPpFbXK",
+      "specs": {},
+      "_enriched_at": "2026-04-25T22:23:17.821267",
+      "_needs_manual": [
+        "weight_kg",
+        "warranty_years",
+        "efficiency_pct"
+      ]
+    }
+  ]
+}

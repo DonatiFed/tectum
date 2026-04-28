@@ -1,6 +1,0 @@
-tavily-python
-requests
-beautifulsoup4
-lxml
-pdfplumber
-playwright
