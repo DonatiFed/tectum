@@ -5,7 +5,10 @@
 <h1 align="center">Tectum</h1>
 
 <p align="center">
-  <strong>AI-powered solar planning & offer generation for German installers (Big Berlin Hack 2026)</strong>
+  <strong>
+    🥇 Aikido Security Challenge Winner at Big Berlin Hack 2026<br />
+    AI-powered solar planning & offer generation for German installers
+  </strong>
 </p>
 
 <p align="center">
